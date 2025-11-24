@@ -38,9 +38,12 @@ class Table:
     return file
 
   # SELECT columns FROM rows WHERE condition ORDER BY order
+  # Wildcard 
   def select(self, columns: list[str], condition: Condition) -> dict[int, list]:
-    selected_column_indexes: list = []
     non_identifier_column_names: list = self.get_non_identifier_column_names()
+    if columns[0] == "*":
+      columns = non_identifier_column_names
+    selected_column_indexes: list = []
     for (i, column_name) in enumerate(non_identifier_column_names):
       if column_name in columns:
         selected_column_indexes.append(i)
@@ -48,7 +51,6 @@ class Table:
     selected_rows: dict = self.filter_dictionary(self.rows, condition)
     for (identifier, row) in selected_rows.items():
       filtered_row = []
-      print(identifier, row)
       for i in selected_column_indexes:
         filtered_row.append(row[i])
       selected_rows[identifier] = filtered_row

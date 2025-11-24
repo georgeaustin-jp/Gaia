@@ -9,6 +9,12 @@ class Database:
     self.file_handler = FileHandler()
     self.table_names: list = []
     self.deleted_table_names: list = []
+  
+  def exists(self) -> bool:
+    main_data = self.load_main_data()
+    if main_data == []:
+      return False
+    return True
 
   # fetches the database from storage
   def load(self) -> None:

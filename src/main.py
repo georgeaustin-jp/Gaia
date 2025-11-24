@@ -1,14 +1,12 @@
-from db.database import Database
+#from db.database import Database
 #import db.table as table
-from db.condition import Condition
+#from db.condition import Condition
 from interface.interface import Interface
+from app import App
 #from interface.character_selection import CharacterSelection
 
 def main() -> None:
-  #inter = Interface()
-  db = Database("main")
-  db.load()
-  cnd = Condition(lambda _identifier, _row: True)
-  print(db.select("User", ["Name"], cnd))
+  app = App()
+  app.run()
 
 if __name__ == "__main__": main()
