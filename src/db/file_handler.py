@@ -14,7 +14,7 @@ class FileHandler:
     file_name_suffix: str = file_name[file_name_length-5:]
     if file_name_suffix != toml_suffix:
       file_name = file_name + toml_suffix
-    return os.path.join("src", "db", "data", file_name)
+    return os.path.join("src", "data", file_name)
 
   def save_file(self, file_name: str, data: dict) -> None:
     file_path: str = self.file_path(file_name)
