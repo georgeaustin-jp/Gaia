@@ -41,6 +41,7 @@ class Table:
   # Wildcard 
   def select(self, columns: list[str], condition: Condition) -> dict[int, list]:
     non_identifier_column_names: list = self.get_non_identifier_column_names()
+    print(columns)
     if columns[0] == "*":
       columns = non_identifier_column_names
     selected_column_indexes: list = []
@@ -48,12 +49,16 @@ class Table:
       if column_name in columns:
         selected_column_indexes.append(i)
 
+    print(selected_column_indexes)
+
     selected_rows: dict = self.filter_dictionary(self.rows, condition)
     for (identifier, row) in selected_rows.items():
       filtered_row = []
       for i in selected_column_indexes:
         filtered_row.append(row[i])
       selected_rows[identifier] = filtered_row
+
+    print(selected_rows)
 
     return selected_rows
   

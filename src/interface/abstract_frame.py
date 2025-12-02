@@ -1,11 +1,11 @@
 import tkinter as tk
 
 class AbstractFrame(tk.Frame):
-  def __init__(self, root, parent: tk.Frame) -> None:
+  def __init__(self, root, parent: tk.Frame, **kwargs) -> None:
     super().__init__(parent)
     self.root = root
     self.parent = parent
-    self.create()
+    self.create(**kwargs)
 
   # each widget will be packed to the frame upon creation
   #https://www.geeksforgeeks.org/python/python-tkinter-frame-widget/
@@ -13,6 +13,10 @@ class AbstractFrame(tk.Frame):
     widget = widget_type(self, **options)
     widget.pack()
 
-  def create(self, title: str = "") -> None:
+  def create(self, title: str = "", **kwargs) -> None:
+    self.load(**kwargs)
     self.grid(row=0, column=0, sticky="nesw")
     self.create_widget(tk.Label, text=title)
+
+  def load(self, **kwargs) -> None:
+    pass

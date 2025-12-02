@@ -1,7 +1,7 @@
 import tkinter as tk
 
-from interface.selection import Selection
+from interface.abstract_frame import AbstractFrame
 
-class WorldSelection(Selection):
+class UserLogin(AbstractFrame):
   def __init__(self, root, parent: tk.Frame, **kwargs) -> None:
     super().__init__(root, parent, **kwargs)

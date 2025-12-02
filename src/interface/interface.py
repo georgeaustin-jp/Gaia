@@ -2,6 +2,7 @@ import tkinter as tk
 
 from interface.user_selection import UserSelection
 from interface.user_creation import UserCreation
+from interface.user_login import UserLogin
 from interface.character_selection import CharacterSelection
 from interface.character_creation import CharacterCreation
 from interface.world_selection import WorldSelection
@@ -9,7 +10,7 @@ from interface.world_creation import WorldCreation
 from interface.combat import Combat
 
 class Interface(tk.Tk):
-  def __init__(self) -> None:
+  def __init__(self, **kwargs) -> None:
     super().__init__()
     self.title("Gaia")
 
@@ -19,25 +20,35 @@ class Interface(tk.Tk):
     container.grid_rowconfigure(0, weight=1)
     container.grid_columnconfigure(0, weight=1)
 
-    screen_types: dict = {
-      "user_selection": UserSelection,
-      "user_creation": UserCreation,
-      "character_selection": CharacterSelection,
-      "character_creation": CharacterCreation,
-      "world_selection": WorldSelection,
-      "world_creation": WorldCreation,
-      "combat": Combat
+    users: list = kwargs["users"]
+    print(f"users=`{users}` (in \'Interface\')")
+
+    screen_init_data: dict = {
+      "user_selection": [UserSelection, {"users": users}],
+      "user_creation": [UserCreation, {"users": users}],
+      "user_login": [UserLogin],
+      "character_selection": [CharacterSelection],
+      "character_creation": [CharacterCreation],
+      "world_selection": [WorldSelection],
+      "world_creation": [WorldCreation],
+      "combat": [Combat]
     }
 
     self.screens: dict = {}
 
-    for (key, Screen) in screen_types.items():
-      self.screens[key] = Screen(self, container)
+    for (key, data) in screen_init_data.items():
+      Screen = data[0]
+      if len(data) > 1:
+        kwargs = data[1]
+        self.screens[key] = Screen(self, container, **kwargs)
+      else:
+        self.screens[key] = Screen(self, container)
 
-  def show_screen(self, screen_name: str) -> None:
+  def show_screen(self, screen_name: str, **kwargs) -> None:
     screen = self.screens[screen_name]
+    screen.load(**kwargs)
     screen.tkraise()
 
-  def run(self) -> None:
-    self.show_screen("user_selection")
+  def run(self, users: list) -> None:
+    self.show_screen("user_selection", users=users)
     self.mainloop()

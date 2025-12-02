@@ -15,6 +15,14 @@ class Database:
     if main_data == []:
       return False
     return True
+  
+  def create_main(self) -> None:
+    try:
+      self.file_handler.create_directory("data")
+    except:
+      pass
+    formatted_table_names: dict = {"tables": self.table_names}
+    self.file_handler.save_file("MAIN", formatted_table_names)
 
   # fetches the database from storage
   def load(self) -> None:
@@ -82,7 +90,7 @@ class Database:
     table.delete_from(condition)
 
   #insert
-  def insert(self, table_name: str, fields) -> None:
+  def insert(self, table_name: str, fields: dict) -> None:
     self.find_table(table_name).insert(fields)
 
   def create_table(self, table_name: str, column_names: list[str]) -> None:

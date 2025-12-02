@@ -15,6 +15,10 @@ class FileHandler:
     if file_name_suffix != toml_suffix:
       file_name = file_name + toml_suffix
     return os.path.join("src", "data", file_name)
+  
+  def create_directory(self, directory_name: str) -> None:
+    directory_path: str = os.path.join("src", directory_name)
+    os.mkdir(directory_path)
 
   def save_file(self, file_name: str, data: dict) -> None:
     file_path: str = self.file_path(file_name)
