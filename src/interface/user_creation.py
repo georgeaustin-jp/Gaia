@@ -19,9 +19,9 @@ class UserCreation(AbstractFrame):
   def create_user(self) -> None:
     user_name = self.entered_user_name.get()
     password = self.entered_password.get()
-    password_hash = sha256(password.encode("utf-8"))
+    password_hash = sha256(password.encode("utf-8")).hexdigest()
     re_entered_password = self.re_entered_password.get()
-    re_entered_password_hash = sha256(re_entered_password.encode("utf-8"))
+    re_entered_password_hash = sha256(re_entered_password.encode("utf-8")).hexdigest()
     if user_name == "":
       self.fail_creation("User name cannot be null")
     elif password == "" or re_entered_password == "":

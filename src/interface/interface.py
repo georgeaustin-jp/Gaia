@@ -21,10 +21,10 @@ class Interface(tk.Tk):
     container.grid_columnconfigure(0, weight=1)
 
     users: list = kwargs["users"]
-    print(f"users=`{users}` (in \'Interface\')")
+    quit_command = kwargs["quit_command"]
 
     screen_init_data: dict = {
-      "user_selection": [UserSelection, {"users": users}],
+      "user_selection": [UserSelection, {"users": users, "quit_command": quit_command}],
       "user_creation": [UserCreation, {"users": users}],
       "user_login": [UserLogin],
       "character_selection": [CharacterSelection],

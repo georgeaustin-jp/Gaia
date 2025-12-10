@@ -28,7 +28,7 @@ class App:
     self.load_game_data()
 
     users: list = list(self.game_data.users.values())
-    self.interface = Interface(users=users)
+    self.interface = Interface(users=users, quit_command=self.quit_command)
 
   def load_game_data(self) -> None:
     if not self.game_data.database_exists():
@@ -58,3 +58,7 @@ class App:
   def run(self) -> None:
     users: list = list(self.game_data.users.values())
     self.interface.run(users)
+
+  def quit_command(self) -> None:
+    self.save()
+    quit(1)

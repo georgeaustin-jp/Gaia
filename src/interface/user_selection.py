@@ -6,24 +6,26 @@ from user import User
 class UserSelection(Selection):
   def __init__(self, root, parent: tk.Frame, **kwargs) -> None:
     self.existing_user_buttons: list[str] = []
+    self.users: list[User]
     super().__init__(root, parent, **kwargs)
     self.load(**kwargs)
 
   def load(self, **kwargs) -> None:
     print(kwargs)
-    users: list[User] = kwargs["users"]
-    print(f"UserSelection.load(): users=`{users}`")
-    for user in users: # loads buttons for new users
+    try: self.users = kwargs["users"]
+    except: pass
+    print(f"UserSelection.load(): users=`{self.users}`")
+    for user in self.users: # loads buttons for new users
       user_name: str = user.name
       if not user_name in self.existing_user_buttons:
         self.create_widget(tk.Button, text=user_name, command=lambda: self.root.show_screen("user_login", user=user))
         self.existing_user_buttons.append(user_name)
 
     widgets: list[tk.Widget] = self.winfo_children()
-    print(f"UserSelection.load() widgets=`{widgets}`")
-    buttons: list[tk.Widget] = list(filter(lambda widget: type(widget) == tk.Button and widget["text"] != "Create user", widgets))
+    special_button_texts = ["Create user", "Quit"]
+    buttons: list[tk.Widget] = list(filter(lambda widget: type(widget) == tk.Button and not widget["text"] in special_button_texts, widgets))
 
-    user_names: list = [user.name for user in users]
+    user_names: list = [user.name for user in self.users]
     for (index, button) in enumerate(buttons): # deletes buttons for deleted users
       button_name: str = button["text"]
       print(f"UserSelection.load(): button_name=`{button_name}`")
@@ -33,4 +35,5 @@ class UserSelection(Selection):
 
   def create(self, **kwargs) -> None:
     super().create("User selection", **kwargs)
-    self.create_widget(tk.Button, text="Create user", command = lambda: self.root.show_screen("user_creation"))
+    self.create_widget(tk.Button, text="Create user", command = lambda: self.root.show_screen("user_creation", users=self.users))
+    self.create_widget(tk.Button, text="Quit", command = lambda: kwargs["quit_command"]())
