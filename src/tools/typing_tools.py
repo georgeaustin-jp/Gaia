@@ -1,0 +1,36 @@
+from collections.abc import Callable
+from types import FunctionType
+from typing import Any, Dict, Iterable, Sized, Literal, Optional, Type, TypeVar, Union, cast
+from multipledispatch import dispatch
+from enum import Enum, Flag, IntEnum, StrEnum, unique
+from dataclasses import dataclass, field
+
+type ButtonCommand = Callable[[], None]
+type Position = tuple[int, int]
+type ActionLocation = Optional[Position]
+type EnemyActionTag = Literal["Attack"] | int # either "Attack" (denoting the enemy's attack) or the `AbilityID` of the `Ability` it will use
+type Numeric = int | float
+
+def unpack_optional[T](option: Optional[T]) -> T:
+  """
+  Converts an argument of unknown type from an optional to a non-optional. If the argument is `None`, a value error is raised.
+  
+  :param option: An optional variable. Must have a value not `None`, otherwise it will raise a value error.
+  :type option: Optional[T]
+  :return: The argument in non-optional form.
+  :rtype: T
+  """
+  if option == None: raise ValueError(f"Tried to unpack argument \'option\'=`{option}`")
+  return option
+
+def unpack_optional_bool(option: Optional[bool], default: bool) -> bool:
+  if option == True: return True
+  return default
+
+def unpack_optional_string(option: Optional[str], default: str = "") -> str:
+  if option == None: return default
+  return option
+
+
+
+

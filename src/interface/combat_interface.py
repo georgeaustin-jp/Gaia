@@ -1,0 +1,552 @@
+import tkinter as tk
+
+from tools.typing_tools import *
+from tools.dictionary_tools import filter_dictionary
+from tools.exceptions import *
+from tools.constants import *
+from tools.logging_tools import *
+from tools.positional_tools import length_to_point
+
+from combat_action import CombatAction
+from data_structures.entity_type import *
+from data_structures.action_type import *
+from data_structures.matrix import Matrix
+
+from custom_tkinter.weapon_interface import WeaponInterface, create_weapon_interface
+from custom_tkinter.toggleable_button import ToggleableButton
+
+from interface.abstract_interface import AbstractInterface
+from game_data import GameData
+
+from stored.items.weapon import Weapon
+from stored.items.equipable import Equipable
+from stored.items.inventory_item import InventoryItem
+#from stored.entities.fighting_enemy import FightingEnemy
+
+from stored.abilities.parry_ability import ParryAbility
+
+def access_info_box(func) -> Callable:
+  def wrapper(self, *args, **kwargs) -> Any:
+    self.info_box["state"] = tk.NORMAL
+    res: Any = func(self, *args, **kwargs)
+    self.info_box["state"] = tk.DISABLED
+    return res
+  return wrapper
+
+class CombatInterface(AbstractInterface):
+  def __init__(self, root, parent: tk.Frame, game_data: GameData, **kwargs) -> None:
+    self.equipped_inventory_weapon_identifiers: list[Optional[int]] = []
+    self.weapon_interfaces: list[WeaponInterface] = []
+
+    self.equipped_inventory_equipable_identifiers: list[Optional[int]] = []
+    self.equipable_text_variables: list[tk.StringVar] = []
+
+    self.enemy_buttons = Matrix[ToggleableButton]((Constants.GRID_WIDTH,Constants.GRID_HEIGHT))
+    self.enemy_name_variables = Matrix[tk.StringVar]((Constants.GRID_WIDTH,Constants.GRID_HEIGHT))
+
+    self.displayed_health = tk.StringVar()
+    self.displayed_damage_resistance = tk.StringVar()
+
+    self.health_potion_button: ToggleableButton
+
+    self.info_box: tk.Text
+    self.info_scrollbar: tk.Scrollbar
+
+    self.confirmation_button: tk.Button
+    self.is_confirm_pressed = tk.BooleanVar(value=False)
+    self.return_button: tk.Button
+
+    self.parry_used: bool = False
+
+    self.end_combat_command: Callable[[ScreenName], None] = kwargs["end_combat"]
+
+    super().__init__(root, parent, game_data, **kwargs)
+
+  # weapon label operations
+
+  def get_equipped_inventory_weapon_identifiers(self) -> list[Optional[int]]:
+    """
+    Gets the `InventoryItemID` for all weapons the active character has equipped from their inventory.
+    
+    :return: A list of inventory item identifiers. Never contains `None` elements, but the typing describes it as such to match with the type of `self.equipped_inventory_weapon_identifiers`.
+    :rtype: list[Optional[int]]
+    """
+    inventory_items: dict[int, InventoryItem] = self.game_data.get_character_inventory_items() # all items in the inventory of the currently active character
+    equipped_inventory_items: dict[int, InventoryItem] = filter_dictionary(inventory_items, lambda _, inv_item: inv_item.equipped) # all items from their inventory which they have equipped
+    equipped_inventory_weapons_dict: dict[int, InventoryItem] = filter_dictionary(equipped_inventory_items, lambda _, inv_item: self.game_data.items[inv_item.item_id].item_type == ItemType.WEAPON)
+    return list(equipped_inventory_weapons_dict.keys())
+  
+  def get_equipped_inventory_weapon_identifiers_length(self) -> int:
+    """
+    Gets the number of elements in the `self.equipped_inventory_weapon_identifiers` attribute, including elements of value `None`.
+    
+    :return: The length of the `self.equipped_inventory_weapon_identifiers` attribute (value >= 0).
+    :rtype: int
+    """
+    return len(self.equipped_inventory_weapon_identifiers)
+
+  def get_non_null_equipped_inventory_weapon_ids(self) -> list[int]:
+    is_weapon_id_not_null: Callable[[Optional[int]], bool] = lambda weapon_id: weapon_id != None
+    filtered_weapon_ids: list[Optional[int]] = list(filter(is_weapon_id_not_null, self.equipped_inventory_weapon_identifiers)) # removes all `None` entries
+    cast_optional_to_int: Callable[[Optional[int]], int] = lambda weapon_id: cast(int, weapon_id)
+    return list(map(cast_optional_to_int, filtered_weapon_ids)) # converts from type `list[Optional[int]]` to `list[int]`
+
+  def load_equipped_inventory_weapon_identifiers(self) -> None: 
+    self.equipped_inventory_weapon_identifiers = [].copy() # clears active weapons
+    self.equipped_inventory_weapon_identifiers = self.get_equipped_inventory_weapon_identifiers()
+    weapons_length: int = self.get_equipped_inventory_weapon_identifiers_length()
+    if weapons_length > Constants.MAX_EQUIPPED_WEAPONS:
+      raise ValueError(f"`{weapons_length=}` should have maximum length `{Constants.MAX_EQUIPPED_WEAPONS}`; instead has length of `{len(self.equipped_inventory_weapon_identifiers)}`")
+    if weapons_length < Constants.MAX_EQUIPPED_WEAPONS:
+      for _ in range(weapons_length, Constants.MAX_EQUIPPED_WEAPONS):
+        self.equipped_inventory_weapon_identifiers.append(None)
+  
+  def get_equipped_inventory_weapon_names(self) -> list[Optional[str]]:
+    if len(self.equipped_inventory_weapon_identifiers) > Constants.MAX_EQUIPPED_WEAPONS:
+      raise ValueError(f"\'self.equipped_inventory_weapon_identifiers\'=`{self.equipped_inventory_weapon_identifiers}` should have maximum length \'{Constants.MAX_EQUIPPED_WEAPONS}\'; instead has length of `{len(self.equipped_inventory_weapon_identifiers)}`")
+    
+    weapon_names: list[Optional[str]] = []
+    for active_weapon_id in self.equipped_inventory_weapon_identifiers:
+      if active_weapon_id == None: weapon_name = None
+      else: weapon_name = self.game_data.get_inventory_item_name(active_weapon_id)
+      weapon_names.append(weapon_name)
+    return weapon_names
+  
+  def init_weapon_interfaces(self, weapon_grid: tk.Frame, placement_options: dict[str, Any] = {}, **kwargs) -> None:
+    weapon_interfaces: list[WeaponInterface] = []
+    for i in range(Constants.MAX_EQUIPPED_WEAPONS):
+      weapon_interface = create_weapon_interface(self.root, parent=weapon_grid, position=(i,0), placement_options=placement_options,**kwargs)
+      weapon_interfaces.append(weapon_interface)
+    self.weapon_interfaces = weapon_interfaces
+  
+  def load_weapon_label_names(self) -> None:
+    weapon_names: list[Optional[str]] = self.get_equipped_inventory_weapon_names()
+    for (i, weapon_name) in enumerate(weapon_names):
+      self.weapon_interfaces[i].weapon_name = weapon_name
+
+  def load_weapon_interface_at(self, index: int) -> None:
+    weapon_interface: WeaponInterface = self.weapon_interfaces[index]
+    weapon_identifier: Optional[int] = self.equipped_inventory_weapon_identifiers[index]
+    if weapon_identifier == None: 
+      weapon_interface.load()
+      return
+    weapon_name: Optional[str] = self.get_equipped_inventory_weapon_names()[index]
+    if weapon_name == None: 
+      raise TypeError(f"Weapon name should not be of type `None` at `{index=}` in `{self.get_equipped_inventory_weapon_names()=}` (`{weapon_name=}`)")
+    weapon: Weapon = self.game_data.weapons[weapon_identifier]
+    attack_damage: float = weapon.damage
+    weapon_parry: ParryAbility = self.game_data.get_weapon_parry(weapon)
+    parry_damage_threshold: float = weapon_parry.damage_threshold
+    parry_reflection_proportion: float = weapon_parry.reflection_proportion
+    weapon_interface.load(weapon_name, attack_damage, parry_damage_threshold, parry_reflection_proportion)
+
+  def load_weapon_interfaces(self) -> None:
+    for i in range(Constants.MAX_EQUIPPED_WEAPONS):
+      self.load_weapon_interface_at(i)
+
+  # equipable label operations
+
+  def get_equipped_inventory_equipable_identifiers(self) -> list[Optional[int]]:
+    inventory_items: dict[int, InventoryItem] = self.game_data.get_character_inventory_items() # all items in the inventory of the currently active character
+    equipped_inventory_items: dict[int, InventoryItem] = filter_dictionary(inventory_items, lambda _, inv_item: inv_item.equipped) # all items from their inventory which they have equipped
+    equipped_inventory_equipables_dict: dict[int, InventoryItem] = filter_dictionary(equipped_inventory_items, lambda _, inv_item: self.game_data.items[inv_item.item_id].item_type == ItemType.EQUIPABLE)
+    return list(equipped_inventory_equipables_dict.keys())
+
+  def load_equipped_inventory_equipable_identifiers(self) -> None:
+    self.equipped_inventory_equipable_identifiers = [].copy() # clear active weapons
+    self.equipped_inventory_equipable_identifiers = self.get_equipped_inventory_equipable_identifiers()
+    equipables_length: int = len(self.equipped_inventory_equipable_identifiers)
+    if equipables_length > Constants.MAX_EQUIPPED_EQUIPABLES:
+      raise ValueError(f"`{equipables_length=}` should have maximum length `{Constants.MAX_EQUIPPED_EQUIPABLES}`; instead has length of `{len(self.equipped_inventory_equipable_identifiers)}`")
+    if equipables_length < Constants.MAX_EQUIPPED_EQUIPABLES:
+      for _ in range(equipables_length, Constants.MAX_EQUIPPED_EQUIPABLES):
+        self.equipped_inventory_equipable_identifiers.append(None)
+
+  def get_equipped_inventory_equipable_names(self) -> list[Optional[str]]:
+    if len(self.equipped_inventory_equipable_identifiers) > Constants.MAX_EQUIPPED_EQUIPABLES:
+      raise ValueError(f"{self.equipped_inventory_equipable_identifiers=} should have maximum length `{Constants.MAX_EQUIPPED_EQUIPABLES}`; instead has length of `{len(self.equipped_inventory_equipable_identifiers)}`")
+    
+    equipable_names: list[Optional[str]] = []
+    for active_equipable_id in self.equipped_inventory_equipable_identifiers:
+      if active_equipable_id == None: equipable_name = None
+      else: equipable_name = self.game_data.get_inventory_item_name(active_equipable_id)
+      equipable_names.append(equipable_name)
+    return equipable_names
+  
+  def init_equipable_text_variables(self) -> None:
+    for _ in range(Constants.MAX_EQUIPPED_EQUIPABLES):
+      self.equipable_text_variables.append(tk.StringVar())
+
+  def init_equipable_labels(self, container: tk.Frame) -> None:
+    for i in range(Constants.MAX_EQUIPPED_EQUIPABLES):
+      self.create_widget_on_grid(tk.Label, position=(0,i), container=container, textvariable=self.equipable_text_variables[i])
+
+  def load_equipable_label_names(self) -> None:
+    display: str
+    equipable_names: list[Optional[str]] = self.get_equipped_inventory_equipable_names()
+    for (i, equipable_name) in enumerate(equipable_names):
+      if equipable_name == None: equipable_name = "-"
+      display = f"{equipable_name}"
+      self.equipable_text_variables[i].set(display)
+
+  # info box
+
+  @access_info_box
+  def add_info(self, info: Optional[str] = None) -> None:
+    info = unpack_optional_string(info, default="")
+    self.info_box.insert(tk.END, f"{info}\n")
+    self.info_box.see(tk.END)
+
+  @access_info_box
+  def clear_info(self) -> None:
+    self.info_box.delete("1.0", tk.END)
+
+  # user buttons
+  def set_user_buttons_attributes(self, attribute: str, value: Any, include_attack: bool = True, include_parry: bool = True, include_confirm: bool = True) -> None:
+    if include_attack or include_parry: # skips the attack buttons if neither `include_attack` nor `include_parry` is active
+      for i in range(len(self.weapon_interfaces)):
+        if include_attack: self.set_attack_button_attribute(i, attribute, value)
+        if include_parry: self.set_parry_button_attribute(i, attribute, value)
+    
+    (enemy_buttons_width, enemy_buttons_height) = self.enemy_buttons.dimensions
+    for x in range(enemy_buttons_width):
+      for y in range(enemy_buttons_height):
+        enemy_button: Optional[ToggleableButton] = self.enemy_buttons[(x,y)]
+        if enemy_button == None: continue
+        enemy_button[attribute] = value
+
+    self.health_potion_button[attribute] = value
+
+    if include_confirm: self.confirmation_button[attribute] = value
+
+  def set_user_buttons_toggled(self, is_toggled: ToggleState, include_attack: bool = True, include_parry: bool = True) -> None:
+    self.set_user_buttons_attributes("is_toggled", is_toggled, include_attack, include_parry, include_confirm=False)
+
+  def reset_toggleable_user_buttons_state(self) -> None:
+    self.set_user_buttons_toggled(ToggleState.OFF)
+
+  def set_user_buttons_state(self, state: str, include_attack: bool = True, include_parry: bool = True, include_confirm: bool = True) -> None:
+    """Sets whether the user buttons are enabled or not"""
+    self.set_user_buttons_attributes("state", state, include_attack, include_parry, include_confirm)
+
+  def enable_user_buttons(self, include_attack: bool = True, include_parry: bool = True, include_confirm: bool = True) -> None:
+    self.set_user_buttons_state(tk.NORMAL, include_attack, include_parry, include_confirm)
+
+  def disable_user_buttons(self, include_attack: bool = True, include_parry: bool = True, include_confirm: bool = True) -> None:
+    self.set_user_buttons_state(tk.DISABLED, include_attack, include_parry, include_confirm)
+
+  # weapon buttons
+  def set_weapon_button_attribute(self, weapon_index: int, button_type: WeaponUIComponentName, attribute: str, value: Any) -> None:
+    if button_type not in [WeaponUIComponentName.ATTACK, WeaponUIComponentName.PARRY]: raise TypeError(f"\'button_type\'=`{button_type}` not one of `{WeaponUIComponentName.ATTACK}`, `{WeaponUIComponentName.PARRY}`.")
+    weapon_interface: WeaponInterface = self.weapon_interfaces[weapon_index]
+    selected_button: ToggleableButton = weapon_interface[button_type]
+    selected_button[attribute] = value
+
+  def set_attack_button_attribute(self, weapon_index: int, attribute: str, value: Any) -> None:
+    self.set_weapon_button_attribute(weapon_index, WeaponUIComponentName.ATTACK, attribute, value)
+
+  def set_parry_button_attribute(self, weapon_index: int, attribute: str, value: Any) -> None:
+    self.set_weapon_button_attribute(weapon_index, WeaponUIComponentName.PARRY, attribute, value)
+
+  def enable_attack_button(self, weapon_index: int) -> None:
+    self.set_attack_button_attribute(weapon_index, "state", tk.NORMAL)
+
+  def disable_attack_button(self, weapon_index: int) -> None:
+    self.set_attack_button_attribute(weapon_index, "state", tk.DISABLED)
+
+  def enable_parry_button(self, weapon_index: int) -> None:
+    self.set_parry_button_attribute(weapon_index, "state", tk.NORMAL)
+
+  def disable_parry_button(self, weapon_index: int) -> None:
+    self.set_parry_button_attribute(weapon_index, "state", tk.DISABLED)
+
+  def update_weapon_states(self) -> None:
+    """Operates under the assumption that all weapon buttons are initially enabled."""
+    for i in range(Constants.MAX_EQUIPPED_WEAPONS):
+      weapon_id: Optional[int] = self.equipped_inventory_weapon_identifiers[i]
+      selected_weapon_interface: WeaponInterface = self.weapon_interfaces[i]
+      weapon_used: bool = cast(bool, selected_weapon_interface.is_weapon_used)
+      if weapon_used or weapon_id == None:self.disable_attack_button(i)
+      if self.parry_used or weapon_used or weapon_id == None: self.disable_parry_button(i)
+
+  def reset_weapon_states(self) -> None:
+    for i in range(Constants.MAX_EQUIPPED_WEAPONS):
+      weapon_id: Optional[int] = self.equipped_inventory_weapon_identifiers[i]
+      if weapon_id != None:
+        self.enable_attack_button(i)
+        self.enable_parry_button(i)
+        self.weapon_interfaces[i].is_weapon_used = False
+    self.parry_used = False
+
+  def find_active_weapon_index(self) -> Optional[int]:
+    for i in range(Constants.MAX_EQUIPPED_WEAPONS):
+      weapon_interface: WeaponInterface = self.weapon_interfaces[i]
+      if weapon_interface.is_attack_toggled ^ weapon_interface.is_parry_toggled: # XOR operation. If neither buttons are toggled, the weapon cannot be active, but if they are both toggled, then an invalid move is being made.
+        return i
+    return None
+      
+  # character labels
+
+  def set_health_label(self, health: float) -> None:
+    if health < 0:
+      raise ValueError(f"Cannot set \'displayed_health\' to be less than zero (`{health}` < 0)")
+    display: str = f"{health}HP"
+    self.displayed_health.set(display)
+
+  def update_health_label(self) -> None:
+    character_health: float = self.game_data.get_active_character().health
+    self.set_health_label(character_health)
+
+  def set_damage_resistance_label(self, damage_resistance: float) -> None:
+    display: str = f"{damage_resistance*100:.2f}%"
+    self.displayed_damage_resistance.set(display)
+
+  def update_damage_resistance_label(self) -> None:
+    character_damage_resistance: float= self.game_data.get_active_character().damage_resistance
+    logging.debug(f"{character_damage_resistance=}")
+    self.set_damage_resistance_label(character_damage_resistance)
+
+  def wait_until_confirmed(self) -> None:
+    if self.is_quitting: return None
+    logging.info("WAIT_VARIABLE START")
+    self.wait_variable(self.is_confirm_pressed)
+    logging.info("WAIT_VARIABLE END")
+    self.is_confirm_pressed.set(False)
+
+  def get_character_action(self) -> CombatAction:
+    self.wait_until_confirmed()
+    if self.is_quitting: raise QuitInterrupt(True)
+    target_type: Optional[EntityType] = self.get_targeted_tile_type()
+    action_type: ActionType = self.get_action_type()
+
+    if target_type == None and type(action_type) == Heal:
+      target_type = CharacterType()
+    elif type(action_type) in [Attack, Parry]: 
+      weapon_index: Optional[int] = self.find_active_weapon_index()
+      if weapon_index == None: raise NoWeaponSelectedError()
+      self.weapon_interfaces[weapon_index].is_weapon_used = True # TODO: update the `update` and `reset` methods
+    return CombatAction(CharacterType(), target_type, action_type)
+  
+  def get_targeted_tile_type(self) -> Optional[EntityType]:
+    if self.is_no_enemy_buttons_toggled(): return None
+    position: Position = self.find_active_enemy_position()
+    enemy_identifier: Optional[int] = self.game_data.get_fighting_enemy_id_at(position)
+    if enemy_identifier == None: return EmptyType(position)
+    return EnemyType(enemy_identifier, position)
+  
+  def find_active_enemy_position(self) -> Position:
+    tile_button: ToggleableButton
+    selected_enemy_amount: int = 0
+    position: Optional[Position] = None
+
+    for i in range(9):
+      x: int = i % 3
+      y: int = i // 3
+      tile_button = unpack_optional(self.enemy_buttons[(x,y)]) # there will always be a button on a tile
+      if tile_button.is_toggled:
+        selected_enemy_amount += 1
+        position = (x,y)
+      if selected_enemy_amount > 1 and position != None: raise TooManyEnemiesSelectedError(position)
+    if selected_enemy_amount == 0 or position == None: raise NoEnemiesSelectedError()
+    return position
+  
+  def is_one_enemy_button_toggled(self) -> ComparisonFlag:
+    try: self.find_active_enemy_position()
+    except NoEnemiesSelectedError: return ComparisonFlag.LESS
+    except TooManyEnemiesSelectedError: return ComparisonFlag.GREATER
+    return ComparisonFlag.EQUAL
+  
+  def is_no_enemy_buttons_toggled(self) -> bool:
+    if self.is_one_enemy_button_toggled() == ComparisonFlag.LESS: return True
+    return False
+  
+  def is_no_weapon_buttons_toggled(self) -> bool:
+    return self.is_no_attack_buttons_toggled() and self.is_no_parry_buttons_toggled()
+  
+  def is_no_attack_buttons_toggled(self) -> bool:
+    for weapon_interface in self.weapon_interfaces:
+      if weapon_interface.is_attack_toggled: return False
+    return True
+  
+  def is_no_parry_buttons_toggled(self) -> bool:
+    for weapon_interface in self.weapon_interfaces:
+      if weapon_interface.is_parry_toggled: return False
+    return True
+  
+  def is_health_potion_button_toggled(self) -> bool:
+    return bool(self.health_potion_button.is_toggled)
+
+  def get_action_type(self) -> ActionType: # TODO: remove placeholders, give functionality
+    action: ActionType
+    using_health_potion: bool = self.is_health_potion_button_toggled()
+    using_weapons: bool = not self.is_no_weapon_buttons_toggled()
+    is_attacking: bool = not self.is_no_attack_buttons_toggled()
+    is_parrying: bool = not self.is_no_parry_buttons_toggled()
+
+    targeting_one_enemy_comparison: ComparisonFlag = self.is_one_enemy_button_toggled()
+    if targeting_one_enemy_comparison == ComparisonFlag.GREATER: raise TooManyEnemiesSelectedError() # only 0 or 1 enemies can be selected
+    targeting_no_enemies: bool = targeting_one_enemy_comparison == ComparisonFlag.LESS # to check if targeting 1 enemy, use `not targeting_no_enemies`, as 2 or more enemies cannot be selected
+
+    if not using_health_potion and not using_weapons and targeting_no_enemies: # character can never select no buttons for an action
+      raise NoButtonsSelectedError() 
+    elif using_health_potion and targeting_no_enemies and not using_weapons: # handles using the health potion
+      action = Heal(Constants.HEALTH_POTION_AMOUNT)
+    elif using_health_potion: # health potion button can't be toggled from this point
+      raise TooManyButtonsSelectedError(f"\'health_potion_button\' is toggled when other buttons are as well") 
+    elif is_parrying and not is_attacking and targeting_no_enemies: # handles character parries
+      (damage_threshold, reflection_proportion) = self.get_selected_weapon_parry_data()
+      action = Parry(damage_threshold, reflection_proportion) # TODO: implement parrying
+      self.parry_used = True
+    elif not targeting_no_enemies and not is_attacking: # handles the case where an enemy is selected, but the character has no attack selected
+      raise NoAttackSelectedForEnemyError()
+    elif targeting_no_enemies: # all actions after this point require one enemy to be selected
+      raise NoEnemiesSelectedError()
+    elif is_attacking and not is_parrying: # handles character attacks
+      damage: float = self.get_selected_weapon_attack_damage()
+      action = Attack(damage)
+    else:
+      raise UnknownActionError()
+    return action
+  
+  def get_selected_weapon_attack_damage(self) -> float: # TODO: introduce abilities
+    weapon_buttons_selected: int = 0 # if weapon_interface.is_attack_toggled: return False
+    for (i, weapon_interface) in enumerate(self.weapon_interfaces):
+      is_attack_toggled: ToggleState = weapon_interface.is_attack_toggled
+      if is_attack_toggled:
+        weapon_buttons_selected += 1
+        selected_weapon_identifier_index = i
+      if weapon_buttons_selected > 1:
+        raise TooManyWeaponButtonsSelectedError(i)
+    weapon_identifier: Optional[int] = self.equipped_inventory_weapon_identifiers[selected_weapon_identifier_index]
+    if weapon_identifier == None: raise TypeError("\'weapon_identifier\' can never be \'None\'")
+    return self.game_data.weapons[weapon_identifier].damage
+  
+  def get_selected_weapon_parry_data(self) -> tuple[float, float]:
+    """
+    :return: A pair of floats. The first number is the parry damage threshold. The second is the parry reflection proportion.
+    :rtype: tuple[float, float]
+    """
+    weapon_buttons_selected: int = 0 # if weapon_interface.is_attack_toggled: return False
+    for (i, weapon_interface) in enumerate(self.weapon_interfaces):
+      is_parry_toggled: ToggleState = weapon_interface.is_parry_toggled
+      if is_parry_toggled:
+        weapon_buttons_selected += 1
+        selected_weapon_identifier_index = i
+      if weapon_buttons_selected > 1:
+        raise TooManyWeaponButtonsSelectedError(i)
+    weapon_identifier: Optional[int] = self.equipped_inventory_weapon_identifiers[selected_weapon_identifier_index]
+    if weapon_identifier == None: raise TypeError("\'weapon_identifier\' can never be \'None\'")
+    weapon: Weapon = self.game_data.weapons[weapon_identifier]
+    parry_ability = self.game_data.get_weapon_parry(weapon)
+    return (parry_ability.damage_threshold, parry_ability.reflection_proportion)
+  
+  def init_enemy_name_variables(self) -> None:
+    grid_dimensions: Position = self.enemy_buttons.dimensions
+    for i in range(len(self.enemy_name_variables)):
+      p: Position = length_to_point(i, grid_dimensions)
+      self.enemy_name_variables[p] = tk.StringVar()
+  
+  def init_enemy_buttons(self) -> None:
+    grid_dimensions: Position = self.enemy_buttons.dimensions
+    for i in range(len(self.enemy_buttons)):
+      position: Position = length_to_point(i, grid_dimensions)
+      enemy_text_variable_opt: Optional[tk.StringVar] = self.enemy_name_variables[position]
+      enemy_text_variable: tk.StringVar = unpack_optional(enemy_text_variable_opt)
+      enemy_button: ToggleableButton = unpack_optional(self.create_toggleable_button(position, container=self.enemy_grid, return_button=True, textvariable=enemy_text_variable))
+      self.enemy_buttons[position] = enemy_button      
+  
+  def display_enemy_names_on_grid(self) -> None:
+    fighting_enemy_graph_dimensions: Position = self.game_data.fighting_enemy_graph.dimensions
+    for i in range(len(self.game_data.fighting_enemy_graph)):
+      position: Position = length_to_point(i, fighting_enemy_graph_dimensions)
+      fighting_enemy_id: Optional[int] = self.game_data.fighting_enemy_graph[position]
+
+      fighting_enemy_name: str = self.game_data.get_fighting_enemy_name(fighting_enemy_id)
+      fighting_enemy_heath: Optional[float] = self.game_data.get_fighting_enemy_health(fighting_enemy_id)
+      fighting_enemy_max_heath: Optional[float] = self.game_data.get_fighting_enemy_max_health(fighting_enemy_id)
+
+      display: str = f"{fighting_enemy_name}"
+      if fighting_enemy_heath != None and fighting_enemy_max_heath != None:
+        display += f"\n{fighting_enemy_heath}/{fighting_enemy_max_heath}HP"
+
+      name_variable_opt: Optional[tk.StringVar] = self.enemy_name_variables[position]
+      name_variable: tk.StringVar = unpack_optional(name_variable_opt)
+      name_variable.set(display)
+
+  def generate_return_command(self) -> Callable[[ScreenName], None]:
+    def return_command(screen_name: ScreenName) -> None:
+      self.end_combat_command(screen_name)
+      self.return_button.destroy()
+    return return_command
+
+  def enable_return(self, player_won: bool) -> None:
+    return_to_screen: ScreenName
+    return_message: str
+    if player_won == True:
+      self.add_info("PLAYER WON")
+      return_to_screen = ScreenName.EXPLORATION
+      return_message = "Return to exploration"
+    else:
+      self.add_info("PLAYER LOST")
+      return_to_screen = ScreenName.HOME
+      return_message = "Return home"
+    return_command: Callable[[ScreenName], None] = self.generate_return_command()
+    self.return_button = self.create_return(return_to_screen, return_message, lambda screen: return_command(screen))
+  
+  def interrupt_waits(self) -> None:
+    super().interrupt_waits()
+    self.is_confirm_pressed.set(True)
+
+  # loading and creating
+    
+  def load(self, **kwargs) -> None:
+    self.load_equipped_inventory_weapon_identifiers()
+    self.load_weapon_interfaces()
+    self.load_equipped_inventory_equipable_identifiers()
+    self.load_equipable_label_names()
+    self.display_enemy_names_on_grid()
+    super().load(**kwargs)
+
+  def create(self, **kwargs) -> None:
+    self.base_grid: tk.Frame = unpack_optional(self.create_frame(return_frame=True, dimensions=(4,6)))
+    self.default_frame = self.base_grid
+
+    self.enemy_grid: tk.Frame = unpack_optional(self.create_frame_on_grid((2, 1), return_frame=True, dimensions=(Constants.GRID_WIDTH, Constants.GRID_HEIGHT), placement_options={"columnspan": 3, "rowspan": 4}))
+
+    # creates buttons for using weapons
+    weapon_grid: tk.Frame = unpack_optional(self.create_frame_on_grid((0, 1), return_frame=True, dimensions=(3, 1), placement_options={"columnspan": 2, "rowspan": 2}))
+    self.init_weapon_interfaces(weapon_grid)
+
+    # where the character's equipables will be displayed
+    self.init_equipable_text_variables()
+    equipables_grid: tk.Frame = unpack_optional(self.create_frame_on_grid((0,5), return_frame=True, dimensions=(1,4), placement_options={"columnspan": 2}))
+    self.init_equipable_labels(equipables_grid)
+
+    # creates buttons for selecting enemies to attack
+    self.init_enemy_name_variables()
+    self.init_enemy_buttons()
+    
+    super().create(title="Combat", dimensions=(1,3), **kwargs)
+    self.create_character_name_label((0,0))
+
+    # health potion button
+    self.health_potion_button = unpack_optional(self.create_toggleable_button(position=(0, 3), return_button=True, text=f"Use health potion (+{Constants.HEALTH_POTION_AMOUNT} HP)", placement_options={"columnspan": 2}))
+
+    # where character information will be displayed
+    character_info_grid: tk.Frame = unpack_optional(self.create_frame_on_grid((0,4), return_frame=True, dimensions=(2,2), exclude_rows=[0]))
+    # where character health will be displayed
+    self.create_widget_on_grid(tk.Label, (0,0), container=character_info_grid, text="Health:")
+    self.create_widget_on_grid(tk.Label, (0,1), container=character_info_grid, textvariable=self.displayed_health)
+    # where character dodge chance will be displayed
+    self.create_widget_on_grid(tk.Label, (1,0), container=character_info_grid, text="Damage resistance:")
+    self.create_widget_on_grid(tk.Label, (1,1), container=character_info_grid, textvariable=self.displayed_damage_resistance)
+
+    # what will be pressed when the player wants to confirm their action
+    self.confirmation_button = unpack_optional(self.create_button(position=(1,4), return_button=True, text="Confirm", placement_options={"sticky": "ew"}, command=lambda: self.is_confirm_pressed.set(True)))
+
+    # where the information of what is happening will be sent through
+    self.info_box = unpack_optional(self.create_widget_on_grid(tk.Text, (2,5), return_widget=True, state=tk.DISABLED, height=10, width=40))
+    self.info_scrollbar = unpack_optional(self.create_scrollbar_on_grid((4,5), return_scrollbar=True, placement_options={"columnspan": 2}, command=self.info_box.yview))
+    self.info_box.configure(yscrollcommand=self.info_scrollbar.set)
+
+    self.create_quit(**kwargs)

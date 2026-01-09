@@ -1,22 +1,28 @@
 import tkinter as tk
 from hashlib import sha256
 
-from interface.abstract_frame import AbstractFrame
+from interface.creation import Creation
+from stored.user import User
+from game_data import GameData
 
-class UserCreation(AbstractFrame):
-  def __init__(self, root, parent: tk.Frame, **kwargs) -> None:
+class UserCreation(Creation):
+  def __init__(self, root, parent: tk.Frame, game_data: GameData, **kwargs) -> None:
     self.entered_user_name = tk.StringVar()
     self.entered_password = tk.StringVar()
     self.re_entered_password = tk.StringVar()
-    self.entry_information = tk.StringVar()
-    self.entry_information.set("...")
-    super().__init__(root, parent, **kwargs)
-    self.load(**kwargs)
+    self.user_creator = kwargs["user_creator"]
+    super().__init__(root, parent, game_data, **kwargs)
+
+  def load_users(self) -> None:
+    self.users: list[User] = list(self.game_data.users.values())
 
   def load(self, **kwargs) -> None:
-    self.users: list = kwargs["users"]
+    self.load_users()
   
-  def create_user(self) -> None:
+  def create_user(self, **kwargs) -> None:
+    self.load_users()
+
+    user_names: list[str] = [user.name for user in self.users]
     user_name = self.entered_user_name.get()
     password = self.entered_password.get()
     password_hash = sha256(password.encode("utf-8")).hexdigest()
@@ -28,9 +34,10 @@ class UserCreation(AbstractFrame):
       self.fail_creation("Password cannot be null")
     elif password_hash != re_entered_password_hash:
       self.fail_creation("Passwords are not the same")
-  
-  def fail_creation(self, message: str) -> None:
-    self.entry_information.set(message)
+    elif user_name in user_names:
+      self.fail_creation("User name already exists")
+    else:
+      self.user_creator(user_name, password_hash)
     
   def create(self, **kwargs) -> None:
     super().create("Create new user", **kwargs)
@@ -44,8 +51,8 @@ class UserCreation(AbstractFrame):
     self.create_widget(tk.Label, text="Re-enter password:")
     self.create_widget(tk.Entry, textvariable=self.re_entered_password)
 
-    self.create_widget(tk.Label, textvariable=self.entry_information)
+    self.create_message()
 
-    self.create_widget(tk.Button, text="Return", command = lambda: self.root.show_screen("user_selection"))
-    self.create_widget(tk.Button, text="Confirm",command = lambda: self.create_user())
+    self.create_confirm(self.create_user)
+    #self.create_return("user_selection", **kwargs)
     

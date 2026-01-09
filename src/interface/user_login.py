@@ -1,17 +1,18 @@
 import tkinter as tk
 from hashlib import sha256
 
-from interface.abstract_frame import AbstractFrame
-from user import User
+from interface.abstract_interface import AbstractInterface
+from stored.user import User
+from game_data import GameData
 
-class UserLogin(AbstractFrame):
-  def __init__(self, root, parent: tk.Frame, **kwargs) -> None:
+class UserLogin(AbstractInterface):
+  def __init__(self, root, parent: tk.Frame, game_data: GameData, **kwargs) -> None:
     self.user: User
     self.user_name_text = tk.StringVar()
     self.password = tk.StringVar()
     self.message = tk.StringVar()
     self.message.set("...")
-    super().__init__(root, parent, **kwargs)
+    super().__init__(root, parent, game_data, **kwargs)
 
   def login(self) -> None:
     entered_password = self.password.get()
@@ -37,5 +38,5 @@ class UserLogin(AbstractFrame):
     self.create_widget(tk.Label, text="Enter password: ")
     self.create_widget(tk.Entry, textvariable=self.password)
     self.create_widget(tk.Label, textvariable=self.message)
-    self.create_widget(tk.Button, text="Return", command = lambda: self.root.show_screen("user_selection"))
+    #self.create_widget(tk.Button, text="Return", command = lambda: self.root.show_screen("user_selection"))
     self.create_widget(tk.Button, text="Confirm", command = lambda: self.login())

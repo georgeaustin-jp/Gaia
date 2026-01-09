@@ -1,0 +1,27 @@
+from tools.typing_tools import *
+from tools.constants import TableName
+
+from database.condition import Condition
+from stored.stored import Stored
+
+class FightingEnemyModifier(Stored):
+  def __init__(self, loaded: bool = True) -> None:
+    super().__init__(loaded)
+
+  # `Stored` methods
+
+  @staticmethod
+  def get_table_name() -> TableName: return TableName.NONE
+
+  def get_raw_data(self) -> list[Any]: return []
+
+  @staticmethod
+  def instantiate(data: list[Any], loaded: bool = True):
+    return instantiate_fighting_enemy_modifier(data, loaded)
+  
+  @staticmethod
+  def identical_condition(fighting_enemy_modifier_row: list[Any]) -> Condition:
+    return Condition(lambda _, row: False)
+
+def instantiate_fighting_enemy_modifier(fighting_enemy_modifier_data: list[Any] = [], loaded: bool = True) -> FightingEnemyModifier:
+  return FightingEnemyModifier()
