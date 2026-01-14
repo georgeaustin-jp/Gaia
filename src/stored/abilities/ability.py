@@ -1,8 +1,14 @@
-from database.condition import Condition
-from stored.stored import *
-
 from tools.typing_tools import *
-from tools.ability_names import AbilityTypeName
+from tools.ability_names import *
+
+from database.condition import Condition
+
+from stored.stored import *
+from stored.abilities.abstract_ability import AbstractAbility
+from stored.abilities.parry_ability import ParryAbility
+from stored.abilities.statistic_ability import AbstractAbility
+
+from ability_action import *
 
 class Ability(Stored):
   """
@@ -34,6 +40,15 @@ class Ability(Stored):
 
   def __repr__(self) -> str:
     return f"Ability(`{self.text=}`, `{self.ability_type=}`)"
+  
+  # ability action and specialisation methods
+
+  def get_abstract_ability_class_name(self) -> Optional[AbstractAbilityClassName]:
+    """For more information, see `ability_type_name_to_abstract_ability_class_name` in `ability_names`."""
+    return ability_type_name_to_abstract_ability_class_name(self.ability_type)
+  
+  def get_ability_action(self) -> AbilityAction:
+    raise NotImplementedError()
   
 def instantiate_ability(ability_data: list[Any], loaded: bool = True) -> Ability:
   text: str = ability_data[0]

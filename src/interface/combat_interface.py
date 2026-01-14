@@ -1,4 +1,5 @@
 import tkinter as tk
+from functools import reduce
 
 from tools.typing_tools import *
 from tools.dictionary_tools import filter_dictionary
@@ -15,25 +16,39 @@ from data_structures.matrix import Matrix
 from custom_tkinter.weapon_interface import WeaponInterface, create_weapon_interface
 from custom_tkinter.toggleable_button import ToggleableButton
 
-from interface.abstract_interface import AbstractInterface
+from interface.abstract_screen import AbstractScreen
 from game_data import GameData
 
 from stored.items.weapon import Weapon
 from stored.items.equipable import Equipable
 from stored.items.inventory_item import InventoryItem
+
+from stored.abilities.item_ability import ItemAbility
+from stored.abilities.ability import Ability
 #from stored.entities.fighting_enemy import FightingEnemy
 
 from stored.abilities.parry_ability import ParryAbility
 
-def access_info_box(func) -> Callable:
-  def wrapper(self, *args, **kwargs) -> Any:
+type EnemyInterfaceWidgets = tuple[ToggleableButton, tk.Label, tk.Label]
+"""Elements are as follows:
+1. Button used for enemy selection
+2. Enemy attack damage label
+3. Enemy heal quantity label"""
+type EnemyInterfaceTextVariables = tuple[tk.StringVar, tk.StringVar, tk.StringVar]
+"""Elements are as follows:
+1. Enemy name and health
+2. Amount of damage the enemy does
+3. Amount of healing the enemy does"""
+
+def access_info_box[ReturnType](func: Callable[..., ReturnType]) -> Callable[..., ReturnType]:
+  def wrapper(self, info: Optional[str] = None, *args, **kwargs) -> ReturnType:
     self.info_box["state"] = tk.NORMAL
-    res: Any = func(self, *args, **kwargs)
+    result: ReturnType = func(self, info, *args, **kwargs)
     self.info_box["state"] = tk.DISABLED
-    return res
+    return result
   return wrapper
 
-class CombatInterface(AbstractInterface):
+class CombatInterface(AbstractScreen):
   def __init__(self, root, parent: tk.Frame, game_data: GameData, **kwargs) -> None:
     self.equipped_inventory_weapon_identifiers: list[Optional[int]] = []
     self.weapon_interfaces: list[WeaponInterface] = []
@@ -41,8 +56,8 @@ class CombatInterface(AbstractInterface):
     self.equipped_inventory_equipable_identifiers: list[Optional[int]] = []
     self.equipable_text_variables: list[tk.StringVar] = []
 
-    self.enemy_buttons = Matrix[ToggleableButton]((Constants.GRID_WIDTH,Constants.GRID_HEIGHT))
-    self.enemy_name_variables = Matrix[tk.StringVar]((Constants.GRID_WIDTH,Constants.GRID_HEIGHT))
+    self.enemy_interface_widgets = Matrix[EnemyInterfaceWidgets]((Constants.GRID_WIDTH,Constants.GRID_HEIGHT))
+    self.enemy_name_variables = Matrix[EnemyInterfaceTextVariables]((Constants.GRID_WIDTH,Constants.GRID_HEIGHT))
 
     self.displayed_health = tk.StringVar()
     self.displayed_damage_resistance = tk.StringVar()
@@ -103,8 +118,7 @@ class CombatInterface(AbstractInterface):
   
   def get_equipped_inventory_weapon_names(self) -> list[Optional[str]]:
     if len(self.equipped_inventory_weapon_identifiers) > Constants.MAX_EQUIPPED_WEAPONS:
-      raise ValueError(f"\'self.equipped_inventory_weapon_identifiers\'=`{self.equipped_inventory_weapon_identifiers}` should have maximum length \'{Constants.MAX_EQUIPPED_WEAPONS}\'; instead has length of `{len(self.equipped_inventory_weapon_identifiers)}`")
-    
+      raise ValueError(f"`{self.equipped_inventory_weapon_identifiers=}` should have max length `{Constants.MAX_EQUIPPED_WEAPONS}`; instead has `{len(self.equipped_inventory_weapon_identifiers)=}`.")
     weapon_names: list[Optional[str]] = []
     for active_weapon_id in self.equipped_inventory_weapon_identifiers:
       if active_weapon_id == None: weapon_name = None
@@ -162,16 +176,36 @@ class CombatInterface(AbstractInterface):
       for _ in range(equipables_length, Constants.MAX_EQUIPPED_EQUIPABLES):
         self.equipped_inventory_equipable_identifiers.append(None)
 
-  def get_equipped_inventory_equipable_names(self) -> list[Optional[str]]:
+  def get_equipped_inventory_equipable_texts(self) -> list[Optional[str]]:
     if len(self.equipped_inventory_equipable_identifiers) > Constants.MAX_EQUIPPED_EQUIPABLES:
-      raise ValueError(f"{self.equipped_inventory_equipable_identifiers=} should have maximum length `{Constants.MAX_EQUIPPED_EQUIPABLES}`; instead has length of `{len(self.equipped_inventory_equipable_identifiers)}`")
+      raise ValueError(f"`{self.equipped_inventory_equipable_identifiers=}` should have maximum length `{Constants.MAX_EQUIPPED_EQUIPABLES}`; instead has length of `{len(self.equipped_inventory_equipable_identifiers)}`")
     
-    equipable_names: list[Optional[str]] = []
+    equipable_texts: list[Optional[str]] = []
     for active_equipable_id in self.equipped_inventory_equipable_identifiers:
-      if active_equipable_id == None: equipable_name = None
-      else: equipable_name = self.game_data.get_inventory_item_name(active_equipable_id)
-      equipable_names.append(equipable_name)
-    return equipable_names
+      equipable_name: str = "-"
+      if active_equipable_id == None:
+        equipable_texts.append(equipable_name)
+        continue
+      equipable_name = self.game_data.get_inventory_item_name(active_equipable_id)
+      ability_texts_list: list[str] = [].copy()
+      ability_texts_list = self.get_inventory_item_equipable_ability_descriptors(active_equipable_id)
+      ability_texts: str = reduce(lambda text, acc: f"{acc}; {text}", ability_texts_list)
+      equipable_texts.append(f"{equipable_name}: {ability_texts}")
+    return equipable_texts
+  
+  def get_inventory_item_equipable_ability_descriptors(self, inventory_item_id: int) -> list[str]:
+    inventory_item: InventoryItem = self.game_data.inventory_items[inventory_item_id]
+    if not inventory_item.equipped: raise ValueError(f"Expected `{inventory_item.equipped=}` for `{inventory_item}` (`{inventory_item_id=}`) to be `True`; got `{inventory_item.equipped}` instead.")
+    item_id: int = inventory_item.item_id
+    selected_item_abilities_dict: dict[int, ItemAbility] = filter_dictionary(self.game_data.item_abilities, lambda _, item_ability: item_ability.item_id == item_id)
+    selected_item_abilities: list[ItemAbility] = list(selected_item_abilities_dict.values())
+    ability_texts: list[str] = []
+    for item_ability in selected_item_abilities:
+      ability_id: int = item_ability.ability_id
+      ability: Ability = self.game_data.abilities[ability_id]
+      ability_text: str = ability.text
+      ability_texts.append(ability_text)
+    return ability_texts
   
   def init_equipable_text_variables(self) -> None:
     for _ in range(Constants.MAX_EQUIPPED_EQUIPABLES):
@@ -181,10 +215,10 @@ class CombatInterface(AbstractInterface):
     for i in range(Constants.MAX_EQUIPPED_EQUIPABLES):
       self.create_widget_on_grid(tk.Label, position=(0,i), container=container, textvariable=self.equipable_text_variables[i])
 
-  def load_equipable_label_names(self) -> None:
+  def load_equipable_label_texts(self) -> None:
     display: str
-    equipable_names: list[Optional[str]] = self.get_equipped_inventory_equipable_names()
-    for (i, equipable_name) in enumerate(equipable_names):
+    equipable_texts: list[Optional[str]] = self.get_equipped_inventory_equipable_texts()
+    for (i, equipable_name) in enumerate(equipable_texts):
       if equipable_name == None: equipable_name = "-"
       display = f"{equipable_name}"
       self.equipable_text_variables[i].set(display)
@@ -198,7 +232,7 @@ class CombatInterface(AbstractInterface):
     self.info_box.see(tk.END)
 
   @access_info_box
-  def clear_info(self) -> None:
+  def clear_info(self, _info: Optional[str] = None) -> None:
     self.info_box.delete("1.0", tk.END)
 
   # user buttons
@@ -208,11 +242,12 @@ class CombatInterface(AbstractInterface):
         if include_attack: self.set_attack_button_attribute(i, attribute, value)
         if include_parry: self.set_parry_button_attribute(i, attribute, value)
     
-    (enemy_buttons_width, enemy_buttons_height) = self.enemy_buttons.dimensions
-    for x in range(enemy_buttons_width):
-      for y in range(enemy_buttons_height):
-        enemy_button: Optional[ToggleableButton] = self.enemy_buttons[(x,y)]
-        if enemy_button == None: continue
+    (enemy_interface_widgets_width, enemy_interface_widgets_height) = self.enemy_interface_widgets.dimensions
+    for x in range(enemy_interface_widgets_width):
+      for y in range(enemy_interface_widgets_height):
+        enemy_interface: Optional[EnemyInterfaceWidgets] = self.enemy_interface_widgets[(x,y)]
+        if enemy_interface == None: continue
+        enemy_button: ToggleableButton = enemy_interface[0]
         enemy_button[attribute] = value
 
     self.health_potion_button[attribute] = value
@@ -328,13 +363,14 @@ class CombatInterface(AbstractInterface):
     return CombatAction(CharacterType(), target_type, action_type)
   
   def get_targeted_tile_type(self) -> Optional[EntityType]:
-    if self.is_no_enemy_buttons_toggled(): return None
+    if self.is_no_enemy_interface_widgets_toggled(): return None
     position: Position = self.find_active_enemy_position()
     enemy_identifier: Optional[int] = self.game_data.get_fighting_enemy_id_at(position)
     if enemy_identifier == None: return EmptyType(position)
     return EnemyType(enemy_identifier, position)
   
   def find_active_enemy_position(self) -> Position:
+    enemy_interface: EnemyInterfaceWidgets
     tile_button: ToggleableButton
     selected_enemy_amount: int = 0
     position: Optional[Position] = None
@@ -342,7 +378,8 @@ class CombatInterface(AbstractInterface):
     for i in range(9):
       x: int = i % 3
       y: int = i // 3
-      tile_button = unpack_optional(self.enemy_buttons[(x,y)]) # there will always be a button on a tile
+      enemy_interface = unpack_optional(self.enemy_interface_widgets[(x,y)]) # there will always be a button on a tile
+      tile_button = enemy_interface[0]
       if tile_button.is_toggled:
         selected_enemy_amount += 1
         position = (x,y)
@@ -356,7 +393,7 @@ class CombatInterface(AbstractInterface):
     except TooManyEnemiesSelectedError: return ComparisonFlag.GREATER
     return ComparisonFlag.EQUAL
   
-  def is_no_enemy_buttons_toggled(self) -> bool:
+  def is_no_enemy_interface_widgets_toggled(self) -> bool:
     if self.is_one_enemy_button_toggled() == ComparisonFlag.LESS: return True
     return False
   
@@ -441,37 +478,63 @@ class CombatInterface(AbstractInterface):
     return (parry_ability.damage_threshold, parry_ability.reflection_proportion)
   
   def init_enemy_name_variables(self) -> None:
-    grid_dimensions: Position = self.enemy_buttons.dimensions
+    grid_dimensions: Position = self.enemy_interface_widgets.dimensions
     for i in range(len(self.enemy_name_variables)):
-      p: Position = length_to_point(i, grid_dimensions)
-      self.enemy_name_variables[p] = tk.StringVar()
-  
-  def init_enemy_buttons(self) -> None:
-    grid_dimensions: Position = self.enemy_buttons.dimensions
-    for i in range(len(self.enemy_buttons)):
       position: Position = length_to_point(i, grid_dimensions)
-      enemy_text_variable_opt: Optional[tk.StringVar] = self.enemy_name_variables[position]
-      enemy_text_variable: tk.StringVar = unpack_optional(enemy_text_variable_opt)
-      enemy_button: ToggleableButton = unpack_optional(self.create_toggleable_button(position, container=self.enemy_grid, return_button=True, textvariable=enemy_text_variable))
-      self.enemy_buttons[position] = enemy_button      
+      self.enemy_name_variables[position] = (tk.StringVar(), tk.StringVar(), tk.StringVar())
   
-  def display_enemy_names_on_grid(self) -> None:
+  def init_enemy_interface_widgets(self) -> None:
+    grid_dimensions: Position = self.enemy_interface_widgets.dimensions
+    for i in range(len(self.enemy_interface_widgets)):
+      position: Position = length_to_point(i, grid_dimensions)
+      enemy_info_container: tk.Frame = unpack_optional(self.create_frame_on_grid(position, container=self.enemy_grid, return_frame=True, dimensions=(2,2), exclude_rows=[1]))
+
+      enemy_text_variables: Optional[EnemyInterfaceTextVariables] = unpack_optional(self.enemy_name_variables[position])
+      enemy_button: ToggleableButton = unpack_optional(self.create_toggleable_button((0,0), container=enemy_info_container, return_button=True, textvariable=enemy_text_variables[0], placement_options={"columnspan": 2}))
+      enemy_attack_damage: tk.Label = unpack_optional(self.create_widget_on_grid(tk.Label, (0,1), container=enemy_info_container, return_widget=True, textvariable=enemy_text_variables[1]))
+      enemy_heal_amount: tk.Label = unpack_optional(self.create_widget_on_grid(tk.Label, (1,1), container=enemy_info_container, return_widget=True, textvariable=enemy_text_variables[2]))
+      self.enemy_interface_widgets[position] = (enemy_button, enemy_attack_damage, enemy_heal_amount)
+  
+  def display_enemy_info_on_grid(self) -> None:
     fighting_enemy_graph_dimensions: Position = self.game_data.fighting_enemy_graph.dimensions
     for i in range(len(self.game_data.fighting_enemy_graph)):
+      button_display: str = "-"
+      damage_str: str = "-"
+      heal_str: str = "-"
       position: Position = length_to_point(i, fighting_enemy_graph_dimensions)
       fighting_enemy_id: Optional[int] = self.game_data.fighting_enemy_graph[position]
+      text_variables: EnemyInterfaceTextVariables = unpack_optional(self.enemy_name_variables[position])
+      enemy_interface_widgets: EnemyInterfaceWidgets = unpack_optional(self.enemy_interface_widgets[position])
+      enemy_interface_widgets[1].config(bg=Constants.DISABLED_COLOUR)
+      enemy_interface_widgets[2].config(bg=Constants.DISABLED_COLOUR)
 
-      fighting_enemy_name: str = self.game_data.get_fighting_enemy_name(fighting_enemy_id)
-      fighting_enemy_heath: Optional[float] = self.game_data.get_fighting_enemy_health(fighting_enemy_id)
-      fighting_enemy_max_heath: Optional[float] = self.game_data.get_fighting_enemy_max_health(fighting_enemy_id)
+      heal_ability_id: Optional[int] = None
+      if fighting_enemy_id != None:
+        enemy_interface_widgets[1].config(bg=Constants.ENEMY_ATTACK_LABEL_COLOUR)
+        enemy_interface_widgets[2].config(bg=Constants.ENEMY_HEAL_LABEL_COLOUR)
 
-      display: str = f"{fighting_enemy_name}"
-      if fighting_enemy_heath != None and fighting_enemy_max_heath != None:
-        display += f"\n{fighting_enemy_heath}/{fighting_enemy_max_heath}HP"
+        fighting_enemy = unpack_optional(self.game_data.get_fighting_enemy_at(position))
 
-      name_variable_opt: Optional[tk.StringVar] = self.enemy_name_variables[position]
-      name_variable: tk.StringVar = unpack_optional(name_variable_opt)
-      name_variable.set(display)
+        fighting_enemy_name: str = self.game_data.get_fighting_enemy_name(fighting_enemy_id)
+        fighting_enemy_heath: Optional[float] = self.game_data.get_fighting_enemy_health(fighting_enemy_id)
+        fighting_enemy_max_heath: Optional[float] = self.game_data.get_fighting_enemy_max_health(fighting_enemy_id)
+
+        button_display = f"{fighting_enemy_name}"
+        if fighting_enemy_heath != None and fighting_enemy_max_heath != None:
+          button_display += f"\n{fighting_enemy_heath}/{fighting_enemy_max_heath}HP"
+
+        damage_str = format(fighting_enemy.attack_damage)
+
+        heal_ability_id = fighting_enemy.ability_id_table[ActionName.HEAL]
+
+      if heal_ability_id != None:
+        heal_ability: Ability = self.game_data.abilities[heal_ability_id]
+        heal_ability_action: HealAction = cast(HealAction, heal_ability.get_ability_action())
+        heal_str = format(heal_ability_action.heal_amount)
+
+      text_variables[0].set(button_display)
+      text_variables[1].set(damage_str)
+      text_variables[2].set(heal_str)
 
   def generate_return_command(self) -> Callable[[ScreenName], None]:
     def return_command(screen_name: ScreenName) -> None:
@@ -503,8 +566,8 @@ class CombatInterface(AbstractInterface):
     self.load_equipped_inventory_weapon_identifiers()
     self.load_weapon_interfaces()
     self.load_equipped_inventory_equipable_identifiers()
-    self.load_equipable_label_names()
-    self.display_enemy_names_on_grid()
+    self.load_equipable_label_texts()
+    self.display_enemy_info_on_grid()
     super().load(**kwargs)
 
   def create(self, **kwargs) -> None:
@@ -524,7 +587,7 @@ class CombatInterface(AbstractInterface):
 
     # creates buttons for selecting enemies to attack
     self.init_enemy_name_variables()
-    self.init_enemy_buttons()
+    self.init_enemy_interface_widgets()
     
     super().create(title="Combat", dimensions=(1,3), **kwargs)
     self.create_character_name_label((0,0))

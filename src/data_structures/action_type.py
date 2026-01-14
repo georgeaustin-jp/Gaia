@@ -22,8 +22,8 @@ class Attack(ActionType):
   """
   effects: Queue[AbilityAction] = Queue()
 
-  def add_ability(self, ability: AbilityAction) -> None:
-    self.effects.put(ability)
+  def add_ability_action(self, ability_action: AbilityAction) -> None:
+    self.effects.put(ability_action)
 
   def get_next_ability(self) -> AbilityAction:
     return self.effects.get()
@@ -33,7 +33,7 @@ class Parry(ActionType):
   """
   Docstring for Parry
 
-  :param quantity: Threshold of damage recieved before the sender starts taking damage.
+  :param quantity: Threshold of damage received before the sender starts taking damage.
   :type quantity: float
   :param reflect_proportion: The percentage of damage blocked by the parry which will be reflected at the attacker.
   :type reflect_proportion: float
@@ -45,7 +45,7 @@ class Heal(ActionType):
   """
   Docstring for Heal
 
-  :param quantity:
+  :param quantity: The amount the target is healed. Greater than or equal to `0`.
   :type quantity: float
   """
   ...

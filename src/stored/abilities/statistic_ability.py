@@ -1,10 +1,11 @@
 from tools.typing_tools import *
 from tools.constants import Constants
+from tools.ability_names import AbilityTypeName
 
 from database.condition import Condition
 from stored.abilities.abstract_ability import *
 
-from tools.ability_names import AbilityTypeName
+from ability_action import *
 
 class StatisticAbility(AbstractAbility):
   def __init__(self, ability_id: int, ability_type: AbilityTypeName, amount: float, initial_duration: Optional[int], loaded: bool = True) -> None:
@@ -37,9 +38,21 @@ class StatisticAbility(AbstractAbility):
       return min(health/(max_health - healing), 0)
     elif self.ability_type == AbilityTypeName.PIERCE:
       return Constants.PIERCE_OFFENSIVENESS
-    elif self.ability_type == AbilityTypeName.PIERCE:
-      return Constants.PIERCE_OFFENSIVENESS
-    raise ValueError(f"`{self.ability_type=}` is invalid.")
+    elif self.ability_type == AbilityTypeName.IGNITE:
+      return Constants.IGNITE_OFFENSIVENESS
+    raise ValueError(f"`{self.ability_type=}` not recognised.")
+
+  # ability action methods
+
+  def get_ability_action(self) -> AbilityAction:
+    match self.ability_type:
+      case AbilityTypeName.HEAL:
+        return HealAction(heal_amount=self.amount)
+      case AbilityTypeName.PIERCE:
+        return PierceAction()
+      case AbilityTypeName.IGNITE:
+        return IgniteAction()
+    raise ValueError(f"`{self.ability_type=}` not recognised.")
 
 def instantiate_statistic_ability(statistic_ability_data: list[Any], loaded: bool = True) -> StatisticAbility:
   ability_id: int = statistic_ability_data[0]

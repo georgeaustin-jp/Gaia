@@ -6,25 +6,27 @@ import random
 
 # decorators
 
-def validate_input_probability(func: Callable[..., Any]):
-  def wrapper(p: float, *args, **kwargs):
+def validate_input_probability[ReturnType](func: Callable[Concatenate[float, ...], ReturnType]) -> Callable[Concatenate[float, ...], ReturnType]:
+  def wrapper(p: float, *args, **kwargs) -> ReturnType:
     validate_probability(p)
     return func(p, *args, **kwargs)
   return wrapper
 
-def validate_output_probability(func: Callable[..., float]):
-  def wrapper(*args, **kwargs):
+def validate_output_probability(func: Callable[..., float]) -> Callable[..., float]:
+  def wrapper(*args, **kwargs) -> float:
     p: float = func(*args, **kwargs)
     validate_probability(p)
     return p
   return wrapper
 
-def validate_bounds(func: Callable[..., Any], exclusive: bool = True):
-  def wrapper(lower: Numeric, upper: Numeric, *args, **kwargs):
-    if lower > upper: raise ValueError(f"Bound {lower=} is greater than bound {upper=} ({exclusive=}).")
-    if lower == upper and exclusive: raise ValueError(f"Bound {lower=} is equal to bound {upper=} ({exclusive=}).")
-    return func(lower, upper, *args, **kwargs)
-  return wrapper
+def validate_bounds[ReturnType](exclusive: bool = True) -> Callable[[Callable[..., ReturnType]], Callable[..., ReturnType]]:
+  def decorator(func: Callable[..., ReturnType]) -> Callable[..., ReturnType]:
+    def wrapper(lower: Numeric, upper: Numeric, *args, **kwargs) -> ReturnType:
+      if lower > upper: raise ValueError(f"Bound {lower=} is greater than bound {upper=} ({exclusive=}).")
+      if lower == upper and exclusive: raise ValueError(f"Bound {lower=} is equal to bound {upper=} ({exclusive=}).")
+      return func(lower, upper, *args, **kwargs)
+    return wrapper
+  return decorator
 
 # functions
 ## probabilities and floats
@@ -34,7 +36,7 @@ def validate_probability(p: float) -> None:
   if p > 1: raise ValueError(f"Probability {p=} cannot be greater than 1.")
   return None
 
-@validate_bounds
+@validate_bounds()
 def generate_float_in_range(lower: Numeric, upper: Numeric) -> float:
   return round(random.uniform(lower, upper), Constants.DEFAULT_ROUNDING_ACCURACY)
 
@@ -56,7 +58,7 @@ def is_structure_encounter() -> bool: return evaluate_probability(Constants.STRU
 def is_boss_encounter() -> bool: return evaluate_probability(Constants.BOSS_ENCOUNTER_PROBABILITY)
 
 ## integers
-@validate_bounds
+@validate_bounds()
 def generate_random_int_in_range(lower: int, upper: int) -> int:
   """Returns an integer in the interval `[lower, upper)` (not inclusive)."""
   if lower >= upper: raise ValueError(f"Bound {lower=} cannot be greater than or equal to bound {upper=}.")
@@ -79,3 +81,4 @@ def get_random_position(dimensions: Position) -> Position:
   return (x,y)
 
 ## decision-making-related
+

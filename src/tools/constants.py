@@ -14,11 +14,7 @@ class ScreenName(Enum):
   STORAGE = "storage_interface"
   WORLD_CREATION = "world_creation"
   WORLD_SELECTION = "world_selection"
-  # screens I will likely delete
-  USER_CREATION = "user_creation"
-  USER_LOGIN = "user_login"
-  USER_SELECTION = "user_selection"
-  # abstract screens implemented for just-in-case
+  # abstract screens, implemented for completeness
   ABSTRACT_FRAME = "abstract_frame"
   CREATION = "creation"
   SELECTION = "selection"
@@ -34,8 +30,6 @@ class Constants:
   MAX_EQUIPPED_WEAPONS: int = 3
   MAX_EQUIPPED_EQUIPABLES: int = 4
   HEALTH_POTION_AMOUNT: float = 30
-  TEMP_PARRY_THRESHOLD: float = 25
-  TEMP_PARRY_REFLECT_PROPORTION: float = 0.5
   GRID_WIDTH: int = 3
   GRID_HEIGHT: int = 3
   MIN_ENEMIES: int = 1
@@ -52,7 +46,9 @@ class Constants:
   OFF_COLOUR: str = "light gray"
   OFF_RELIEF = tk.RAISED
   DISABLED_COLOUR: str = "gray85"
-  DISABLED_RELIEF = tk.FLAT
+  DISABLED_RELIEF: Literal['flat'] = tk.FLAT
+  ENEMY_ATTACK_LABEL_COLOUR: str = "#FF5C5C"
+  ENEMY_HEAL_LABEL_COLOUR: str = "#8FFF87"
   MIN_SCREEN_WIDTH: int = 750
   MIN_SCREEN_HEIGHT: int = 450
   MAX_SCREEN_WIDTH: int = 1000
@@ -192,6 +188,9 @@ class WeaponUIComponentName(StrEnum):
 
 @unique
 class ActionName(StrEnum):
+  """The names for the different types of actions can be used.
+  
+  One of `ATTACK`, `PARRY` or `HEAL`."""
   ATTACK = "Attack"
   PARRY = "Parry"
   HEAL = "Heal"

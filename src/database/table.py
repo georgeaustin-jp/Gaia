@@ -117,7 +117,6 @@ class Table:
       formatted_row.append(value)
     return formatted_row
   
-  #TODO: make more secure 
   def insert_with_identifier(self, raw_row: dict[str, Any], identifier: int) -> None:
     """Inserts a new record at a given identifier. Raises an error if the identifier has already been assigned."""
     existing_identifiers: list[int] = list(self.rows.keys())
@@ -132,19 +131,14 @@ class Table:
   
   def get_next_available_identifier(self) -> int:
     """Calculates the smallest, non-zero identifier not in the table."""
-    tried_ids: list[int] = [] # debug, TODO: remove
     previous_id: int = -1 # defining variables
     previous_id_successor: int = 0 
     for current_id in self.identifiers:
-      logging.debug(f"\'current_id\'=`{current_id}`, \'previous_id\'=`{previous_id}`")
       previous_id_successor = previous_id+1
       if current_id > previous_id_successor: # if there is a hole in the sequence (e.g. [1,2,4,5] would return 3)
-        logging.debug(f"HOLE FOUND: \'tried_ids\'=`{tried_ids}`, \'previous_id_successor\'=`{previous_id_successor}`")
         return previous_id_successor
-      tried_ids.append(current_id)
       previous_id = current_id # sets up for next iteration
     previous_id_successor = previous_id+1
-    logging.debug(f"HOLE NOT FOUND: \'tried_ids\'=`{tried_ids}`, \'previous_id_successor\'=`{previous_id_successor}`")
     return previous_id_successor # in the case there are no holes, then it returns the id outside of the list 
 
   #add_column

@@ -4,9 +4,9 @@ from tools.typing_tools import *
 from tools.constants import ScreenName
 
 from game_data import GameData
-from interface.abstract_interface import AbstractInterface
+from interface.abstract_screen import AbstractScreen
 
-class Creation(AbstractInterface):
+class Creation(AbstractScreen):
   def __init__(self, root, parent: tk.Frame, game_data: GameData, **kwargs) -> None:
     super().__init__(root, parent, game_data, **kwargs)
 

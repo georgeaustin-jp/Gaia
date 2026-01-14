@@ -1,29 +1,39 @@
 from tools.typing_tools import *
 from tools.constants import Constants
-#from tools.ability_names import AbilityTypeName
+from tools.ability_names import AbilityTypeName
 
 #from stored.abilities.ability import Ability
 
 @dataclass
 class AbilityAction():
-  """Abstract base class with subclasses of `ParryAction`, `IgniteAction`, `DefendAction`, `WeakenAction` and `PierceAction`"""
+  """Abstract base class for all ability actions.
+  
+  Subclasses of `ParryAction`, `IgniteAction`, `DefendAction`, `WeakenAction`, `HealAction` and `PierceAction`."""
   initial_duration: Optional[int]
+
+  def get_ability_type_name(self) -> AbilityTypeName: raise NotImplementedError()
 
 @dataclass
 class IgniteAction(AbilityAction):
   """Ignites the target, dealing a set amount of damage for a set amount of turns."""
   initial_duration: int = Constants.IGNITE_DURATION
 
+  def get_ability_type_name(self) -> AbilityTypeName: return AbilityTypeName.IGNITE
+
 @dataclass
 class PierceAction(AbilityAction):
   """Pierce attacks will ignore parries."""
   initial_duration: int = 1
+
+  def get_ability_type_name(self) -> AbilityTypeName: return AbilityTypeName.PIERCE
 
 @dataclass
 class ParryAction(AbilityAction):
   damage_threshold: float = 0
   reflection_proportion: float = 0
   initial_duration: int = 1
+
+  def get_ability_type_name(self) -> AbilityTypeName: return AbilityTypeName.PARRY
 
   @staticmethod
   def get_reflected_damage(damage: float, reflection_proportion: float) -> float:
@@ -51,7 +61,18 @@ class DefendAction(AbilityAction):
   """Increases damage resistance."""
   resistance: float = 0
 
+  def get_ability_type_name(self) -> AbilityTypeName: return AbilityTypeName.DEFEND
+
 @dataclass
 class WeakenAction(AbilityAction):
   """Increases damage vulnerability (inverse of `DefendAction`)."""
   vulnerability: float = 0
+
+  def get_ability_type_name(self) -> AbilityTypeName: return AbilityTypeName.WEAKEN
+
+@dataclass
+class HealAction(AbilityAction):
+  initial_duration: int = 1
+  heal_amount: float = 0
+
+  def get_ability_type_name(self) -> AbilityTypeName: return AbilityTypeName.HEAL

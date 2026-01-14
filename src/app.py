@@ -14,8 +14,6 @@ from stored.entities.character import Character
 from stored.world import World
 from stored.items.storage import Storage
 
-from time import sleep
-
 class App:
   def __init__(self) -> None:
     self.game_data = GameData()
@@ -24,7 +22,6 @@ class App:
     interface_init_options: dict[str, Any] = {
       "quit_command": self.quit_command,
       "return_command": self.show_screen,
-      "user_creator": self.create_user,
       "select_character": self.select_character,
       "begin_character_creation": self.begin_character_creation,
       "create_character": self.create_character,
@@ -52,15 +49,12 @@ class App:
     del self.interface
     del self.combat_manager
 
-  def create_user(self, user_name: str, password_hash: str) -> None:
-    self.game_data.insert_user([user_name, password_hash, 0, 0])
-
   def show_screen(self, screen_name: ScreenName, **kwargs) -> None:
     self.interface.show_screen(screen_name, **kwargs)
 
-  def select_character(self, character_data: dict[str, Any]) -> None:
-    logging.debug(f"{character_data=}")
-    self.game_data.active_character_id = character_data["character_identifier"]
+  @log_all
+  def select_character(self, character_id: int) -> None:
+    self.game_data.active_character_id = character_id
     character_name: str = self.game_data.get_character_name()
     self.interface.update_character_name(character_name)
     self.show_screen(ScreenName.WORLD_SELECTION)
@@ -70,14 +64,13 @@ class App:
     self.game_data.users[active_user_id].character_quantity += 1
     max_health: float = Character.get_default_max_health()
     character_identifier: int = self.game_data.insert_character([active_user_id, character_name, max_health, max_health])
-    self.select_character({"character_identifier": character_identifier})
+    self.select_character(character_identifier)
     self.interface.show_screen(ScreenName.WORLD_SELECTION)
 
   def begin_character_creation(self, _kwargs: dict[str, Any] = {}) -> None:
     self.show_screen(ScreenName.CHARACTER_CREATION)
 
-  def select_world(self, kwargs: dict[str, Any]) -> None:
-    world_identifier: int = kwargs["world_identifier"]
+  def select_world(self, world_identifier: int) -> None:
     self.game_data.active_world_id = world_identifier
     # selecting relevant storages (1 for home, 1 for away)
     find_world_storages: Callable[[StorageType], Condition] = lambda storage_type: Condition(lambda _, row: row[0] == world_identifier and row[1] == storage_type)
@@ -106,7 +99,7 @@ class App:
     identical_condition = nothing()
     self.game_data.insert_stored(Storage, [world_identifier, StorageType.HOME], identical_condition, StorageAttrName.STORAGES)
     self.game_data.insert_stored(Storage, [world_identifier, StorageType.CHEST], identical_condition, StorageAttrName.STORAGES)
-    self.select_world({"world_identifier": world_identifier})
+    self.select_world(world_identifier)
 
   def load_active_weapons(self) -> list[int]:
     return list(self.game_data.weapons.keys())
@@ -122,7 +115,7 @@ class App:
     self.show_screen(ScreenName.EXPLORATION)
 
   def begin_combat(self) -> None:
-    self.game_data.encounter_combat()
+    self.game_data.generate_fighting_enemies()
     self.show_screen(ScreenName.COMBAT)
     self.combat_manager.begin_combat()
 

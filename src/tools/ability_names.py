@@ -1,10 +1,36 @@
 from tools.typing_tools import *
 
+# enums
+
 @unique
 class AbilityTypeName(StrEnum):
+  """The names of the different types of abilities.
+  
+  Includes `PARRY`, `IGNITE`, `PIERCE`, `WEAKEN`, `DEFEND` and `HEAL`."""
   PARRY = "Parry"
   IGNITE = "Ignite"
   PIERCE = "Pierce"
   WEAKEN = "Weaken"
   DEFEND = "Defend"
   HEAL = "Heal"
+
+@unique
+class AbstractAbilityClassName(StrEnum):
+  """Class names for different abilities which inherit from `AbstractAbility`."""
+  ABSTRACT = "AbstractAbility" # not used, but here for completion
+  PARRY = "ParryAbility"
+  STATISTIC = "StatisticAbility"
+
+# functions
+
+def ability_type_name_to_abstract_ability_class_name(ability_type_name: AbilityTypeName) -> Optional[AbstractAbilityClassName]:
+  """Converts an `AbilityTypeName` to an `AbstractAbilityClassName` depending on which class it's defined by.
+  
+  * `PARRY` goes to `PARRY`.
+  * `WEAKEN`, `DEFEND` and `HEAL` go to `STATISTIC`.
+  * Anything not in a table returns `None`."""
+  if ability_type_name == AbilityTypeName.PARRY:
+    return AbstractAbilityClassName.PARRY
+  if ability_type_name in [AbilityTypeName.WEAKEN, AbilityTypeName.DEFEND, AbilityTypeName.HEAL]:
+    return AbstractAbilityClassName.STATISTIC
+  return None

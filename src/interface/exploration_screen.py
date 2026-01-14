@@ -5,9 +5,9 @@ from tools.constants import ScreenName
 from tools.generation_tools import *
 
 from game_data import GameData
-from interface.abstract_interface import AbstractInterface
+from interface.abstract_screen import AbstractScreen
 
-class ExplorationScreen(AbstractInterface):
+class ExplorationScreen(AbstractScreen):
   def __init__(self, root, parent: tk.Frame, game_data: GameData, **kwargs) -> None:
     self.is_entering_combat: bool = False
     self.is_entering_structure: bool = False

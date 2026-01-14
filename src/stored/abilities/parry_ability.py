@@ -5,6 +5,8 @@ from tools.typing_tools import *
 from database.condition import Condition
 from stored.abilities.abstract_ability import *
 
+from ability_action import *
+
 class ParryAbility(AbstractAbility):
   def __init__(self, ability_id: int, damage_threshold: float, reflection_proportion: float, loaded: bool = True) -> None:
     #"ParryAbilityID", "AbilityID", "DamageThreshold", "ReflectionProportion"
@@ -35,6 +37,9 @@ class ParryAbility(AbstractAbility):
 
   def calculate_offensiveness(self) -> float:
     return self.reflection_proportion * (1 - exp2(-1*self.damage_threshold))
+
+  def get_ability_action(self) -> AbilityAction:
+    return ParryAction(damage_threshold=self.damage_threshold, reflection_proportion=self.reflection_proportion)
 
 def instantiate_parry_ability(parry_ability_data: list[Any] = [], loaded: bool = True) -> ParryAbility:
   ability_id: int = parry_ability_data[0]

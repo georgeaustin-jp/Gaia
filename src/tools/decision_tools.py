@@ -1,4 +1,4 @@
-from math import pow, exp2
+from math import  exp2
 
 from tools.typing_tools import *
 from tools.generation_tools import generate_float_in_range
@@ -13,6 +13,9 @@ def get_decision_error_bound(intelligence: float) -> float:
 def generate_decision_error(error_bound: float) -> float:
   return generate_float_in_range(-1*error_bound, error_bound)
 
+def clip(x: float, lower_bound: float, upper_bound: float) -> float:
+  return min(max(x, lower_bound), upper_bound)
+
 # aggressiveness calculations
 
 def calculate_health_aggressiveness(health: float, max_health: float) -> float:
@@ -22,8 +25,8 @@ def calculate_health_aggressiveness(health: float, max_health: float) -> float:
   """
   return health * (2 / max_health) - 1
 
-def calculate_ignited_aggressiveness(health: float, max_health: float, remaining_duration: int, is_ignited: bool) -> float:
-  if not is_ignited: return 0
+def calculate_ignited_aggressiveness(health: float, max_health: float, remaining_duration: Optional[int]) -> float:
+  if remaining_duration == None: return 0
   m: float = (1 / 2*max_health) * ((remaining_duration) / Constants.IGNITE_DURATION - (1 / 5*max_health))
   c: float = - (remaining_duration / 2*Constants.IGNITE_DURATION)
   return m*health + c

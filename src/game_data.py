@@ -182,7 +182,7 @@ class GameData:
     """Loads data into `self` after a new database has been initialised."""
     self.users = {0: User("User", "1234", loaded=False)}
     self.items = {
-      0: Item(ItemType.WEAPON, "Sword", loaded=False),
+      0: Item(ItemType.WEAPON, "Bronze sword", loaded=False),
       1: Item(ItemType.WEAPON, "Mace", loaded=False),
       2: Item(ItemType.WEAPON, "Dagger", loaded=False),
     }
@@ -191,11 +191,29 @@ class GameData:
       1: Weapon(1, 15, loaded=False),
       2: Weapon(2, 5, loaded=False),
     }
+    self.equipables = {
+
+    }
     self.inventory_items = {
       0: InventoryItem(0, 0, 1, True, loaded=False),
       1: InventoryItem(0, 1, 1, True, loaded=False),
       2: InventoryItem(0, 2, 1, True, loaded=False),
     }
+    self.enemies = {
+      0: Enemy("Shep", 5, 1, 0.1, False),
+      1: Enemy("Skeleton", 10, 5, 0.5, False),
+    }
+    self.abilities = {
+      0: Ability("Small heal", AbilityTypeName.HEAL),
+      1: Ability("Moderate heal", AbilityTypeName.HEAL),
+      2: Ability("Significant heal", AbilityTypeName.HEAL),
+    }
+    self.statistic_abilities = {
+      0: StatisticAbility(0, AbilityTypeName.HEAL, 10, 1),
+      1: StatisticAbility(1, AbilityTypeName.HEAL, 20, 1),
+      2: StatisticAbility(2, AbilityTypeName.HEAL, 30, 1),
+    }
+
 
   def create_tables(self, existing_table_names: list[str]) -> None:
     for (table_name, table_columns) in self.table_templates.items():
@@ -363,8 +381,6 @@ class GameData:
     for (target, storage_options) in self.save_load_targets.items():
       (storage_name, is_in_database) = self.get_save_load_storage_options(storage_options)
       if not is_in_database: continue # skips if not stored in database
-
-      if storage_name == StorageAttrName.PARRY_ABILITIES: logging.debug(f"{self.parry_abilities=}") # debugging, TODO: remove
       self.save_stored(target, storage_name)
     self.database.save()
 
@@ -427,7 +443,7 @@ class GameData:
   def get_character_name(self) -> str:
    return self.get_active_character().name
   
-  # enemy methods
+  # enemy and fighting_enemy methods
   
   def get_fighting_enemy_id_at(self, position: Position) -> Optional[int]:
     fighting_enemy_id: Optional[int] = self.fighting_enemy_graph.get_fighting_enemy_id(position)
@@ -601,17 +617,34 @@ class GameData:
       return self.add_fighting_enemy_to_grid_at_random_position(fighting_enemy_id) # recursive call
     return self.set_fighting_enemy_at(position, fighting_enemy_id)
   
-  def encounter_combat(self) -> None:
+  def generate_fighting_enemies(self) -> None:
     enemy_count: int = generate_enemy_count()
     is_boss: bool = is_boss_encounter()
     enemy_identifiers: Queue[int] = Queue(self.get_multiple_random_enemy_identifiers(enemy_count, is_boss))
     while not enemy_identifiers.empty():
       enemy_id: int = enemy_identifiers.get()
       enemy: Enemy = self.enemies[enemy_id]
+      # initialisation
       fighting_enemy = FightingEnemy(enemy_id, enemy.name, enemy.max_health, enemy.max_health, enemy.attack_damage, enemy.intelligence)
+      self.set_fighting_enemy_abilities(fighting_enemy)
+      # inserting into storage
       fighting_enemy_id: int = get_next_available_identifier(self.fighting_enemies)
       self.insert_into_storage(StorageAttrName.FIGHTING_ENEMIES, fighting_enemy_id, fighting_enemy)
       self.add_fighting_enemy_to_grid_at_random_position(fighting_enemy_id)
+
+  def set_fighting_enemy_abilities(self, fighting_enemy: FightingEnemy) -> None:
+    """Sets the attack and heal abilities for a given fighting enemy. Having no attack ability means the enemy has only a standard attack. Having no heal ability means the enemy cannot heal."""
+    enemy_id: int = fighting_enemy.enemy_id
+    # attack ability
+    attack_data: Optional[tuple[int, Ability]] = self.get_enemy_attack_ability(enemy_id)
+    if attack_data == None: attack_ability_id = None
+    else: (attack_ability_id, _) = attack_data
+    # heal ability
+    heal_data: Optional[tuple[int, Ability]] = self.get_enemy_heal_ability(enemy_id)
+    if heal_data == None: heal_ability_id = None
+    else: (heal_ability_id, _) = heal_data
+
+    fighting_enemy.set_action_identifiers(attack_ability_id, heal_ability_id)
   
   def finish_combat_encounter(self) -> None:
     for i in range(len(self.fighting_enemy_graph)):

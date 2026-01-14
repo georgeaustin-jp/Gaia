@@ -1,4 +1,2 @@
 src/data
-src/__pycache__
-src/db/__pycache__
-src/db/__pycache__
+*/__pycache__/

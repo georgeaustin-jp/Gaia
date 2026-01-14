@@ -11,7 +11,13 @@ def is_turns_valid(turns_remaining: Optional[int]) -> bool:
 
 @dataclass
 class ActiveEffect:
-  turns_remaining: Optional[int] # is `None` if permanent, otherwise is a non-negative integer
+  """
+  :param turns_remaining: `None` if permanent, otherwise is a non-negative integer.
+  :type turns_remaining: Optional[int]
+  :param effect_ability: The ability which is being applied.
+  :type effect_ability: AbilityAction
+  """
+  turns_remaining: Optional[int]
   effect_ability: AbilityAction
 
   def is_no_turns_remaining(self) -> bool:

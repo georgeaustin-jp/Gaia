@@ -4,6 +4,7 @@ class EntityType:
   """
   Abstract base class for representing which type of fighting entity an object is addressing.
   """
+  ...
   
 @dataclass
 class CharacterType(EntityType):

@@ -1,15 +1,34 @@
+import tkinter as tk
+
 from collections.abc import Callable
 from types import FunctionType
-from typing import Any, Dict, Iterable, Sized, Literal, Optional, Type, TypeVar, Union, cast
+from typing import Any, Concatenate, Dict, Generic, Iterable, Self, Sized, Literal, Optional, Type, TypeVar, Union, cast
 from multipledispatch import dispatch
 from enum import Enum, Flag, IntEnum, StrEnum, unique
 from dataclasses import dataclass, field
+from functools import reduce
+
+# custom types
 
 type ButtonCommand = Callable[[], None]
 type Position = tuple[int, int]
+"A discrete, `(x,y)` point on a 2D plane."
 type ActionLocation = Optional[Position]
-type EnemyActionTag = Literal["Attack"] | int # either "Attack" (denoting the enemy's attack) or the `AbilityID` of the `Ability` it will use
-type Numeric = int | float
+type EnemyActionTag = Union[Literal["Attack"], int]
+"either \"Attack\" (denoting the enemy's attack), or the `AbilityID` of the `Ability` it will use"
+type Numeric = Union[int, float]
+"Any real number, being either a `float` or `int`."
+
+type DynamicButtonInput = tuple[str, Union[Any, tuple[Any, ...]]]
+"""
+The significance of each value of the tuple is as follows:
+1. `text` - what the text value of the button is set to
+2. `args` - command positional arguments. If there is `0` or `1`, a collection need not be used, but any more requires a tuple.
+"""
+
+
+
+# functions
 
 def unpack_optional[T](option: Optional[T]) -> T:
   """
@@ -31,6 +50,4 @@ def unpack_optional_string(option: Optional[str], default: str = "") -> str:
   if option == None: return default
   return option
 
-
-
-
+# custom generic typ

@@ -3,6 +3,8 @@ from tools.typing_tools import *
 from database.condition import Condition
 from stored.stored import *
 
+from ability_action import AbilityAction
+
 class AbstractAbility(Stored):
   def __init__(self, ability_id: int, loaded: bool = True) -> None:
     super().__init__(loaded)
@@ -27,6 +29,8 @@ class AbstractAbility(Stored):
   # offensiveness and decision-making methods
 
   def calculate_offensiveness(self) -> float: raise NotImplementedError()
+
+  def get_ability_action(self) -> AbilityAction: raise NotImplementedError()
 
 def instantiate_abstract_ability(abstract_ability_data: list[Any] = [], loaded: bool = True) -> AbstractAbility:
   ability_id: int = abstract_ability_data[0]

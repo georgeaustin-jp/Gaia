@@ -3,10 +3,10 @@ import tkinter as tk
 from tools.typing_tools import *
 from tools.constants import ScreenName
 
-from interface.abstract_interface import AbstractInterface
+from interface.abstract_screen import AbstractScreen
 from game_data import GameData
 
-class Selection(AbstractInterface):
+class Selection(AbstractScreen):
   def __init__(self, root, parent: tk.Frame, game_data: GameData, **kwargs) -> None:
     super().__init__(root, parent, game_data, **kwargs)
 

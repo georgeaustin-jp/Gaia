@@ -7,7 +7,7 @@ from tools.dictionary_tools import filter_dictionary
 from tools.tkinter_tools import *
 
 from game_data import GameData
-from interface.abstract_interface import AbstractInterface
+from interface.abstract_screen import AbstractScreen
 
 from stored.items.item import Item
 from stored.items.storage import Storage
@@ -17,7 +17,7 @@ from stored.items.abstract_storage_item import AbstractStorageItem
 
 from custom_tkinter.toggleable_button import ToggleableButton
 
-class StorageInterface(AbstractInterface):
+class StorageInterface(AbstractScreen):
   def __init__(self, root, parent: tk.Frame, game_data: GameData, **kwargs) -> None:
     self.storage_indicator = tk.StringVar()
 

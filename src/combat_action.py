@@ -8,38 +8,38 @@ from data_structures.entity_type import *
 
 from stored.entities.fighting_entity import FightingEntity
 
-def only_for_attacks(func):
-  def wrapper(self, *args, **kwargs):
+def only_for_attacks[ReturnType](func: Callable[..., ReturnType]) -> Callable[..., ReturnType]:
+  def wrapper(self, *args, **kwargs) -> ReturnType:
     if type(self.action_type) != Attack: raise TypeError(f"Cannot apply method to `{type(self.action_type)=}` not of type `Attack`.")
     return func(self, *args, **kwargs)
   return wrapper
 
-class CombatAction:
+class CombatAction():
   """
   Represents a single action taken in combat. All methods handle attacks on individual entities.
 
   :param sender_type: The entity who made the action.
   :type sender_type: EntityType
-  :param target_type: The entity who will receive the action.
-  :type target_type: EntityType
+  :param target_type: The entity who will receive the action. Is `None` in the case of a parry.
+  :type target_type: Optional[EntityType]
   :param action_type: What action is being carried out.
   :type action_type: ActionType
   """
   def __init__(self, sender_type: EntityType, target_type: Optional[EntityType], action_type: ActionType) -> None:
-    self.sender_type = sender_type
-    self.target_type = target_type
-    self.action_type = action_type
+    self.sender_type: EntityType = sender_type
+    self.target_type: Optional[EntityType] = target_type
+    self.action_type: ActionType = action_type
 
   # built-in methods
 
   def __repr__(self) -> str:
     return f"ACTION {self.action_type}\n  [ {self.sender_type} -> {self.target_type} ]"
 
-  def __call__(self, sender: FightingEntity, target: Optional[FightingEntity]) -> None:
+  def __call__(self, sender: FightingEntity, target: Optional[FightingEntity]) -> str:
     type_of_action: Type[ActionType] = type(self.action_type)
-    if type_of_action == Attack: self.attack_fighting_entity(sender, target)
-    elif type_of_action == Parry: pass # parrying is handled in `CombatManager`
-    elif type_of_action == Heal: self.heal_fighting_entity(sender, target)
+    if type_of_action == Attack: return self.attack_fighting_entity(sender, target)
+    elif type_of_action == Parry: return f"{sender.name} parried" # parrying is handled in `CombatManager`
+    elif type_of_action == Heal: return self.heal_fighting_entity(sender, target)
     else:
       raise TypeError(f"Action type `{type_of_action}` does not match with any known action types (\'Attack\', \'Parry\', \'Heal\')")
     
@@ -48,7 +48,7 @@ class CombatAction:
   @only_for_attacks
   def add_ability_to_attack(self, ability: AbilityAction) -> None:
     if type(self.action_type) != Attack: raise TypeError(f"Cannot add abilities to `{type(self.action_type)=}`. Must be of type `Attack`.")
-    return self.action_type.add_ability(ability)
+    return self.action_type.add_ability_action(ability)
   
   @only_for_attacks
   def add_abilities_to_attack(self, abilities: Queue[AbilityAction]) -> None:
@@ -68,13 +68,13 @@ class CombatAction:
 
   def apply_abilities(self) -> None: raise NotImplementedError()
 
-  def attack_fighting_entity(self, sender: FightingEntity, target: Optional[FightingEntity]) -> None:
+  def attack_fighting_entity(self, sender: FightingEntity, target: Optional[FightingEntity]) -> str:
     if type(self.action_type) != Attack:
       raise TypeError(f"Expected type `Attack` for `type(self.action_type)`; got `{type(self.action_type)=}` instead.")
     if target == None:
-      logging.info("target=\'None\'")
-      return
+      return f"{sender.name.upper()} attacked nothing."
     damage: float = self.action_type.quantity
+    message: str = f"{sender.name.upper()} attacked {target.name.upper()} ({damage}DMG)"
     if target.is_parrying:
       parry_damage_threshold: Optional[float] = target.parry_damage_threshold
       parry_reflection_proportion: Optional[float] = target.parry_reflection_proportion
@@ -83,12 +83,12 @@ class CombatAction:
       (damage, reflected_damage) = ParryAction.parry_damage(damage, parry_damage_threshold, parry_reflection_proportion)
       sender.take_damage(reflected_damage)
     target.take_damage(damage)
+    return message
 
-  def heal_fighting_entity(self, sender: FightingEntity, target: Optional[FightingEntity]) -> None:
+  def heal_fighting_entity(self, sender: FightingEntity, target: Optional[FightingEntity]) -> str:
     if type(self.action_type) != Heal:
-      raise TypeError(f"Expected type `Heal` for `type(self.action_type)`. Got `{type(self.action_type)=}` instead.")
-    if target == None:
-      logging.info("target=`None`")
-      return
+      raise TypeError(f"Expected type `Heal` for `type(self.action_type)`; got `{type(self.action_type)=}` instead.")
     healing: float = self.action_type.quantity
-    target.heal(healing)
+    if target == None:
+      return f"{sender.name.upper()}: healed nothing"
+    return target.heal(healing)

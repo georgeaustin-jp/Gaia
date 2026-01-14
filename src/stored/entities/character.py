@@ -44,9 +44,10 @@ class Character(FightingEntity):
   def __repr__(self) -> str:
     return f"Character({self.user_id}, {self.name=}, {self.health=}, {self.max_health=})"
   
-  # methods for enemy decision making
+  # decision-making methods for enemies
 
-  
+  def calculate_aggressiveness_info(self, remaining_ignition_duration: Optional[int], is_target_parrying: bool) -> tuple[float, int]:
+    return super().calculate_aggressiveness_info(remaining_ignition_duration, is_target_parrying)
 
 def instantiate_character(character_data: list[Any], loaded: bool = True) -> Character:
   user_id: int = character_data[0]

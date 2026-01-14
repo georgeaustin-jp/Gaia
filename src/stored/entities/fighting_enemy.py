@@ -1,16 +1,21 @@
-from math import exp2, tanh, pow
-
 from tools.typing_tools import *
 from tools.decision_tools import *
 from tools.constants import *
+
 from data_structures.action_type import ActionType
 
-from data_structures.queue import Queue
-
 from stored.entities.fighting_entity import *
+from stored.abilities.abstract_ability import AbstractAbility
+
 from database.condition import Condition
 
 from ability_action import *
+
+def validate_action_name[FightingEnemyType: FightingEnemy, ReturnType](func: Callable[Concatenate[FightingEnemyType, ...], ReturnType]) -> Callable[Concatenate[FightingEnemyType, ...], ReturnType]:
+  def wrapper(self: FightingEnemyType, action_name: ActionName, *args, **kwargs) -> ReturnType:
+    if not action_name in self.VALID_ACTION_NAMES: raise ValueError(f"`{action_name=}` not in `{self.VALID_ACTION_NAMES}`.")
+    return func(self, action_name, *args, **kwargs)
+  return wrapper
 
 class FightingEnemy(FightingEntity):
   def __init__(self, enemy_id: int, name: str, health: float, max_health: float, attack_damage: float, intelligence: float, loaded: bool = True) -> None:
@@ -20,11 +25,13 @@ class FightingEnemy(FightingEntity):
     self.intelligence: float = intelligence
     self.decision_error_bound: float = get_decision_error_bound(self.intelligence)
 
-    self.action_offensiveness_table: dict[ActionName, float] = {
+    self.__action_offensiveness_table: dict[ActionName, float] = {
       ActionName.ATTACK: 0,
       ActionName.HEAL: 0,
     }
     self.ability_id_table: dict[ActionName, Optional[int]] = {}
+
+    self.VALID_ACTION_NAMES: list[ActionName] = [ActionName.ATTACK, ActionName.HEAL]
 
     self.aggressiveness: float
 
@@ -44,33 +51,50 @@ class FightingEnemy(FightingEntity):
   def identical_condition(fighting_enemy_row: list[Any]) -> Condition:
     return Condition(lambda _, row: False)
   
+  # built-in methods
+
+  @validate_action_name
+  def get_action_offensiveness(self, action_name: ActionName) -> float:
+    return self.__action_offensiveness_table[action_name]
+  
+  @validate_action_name
+  def set_action_offensiveness(self, action_name: ActionName, offensiveness: float) -> None:
+    self.__action_offensiveness_table[action_name] = offensiveness
+  
   # decision making methods
 
-  def set_action_identifiers(self, attack_ability_id: int, heal_ability_id: Optional[int]) -> None:
+  def set_action_identifiers(self, attack_ability_id: Optional[int], heal_ability_id: Optional[int]) -> None:
     self.ability_id_table[ActionName.ATTACK] = attack_ability_id
-    if heal_ability_id != None:
-      self.ability_id_table[ActionName.HEAL] = heal_ability_id
+    self.ability_id_table[ActionName.HEAL] = heal_ability_id
 
   ## calculating action values
-  def set_action_offensiveness_value(self, action_name: ActionName, offensiveness: float) -> None:
-    self.action_offensiveness_table[action_name] = offensiveness
-
-  def calculate_action_offensiveness_value(self, action_name: ActionName) -> float:
-    raise NotImplementedError()
+  def calculate_action_offensiveness_value(self, ability: AbstractAbility, action_name: ActionName, store_result: bool = True) -> float:
+    offensiveness_value: float = ability.calculate_offensiveness()
+    if store_result:
+      self.set_action_offensiveness(action_name, store_result)
+    return offensiveness_value
       
   ## aggressiveness calculations
-  def calculate_aggressiveness(self, remaining_ignition_duration: int, is_target_parrying: bool, negative_player_total: float, player_n: int) -> float:
+  def generate_decision_error(self) -> float:
+    return generate_decision_error(self.decision_error_bound)
+  
+  def clip_aggressiveness(self, aggressiveness: float) -> float:
+    return clip(aggressiveness, -self.decision_error_bound, self.decision_error_bound)
+
+  def calculate_aggressiveness(self, remaining_ignition_duration: Optional[int], is_target_parrying: bool, negative_character_total: float, character_n: int) -> float:
     (total, n) = self.calculate_aggressiveness_info(remaining_ignition_duration, is_target_parrying)
-    total += negative_player_total
-    n += player_n
+    total += negative_character_total
+    n += character_n
     self.aggressiveness = total / n
+    decision_error: float = self.generate_decision_error()
+    self.aggressiveness = self.clip_aggressiveness(self.aggressiveness + decision_error)
     return self.aggressiveness
   
   ## choosing the action
   def choose_action_name(self) -> ActionName:
     chosen_action: Optional[tuple[ActionName, float]] = None
-    if len(self.action_offensiveness_table) == 0: raise BufferError(f"{self.action_offensiveness_table=} cannot be empty when choosing the action tag.")
-    for (action_name, offensiveness) in self.action_offensiveness_table.items():
+    if len(self.__action_offensiveness_table) == 0: raise BufferError(f"{self.__action_offensiveness_table=} cannot be empty when choosing the action tag.")
+    for (action_name, offensiveness) in self.__action_offensiveness_table.items():
       deviation: float = self.calculate_aggressiveness_squared_deviation(offensiveness)
       if chosen_action == None:
         chosen_action = (action_name, deviation)
