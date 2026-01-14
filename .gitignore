@@ -1,4 +1,6 @@
-src/data
-**/__pycache__
-.vscode
-output.*
+# in root
+/.vscode
+/output.*
+# in source
+src/data/
+src/**/__pycache__/
