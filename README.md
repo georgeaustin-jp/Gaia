@@ -5,4 +5,6 @@ Gaia is a turn-based combat game, taking inspiration from Terraria, Pokémon and
 
 ## Installation guide
 Download and unzip the latest release from the **Releases** section. In the terminal, change the directory to `Gaia` and execute the following command to begin the game:
-```python src/main.py```
+```
+python src/main.py
+```
