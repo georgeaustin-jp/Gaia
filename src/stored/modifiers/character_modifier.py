@@ -22,7 +22,7 @@ class CharacterModifier(Stored):
   
   @staticmethod
   def identical_condition(character_modifier_row: list[Any]) -> Condition:
-    return Condition(lambda _, row: False)
+    return lambda _, row: False
 
 def instantiate_character_modifier(character_modifier_data: list[Any] = [], loaded: bool = True) -> CharacterModifier:
   return CharacterModifier()

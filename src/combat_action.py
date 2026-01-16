@@ -1,5 +1,3 @@
-import logging
-
 from tools.typing_tools import *
 
 from ability_action import AbilityAction

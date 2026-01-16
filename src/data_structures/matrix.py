@@ -1,5 +1,4 @@
 from tools.typing_tools import *
-from tools.logging_tools import *
 from tools.positional_tools import validate_position_on
 
 class Matrix[T](Sized):
@@ -8,10 +7,10 @@ class Matrix[T](Sized):
   """
   def __init__(self, dimensions: Position) -> None:
     """
-    Constructor.
-
     :param dimensions: In the form (x_length, y_length).
     :type dimensions: tuple[int, int]
+    :returns: None
+    :rtype: None
     """
     self.dimensions = dimensions
     self.__matrix: list[list[Optional[T]]] = []

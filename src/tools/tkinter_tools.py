@@ -3,7 +3,6 @@ import customtkinter as ctk
 
 from tools.constants import Constants
 from tools.typing_tools import *
-from tools.logging_tools import *
 
 ctk.set_appearance_mode("light")
 
@@ -11,7 +10,7 @@ def configure_grid(frame: tk.Frame, dimensions: Position = (1, 3),  exclude_colu
   """
   Sets the columns and rows of a grid frame to expand with the window when it changes size. Includes some customisation options.
   
-  :param frame: Frame being configured.
+  :param frame: Frame whose grid is being configured.
   :type frame: tk.Frame
   :param dimensions: The width and height of the frame in columns and rows. Defaults to `(1,3)`.
   :type dimensions: Position
@@ -52,7 +51,6 @@ def configure_grid(frame: tk.Frame, dimensions: Position = (1, 3),  exclude_colu
         frame.grid_rowconfigure(row, weight=2)
 
 def toggle_button_selection(button: tk.Button, command: Callable[[], Any]) -> None:
-  logging.info("called")
   button_colour = button["bg"]
   if button_colour == Constants.OFF_COLOUR:
     button.config(bg=Constants.ON_COLOUR, relief=Constants.ON_RELIEF)

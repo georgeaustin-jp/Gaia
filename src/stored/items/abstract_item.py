@@ -18,7 +18,7 @@ class AbstractItem(Stored):
   
   @staticmethod
   def identical_condition(abstract_item_row: list[Any]) -> Condition:
-    return Condition(lambda _, row: False)
+    return lambda _, row: False
 
 def instantiate_abstract_item(abstract_item_data: list[Any] = [], loaded: bool = True) -> AbstractItem:
   return AbstractItem()

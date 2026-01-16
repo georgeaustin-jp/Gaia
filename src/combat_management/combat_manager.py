@@ -1,12 +1,11 @@
 from tools.constants import *
 from tools.typing_tools import *
-from tools.logging_tools import *
 from tools.exceptions import *
 from tools.positional_tools import length_to_point
 
 import game_data as gd
 
-from interface.combat_interface import CombatInterface
+from interface.combat_screen import CombatScreen
 
 from stored.entities.character import Character
 from stored.entities.fighting_enemy import FightingEnemy
@@ -24,10 +23,10 @@ from data_structures.fighting_enemy_graph import FightingEnemyGraph
 from combat_management.effect_manager import EffectManager
 
 class CombatManager:
-  def __init__(self, game_data: gd.GameData, combat_interface: CombatInterface) -> None:
+  def __init__(self, game_data: gd.GameData, combat_screen: CombatScreen) -> None:
     self.game_data = game_data
 
-    self.combat_interface = combat_interface
+    self.combat_screen = combat_screen
 
     self.effect_manager = EffectManager(self.game_data)
 
@@ -92,27 +91,25 @@ class CombatManager:
   # methods for controlling user buttons
 
   def enable_user_buttons(self, include_confirm: bool = True) -> None:
-    self.combat_interface.enable_user_buttons(include_confirm)
+    self.combat_screen.enable_user_buttons(include_confirm)
 
   def disable_user_buttons(self, include_confirm: bool = True) -> None:
-    self.combat_interface.disable_user_buttons(include_confirm)
+    self.combat_screen.disable_user_buttons(include_confirm)
 
   def reset_toggleable_user_buttons_state(self) -> None:
-    self.combat_interface.reset_toggleable_user_buttons_state()
+    self.combat_screen.reset_toggleable_user_buttons_state()
 
-  # methods for adding information to `self.combat_interface`
+  # methods for adding information to `self.combat_screen`
 
   def add_info(self, message: str = "") -> None:
-    logging.info(f"Adding info ({message=})...")
     """Adds a newline at the end of the message."""
-    _ = self.combat_interface.add_info(message)
-    logging.info(f"Info added ({message=})")
+    self.combat_screen.add_info(message)
 
   def add_newline_info(self) -> None:
     self.add_info()
 
   def clear_info(self) -> None:
-    self.combat_interface.clear_info()
+    self.combat_screen.clear_info()
   
   def add_remaining_actions_info(self) -> None:
     self.add_info(f" > Remaining actions: {self.remaining_actions}")
@@ -152,7 +149,7 @@ class CombatManager:
   def begin_combat(self) -> None:
     self.clear_info()
     self.reset_round_number()
-    self.combat_interface.parry_used = False
+    self.combat_screen.parry_used = False
 
     self.game_data.get_active_character().reset_health()
 
@@ -161,12 +158,12 @@ class CombatManager:
 
     self.effect_manager.init_fighting_enemy_effects()
 
-    self.combat_interface.update_health_label()
-    self.combat_interface.update_damage_resistance_label()
+    self.combat_screen.update_health_label()
+    self.combat_screen.update_damage_resistance_label()
 
     character_won: bool = self.play_round() # recursive function
 
-    self.combat_interface.enable_return(character_won)
+    self.combat_screen.enable_return(character_won)
     self.effect_manager.remove_all_effects_from_active_character()
 
   def play_round(self) -> bool:
@@ -195,7 +192,7 @@ class CombatManager:
   ## character turn
   def start_character_turn(self) -> None:
     self.is_character_turn = True
-    self.combat_interface.parry_used = False
+    self.combat_screen.parry_used = False
     self.reset_remaining_actions()
     self.add_entity_turn_begin_info(character_turn=self.is_character_turn)
 
@@ -203,8 +200,8 @@ class CombatManager:
     self.effect_manager.remove_finished_effects_from_active_character()
     
     self.enable_user_buttons(include_confirm=True)
-    self.combat_interface.reset_weapon_states()
-    self.combat_interface.update_weapon_states()
+    self.combat_screen.reset_weapon_states()
+    self.combat_screen.update_weapon_states()
     character_actions: list[CombatAction] = self.get_character_actions()
 
     for action in character_actions:
@@ -219,8 +216,8 @@ class CombatManager:
     character_action = self.input_character_action()
 
     if type(character_action) == Parry:
-      self.combat_interface.parry_used = True
-    self.combat_interface.update_weapon_states()
+      self.combat_screen.parry_used = True
+    self.combat_screen.update_weapon_states()
 
     self.decrement_remaining_actions()
     return [character_action] + self.get_character_actions()
@@ -231,7 +228,7 @@ class CombatManager:
     while not successful_input:
       error_message_info: Optional[ErrorMessageInfo] = None
       try:
-        character_action: CombatAction = self.combat_interface.get_character_action()
+        character_action: CombatAction = self.combat_screen.get_character_action()
       except QuitInterrupt as error:
         raise error
       except UnknownActionError as error:
@@ -337,22 +334,22 @@ class CombatManager:
     if action_name == ActionName.HEAL:
       # initialising
       heal_ability_id: Optional[int] = fighting_enemy.ability_id_table.get(ActionName.HEAL)
-      if heal_ability_id == None: raise ValueError(f"Tried to get `{action_name=}` for `{fighting_enemy=}` when no healing ability exists.")
+      if heal_ability_id == None: raise ValueError(f"Tried to get {action_name=} for {fighting_enemy=} when no healing ability exists.")
       # adding ability
       heal_ability: Ability = self.game_data.abilities[heal_ability_id]
       heal_ability_action: AbilityAction = heal_ability.get_ability_action()
-      if type(heal_ability_action) != HealAction: raise TypeError(f"`{heal_ability_action=}` not of type `HealAction`.")
+      if type(heal_ability_action) != HealAction: raise TypeError(f"{heal_ability_action=} not of type `HealAction`.")
       heal_amount: float = heal_ability_action.heal_amount
       return Heal(heal_amount)
-    raise Exception(f"TODO: fix this ({fighting_enemy=}, {action_name=}).")
+    raise UnknownActionError(f"Unknown {action_name=} for {fighting_enemy=}.") # enemies can only use healing or attacking actions; anything else is erroneous
 
   def end_enemies_turn(self) -> None:
     self.execute_all_actions()
     self.effect_manager.inflict_active_effects_to_all_fighting_entities()
     self.remove_dead_fighting_enemies()
-    self.combat_interface.display_enemy_info_on_grid()
-    self.combat_interface.update_health_label()
-    self.combat_interface.update_damage_resistance_label()
+    self.combat_screen.display_enemy_info_on_grid()
+    self.combat_screen.update_health_label()
+    self.combat_screen.update_damage_resistance_label()
   
   def has_character_won_combat(self) -> Optional[bool]:
     if self.is_character_dead():
@@ -437,6 +434,5 @@ class CombatManager:
   
   # misc functions
   def quit(self) -> None:
-    logging.info("called")
-    if not self.combat_interface.is_quitting: raise ValueError(f"\'self.quit()\' called when \'self.combat_interface.is_quitting\'=`{self.combat_interface.is_quitting}` (should be \'True\')")
+    if not self.combat_screen.is_quitting: raise ValueError(f"`quit()` called when self.combat_screen.is_quitting={self.combat_screen.is_quitting=} (should be `True`).")
     del self

@@ -7,15 +7,15 @@ class ScreenName(Enum):
   # main screen names
   CHARACTER_CREATION = "character_creation"
   CHARACTER_SELECTION = "character_selection"
-  COMBAT = "combat_interface"
+  COMBAT = "combat_screen"
   EXPLORATION = "exploration_screen"
   HOME = "home_screen"
   INTERFACE = "interface"
-  STORAGE = "storage_interface"
+  STORAGE = "storage_screen"
   WORLD_CREATION = "world_creation"
   WORLD_SELECTION = "world_selection"
   # abstract screens, implemented for completeness
-  ABSTRACT_FRAME = "abstract_frame"
+  ABSTRACT_SCREEN = "abstract_screen"
   CREATION = "creation"
   SELECTION = "selection"
 
@@ -112,6 +112,8 @@ class TableName(StrEnum):
 
   NONE = "" # for subclasses of `Stored` where the object won't be stored in the database
 
+  def __get__(self, *args) -> str: return self.value
+
 @unique
 class StorageAttrName(StrEnum):
   """Names for attributes handling data storage of specific objects in \'GameData\'."""
@@ -180,7 +182,7 @@ class StorageType(StrEnum):
 
 @unique
 class WeaponUIComponentName(StrEnum):
-  """Used in accessing the different components of the weapon user interface in `CombatInterface`."""
+  """Used in accessing the different components of the weapon user interface in `CombatScreen`."""
   WEAPON_NAME = "weapon_name"
   ATTACK = "attack"
   ATTACK_DAMAGE = "attack_damage"

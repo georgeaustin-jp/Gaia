@@ -1,4 +1,5 @@
 from tools.typing_tools import *
+from tools.constants import TableName
 from tools.logging_tools import *
 
 from database.table import Table
@@ -20,7 +21,7 @@ class Database:
       self.save()
   
   def exists(self) -> bool:
-    """Uses the \'self.file_handler.does_data_directory_exist()\' method to determine whether the database has already been created in memory or not."""
+    """Uses the `file_handler.does_data_directory_exist()` method to determine whether the database has already been created in memory or not."""
     if self.file_handler.does_data_directory_exist(): return True
     return False
   
@@ -31,18 +32,20 @@ class Database:
     formatted_table_names: dict[str, Any] = {"tables": self.table_names}
     self.file_handler.save_file("MAIN", formatted_table_names)
 
+  def init_tables(self, table_templates: dict[TableName, list[str]]) -> None:
+    for (table_name, columns) in table_templates.items():
+      self.create_table(table_name, columns)
+
   def load(self) -> None:
-    """Fetches the database from storage, loading all tables specified in \'self.table_names\'.
-    
-    Raises a `ValueError` if \'self.table_names\' is empty."""
+    """Fetches the database from storage, loading all tables specified in `self.table_names`. Raises a `ValueError` if `self.table_names` is empty."""
     self.table_names = self.load_main_data()
-    if self.table_names == []: raise ValueError(f"Expected a non-empty list of table names, instead got `{self.table_names}`")
+    if self.table_names == []: raise ValueError(f"Expected a non-empty list of table names; instead got {self.table_names}.")
     for table_name in self.table_names:
       raw_table: dict = self.file_handler.load_file(table_name)
       self.load_table(table_name, raw_table)
 
-  # fetches each table from secondary storage
   def load_table(self, table_name: str, raw_table: dict[str, Any]) -> None:
+    """Fetches each table from secondary storage."""
     column_names: list = raw_table["column_names"] 
 
     table = Table(table_name, column_names)
@@ -82,18 +85,18 @@ class Database:
     file: dict = table.to_file()
     self.file_handler.save_file(table_name, file)
 
+  # SQL queries
+
   def find_table(self, table_name: str) -> Table:
     try:
       table: Table = self.tables[table_name]
     except:
-      raise NameError(f"Table `{table_name}` does not exist.")
+      raise NameError(f"Table {table_name} does not exist.")
     return table
 
-  # SELECT columns FROM table WHERE condition ORDER BY order
   def select(self, table_name: str, columns: list[str], condition: Condition) -> dict[int, list[Any]]:
     return self.find_table(table_name).select(columns, condition)
   
-  #update
   def update(self, table_name: str, columns_to_values: dict[str, Any], condition: Condition) -> None:
     table: Table = self.find_table(table_name)
     table.update(columns_to_values, condition)
@@ -109,8 +112,9 @@ class Database:
     else: return table.insert_with_identifier(columns_to_values, identifier)
 
   def create_table(self, table_name: str, column_names: list[str]) -> None:
+    """Initialises the given table in memory."""
     if table_name in self.table_names:
-      raise BufferError(f"Table `{table_name}` already exists.")
+      raise BufferError(f"Table {table_name} already exists.")
     table = Table(table_name, column_names)
     self.tables[table_name] = table
     self.table_names.append(table_name)
@@ -120,19 +124,15 @@ class Database:
     self.deleted_table_names.append(table_name)
     self.tables.pop(table_name)
 
-  #add_column
   def add_column(self, table_name: str, column_name: str) -> None:
     self.find_table(table_name).add_column(column_name)
 
-  #drop_column
   def drop_column(self, table_name: str, column_name: str) -> None:
     self.find_table(table_name).drop_column(column_name)
 
-  #rename_column
   def rename_column(self, table_name: str, name: str, new_name: str) -> None:
     self.find_table(table_name).rename_column(name, new_name)
 
-  #rename_table
   def rename_table(self, table_name: str, new_name: str) -> None:
     table: Table = self.find_table(table_name)
     table.rename_table(new_name)

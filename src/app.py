@@ -1,18 +1,18 @@
 from tools.typing_tools import *
-from tools.logging_tools import *
 from tools.constants import *
 
-from database.condition import Condition, nothing
+from database.condition import Condition
 
 from interface.interface import Interface
-from interface.combat_interface import CombatInterface
+from interface.combat_screen import CombatScreen
 
 from game_data import GameData
 from combat_management.combat_manager import CombatManager
 
-from stored.entities.character import Character
 from stored.world import World
+from stored.entities.character import Character
 from stored.items.storage import Storage
+from stored.items.inventory_item import InventoryItem
 
 class App:
   def __init__(self) -> None:
@@ -38,10 +38,8 @@ class App:
 
     self.interface = Interface(self.game_data, **interface_init_options)
 
-    combat_interface: CombatInterface = self.interface.get_combat_interface()
-    self.combat_manager = CombatManager(self.game_data, combat_interface)
-
-    logging.info("App initialisation complete")
+    combat_screen: CombatScreen = self.interface.get_combat_screen()
+    self.combat_manager = CombatManager(self.game_data, combat_screen)
 
   def __del__(self) -> None:
     self.save()
@@ -52,19 +50,30 @@ class App:
   def show_screen(self, screen_name: ScreenName, **kwargs) -> None:
     self.interface.show_screen(screen_name, **kwargs)
 
-  @log_all
   def select_character(self, character_id: int) -> None:
     self.game_data.active_character_id = character_id
     character_name: str = self.game_data.get_character_name()
     self.interface.update_character_name(character_name)
     self.show_screen(ScreenName.WORLD_SELECTION)
 
+  def initialise_new_character_items(self) -> None:
+    active_character_id: Optional[int] = self.game_data.active_character_id
+    if active_character_id == None: raise ValueError(f"Trying to initialise items for character when {active_character_id=}.")
+    item_identifiers: list[int] = [
+      0, # tin dagger
+      1, # mahogany staff
+      12, # leather boots
+      13, # tunic
+    ]
+    for item_identifier in item_identifiers:
+      self.game_data.insert_stored(InventoryItem, [active_character_id, item_identifier, 1, True], StorageAttrName.INVENTORY_ITEMS)
+
   def create_character(self, character_name: str) -> None:
     active_user_id: int = unpack_optional(self.game_data.active_user_id)
-    self.game_data.users[active_user_id].character_quantity += 1
     max_health: float = Character.get_default_max_health()
-    character_identifier: int = self.game_data.insert_character([active_user_id, character_name, max_health, max_health])
+    (character_identifier, _) = self.game_data.insert_stored(Character, [active_user_id, character_name, max_health, max_health], StorageAttrName.CHARACTERS)
     self.select_character(character_identifier)
+    self.initialise_new_character_items()
     self.interface.show_screen(ScreenName.WORLD_SELECTION)
 
   def begin_character_creation(self, _kwargs: dict[str, Any] = {}) -> None:
@@ -73,7 +82,7 @@ class App:
   def select_world(self, world_identifier: int) -> None:
     self.game_data.active_world_id = world_identifier
     # selecting relevant storages (1 for home, 1 for away)
-    find_world_storages: Callable[[StorageType], Condition] = lambda storage_type: Condition(lambda _, row: row[0] == world_identifier and row[1] == storage_type)
+    find_world_storages: Callable[[StorageType], Condition] = lambda storage_type: lambda _, row: row[0] == world_identifier and row[1] == storage_type
     # storage at home
     home_storages: dict[int, Storage] = self.game_data.select_from_storage(self.game_data.storages, find_world_storages(StorageType.HOME))
     if len(home_storages) != 1: raise Exception(f"{home_storages=} should have 1 element; {len(home_storages)} were found.")
@@ -94,11 +103,9 @@ class App:
 
   def create_world(self, world_name: str, world_seed: str) -> None:
     active_user_id: int = unpack_optional(self.game_data.active_user_id)
-    self.game_data.users[active_user_id].world_quantity += 1
-    world_identifier: int = self.game_data.insert_world([active_user_id, world_name, world_seed])
-    identical_condition = nothing()
-    self.game_data.insert_stored(Storage, [world_identifier, StorageType.HOME], identical_condition, StorageAttrName.STORAGES)
-    self.game_data.insert_stored(Storage, [world_identifier, StorageType.CHEST], identical_condition, StorageAttrName.STORAGES)
+    (world_identifier, _) = self.game_data.insert_stored(World, [active_user_id, world_name, world_seed], StorageAttrName.WORLDS)
+    self.game_data.insert_stored(Storage, [world_identifier, StorageType.HOME], StorageAttrName.STORAGES)
+    self.game_data.insert_stored(Storage, [world_identifier, StorageType.CHEST], StorageAttrName.STORAGES)
     self.select_world(world_identifier)
 
   def load_active_weapons(self) -> list[int]:

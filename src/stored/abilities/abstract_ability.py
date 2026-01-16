@@ -24,7 +24,7 @@ class AbstractAbility(Stored):
   
   @staticmethod
   def identical_condition(abstract_ability_row: list[Any]) -> Condition:
-    return Condition(lambda _, row: False)
+    return lambda _, row: False
   
   # offensiveness and decision-making methods
 

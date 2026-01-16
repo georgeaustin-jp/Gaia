@@ -1,7 +1,6 @@
 import tkinter as tk
 
 from tools.typing_tools import *
-from tools.dictionary_tools import filter_dictionary
 from tools.constants import ScreenName
 
 from interface.creation import Creation
@@ -19,7 +18,7 @@ class CharacterCreation(Creation):
     new_character_name: str = self.entered_name.get()
     existing_character_names: list[str] = [character.name for character in self.game_data.characters.values()]
     if new_character_name in existing_character_names:
-      self.fail_creation(f"Character with name `{new_character_name}` already exists")
+      self.fail_creation(f"Character with name `{new_character_name}` already exists.")
     else:
       self.confirm_creation(new_character_name)
 

@@ -1,7 +1,6 @@
 from tools.typing_tools import *
 from tools.exceptions import HealthSetError
 from tools.decision_tools import *
-from tools.logging_tools import *
 
 from stored.stored import *
 
@@ -93,7 +92,7 @@ class FightingEntity(Stored):
   def get_table_name() -> TableName: return TableName.NONE
 
   def get_raw_data(self) -> list[Any]:
-    return super().get_raw_data() + [self.health]
+    return super().get_raw_data() + [self.name, self.health, self.max_health]
   
   @staticmethod
   def instantiate(fighting_entity_data: list[Any], loaded: bool = True):
@@ -146,7 +145,7 @@ class FightingEntity(Stored):
     elif type(ability) == WeakenAction: return self.weaken(ability.vulnerability)
     elif type(ability) == PierceAction: return self.pierce()
     elif type(ability) == ParryAction: return self.engage_parry(ability.damage_threshold, ability.reflection_proportion)
-    raise TypeError(f"Unexpected {ability=} of {type(ability)=}")
+    raise TypeError(f"Unexpected {ability=} of {type(ability)=}.")
 
   @prepend_message_info("name", add_colon_at_end=True, capitalise=True)
   def inflict_active_effects(self) -> str:

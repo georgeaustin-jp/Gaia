@@ -1,9 +1,7 @@
 import tkinter as tk
 import customtkinter as ctk
-import logging
 
 from tools.typing_tools import *
-from tools.dictionary_tools import add_if_vacant
 from tools.tkinter_tools import *
 from tools.constants import DefaultTkInitOptions, ScreenName
 
@@ -12,13 +10,6 @@ from game_data import GameData
 from interface.base_frame import BaseFrame
 
 from custom_tkinter.dynamic_button import DynamicButton
-
-type DynamicButtonCommand = Callable[[dict[str, Any]], None]
-"""
-The significance of each input is as follows:
-1. `dynamic_button_list` - a list containing all buttons created during dynamic button creation
-2. `button_args` - the arguments for each button. The key is the `text` of the button, and the value is the arguments passed into that button's command when it is called.
-"""
 
 class AbstractScreen(BaseFrame):
   def __init__(self, root, parent: tk.Frame, game_data: GameData, **kwargs) -> None:
@@ -59,7 +50,6 @@ class AbstractScreen(BaseFrame):
   # widget creation methods
 
   ## dynamic button creation
-  
   def create_buttons_dynamically(self, button_inputs: list[DynamicButtonInput], command: Callable[..., None], container: Optional[tk.Frame] = None, placement_options: Optional[dict[str, Any]] = None, **kwargs) -> None:
     if hasattr(self, "dynamic_button_frame"):
       self.dynamic_button_frame.destroy()
@@ -68,7 +58,6 @@ class AbstractScreen(BaseFrame):
     command_args_dict: dict[str, Any] = {}
     for (i, (text, command_args)) in enumerate(button_inputs):
       position: Position = (0,i)
-      logging.debug(f"{i=}, {text=}, {command_args=}")
       new_dynamic_button = unpack_optional(self.create_widget(DynamicButton, position, container=self.dynamic_button_frame, return_widget=True, placement_options=placement_options, **kwargs))
       new_dynamic_button.text = text
       dynamic_buttons.append(new_dynamic_button)

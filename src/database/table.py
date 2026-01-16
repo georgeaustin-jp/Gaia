@@ -1,8 +1,7 @@
 from tools.typing_tools import *
-from tools.logging_tools import *
 from tools.dictionary_tools import *
 
-from database.condition import Condition, filter_dictionary_with_condition, get_condition_inverse
+from database.condition import Condition, filter_dictionary, get_condition_inverse
 
 from tools.exceptions import InsertAtExistingIdentifierError
 
@@ -72,7 +71,7 @@ class Table:
       if column_name in columns:
         selected_column_indexes.append(i)
 
-    selected_rows: dict[Any, Any] = filter_dictionary_with_condition(self.rows, condition)
+    selected_rows: dict[Any, Any] = filter_dictionary(self.rows, condition)
     for (identifier, row) in selected_rows.items():
       filtered_row = []
       for i in selected_column_indexes:
@@ -82,7 +81,7 @@ class Table:
     return selected_rows
   
   def update(self, columns_to_values: dict[str, Any], condition: Condition) -> None:
-    rows_to_update: dict[int, list[Any]] = filter_dictionary_with_condition(self.rows, condition)
+    rows_to_update: dict[int, list[Any]] = filter_dictionary(self.rows, condition)
     identifiers_to_update: list[int] = list(rows_to_update.keys())
     column_name: str = ""
     updated_rows: dict[int, list[Any]] = {}
@@ -102,7 +101,7 @@ class Table:
   def delete_from(self, condition: Condition) -> None:
     """Deletes all values from the table where the condition statement evaluates to `True`."""
     condition_inverse: Condition = get_condition_inverse(condition)
-    undeleted_rows: dict[int, list[Any]] = filter_dictionary_with_condition(self.rows, condition_inverse)
+    undeleted_rows: dict[int, list[Any]] = filter_dictionary(self.rows, condition_inverse)
     self.rows = undeleted_rows
   
   def format_raw_row(self, raw_row: dict[str, Any]) -> list[Any]:

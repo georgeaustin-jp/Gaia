@@ -20,7 +20,7 @@ class Equipable(AbstractItem):
   
   @staticmethod
   def identical_condition(_stored_row: list[Any]) -> Condition:
-    return Condition(lambda _, row: False)
+    return lambda _, row: False
 
 def instantiate_equipable(equipable_data: list[Any], loaded: bool = True) -> Equipable:
   item_id: int = equipable_data[0]

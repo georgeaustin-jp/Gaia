@@ -4,11 +4,8 @@ import sys
 
 from tools.typing_tools import *
 
-# Note: added because it makes code more readable, more modular and is a different thing to the database itself.
-
 class FileHandler:
-  def __init__(self) -> None:
-    pass
+  def __init__(self) -> None: pass
 
   @staticmethod
   def data_path() -> str:
@@ -16,15 +13,13 @@ class FileHandler:
 
   @staticmethod
   def file_path(file_name: str) -> str:
-    toml_suffix: str = ".toml"
-    file_name_length: int = len(file_name)
-    file_name_suffix: str = file_name[file_name_length-5:]
+    toml_suffix: str = "toml"
+    file_name_suffix: str = file_name.split(".")[-1]
     if file_name_suffix != toml_suffix:
-      file_name = file_name + toml_suffix
+      file_name = file_name + f".{toml_suffix}"
     return os.path.join(FileHandler.data_path(), file_name)
   
-  def does_data_directory_exist(self) -> bool:
-    return os.path.isdir(self.data_path())
+  def does_data_directory_exist(self) -> bool: return os.path.isdir(self.data_path())
   
   def create_directory(self, directory_name: str) -> None:
     directory_path: str = os.path.join("src", directory_name)

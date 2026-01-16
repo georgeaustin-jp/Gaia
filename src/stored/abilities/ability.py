@@ -4,9 +4,6 @@ from tools.ability_names import *
 from database.condition import Condition
 
 from stored.stored import *
-from stored.abilities.abstract_ability import AbstractAbility
-from stored.abilities.parry_ability import ParryAbility
-from stored.abilities.statistic_ability import AbstractAbility
 
 from ability_action import *
 
@@ -34,12 +31,14 @@ class Ability(Stored):
   
   @staticmethod
   def identical_condition(stored_row: list[Any]) -> Condition:
-    return Condition(lambda _identifier, row: stored_row[0] == row[0] and stored_row[1] == row[1])
+    return lambda _identifier, row: stored_row[0] == row[0] and stored_row[1] == row[1]
   
   # built-in methods
 
   def __repr__(self) -> str:
-    return f"Ability(`{self.text=}`, `{self.ability_type=}`)"
+    string: str = "Ability("
+    if self.text != "": string += f"{self.text}, "
+    return string + f"{self.ability_type=})"
   
   # ability action and specialisation methods
 

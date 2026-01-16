@@ -5,7 +5,6 @@ from tools.typing_tools import *
 from tools.dictionary_tools import filter_dictionary
 from tools.exceptions import *
 from tools.constants import *
-from tools.logging_tools import *
 from tools.positional_tools import length_to_point
 
 from combat_action import CombatAction
@@ -20,13 +19,10 @@ from interface.abstract_screen import AbstractScreen
 from game_data import GameData
 
 from stored.items.weapon import Weapon
-from stored.items.equipable import Equipable
 from stored.items.inventory_item import InventoryItem
 
 from stored.abilities.item_ability import ItemAbility
 from stored.abilities.ability import Ability
-#from stored.entities.fighting_enemy import FightingEnemy
-
 from stored.abilities.parry_ability import ParryAbility
 
 type EnemyInterfaceWidgets = tuple[ToggleableButton, tk.Label, tk.Label]
@@ -34,6 +30,7 @@ type EnemyInterfaceWidgets = tuple[ToggleableButton, tk.Label, tk.Label]
 1. Button used for enemy selection
 2. Enemy attack damage label
 3. Enemy heal quantity label"""
+
 type EnemyInterfaceTextVariables = tuple[tk.StringVar, tk.StringVar, tk.StringVar]
 """Elements are as follows:
 1. Enemy name and health
@@ -41,6 +38,7 @@ type EnemyInterfaceTextVariables = tuple[tk.StringVar, tk.StringVar, tk.StringVa
 3. Amount of healing the enemy does"""
 
 def access_info_box[ReturnType](func: Callable[..., ReturnType]) -> Callable[..., ReturnType]:
+  """Decorator that allows for the text in the info box to be edited."""
   def wrapper(self, info: Optional[str] = None, *args, **kwargs) -> ReturnType:
     self.info_box["state"] = tk.NORMAL
     result: ReturnType = func(self, info, *args, **kwargs)
@@ -48,7 +46,7 @@ def access_info_box[ReturnType](func: Callable[..., ReturnType]) -> Callable[...
     return result
   return wrapper
 
-class CombatInterface(AbstractScreen):
+class CombatScreen(AbstractScreen):
   def __init__(self, root, parent: tk.Frame, game_data: GameData, **kwargs) -> None:
     self.equipped_inventory_weapon_identifiers: list[Optional[int]] = []
     self.weapon_interfaces: list[WeaponInterface] = []
@@ -111,14 +109,14 @@ class CombatInterface(AbstractScreen):
     self.equipped_inventory_weapon_identifiers = self.get_equipped_inventory_weapon_identifiers()
     weapons_length: int = self.get_equipped_inventory_weapon_identifiers_length()
     if weapons_length > Constants.MAX_EQUIPPED_WEAPONS:
-      raise ValueError(f"`{weapons_length=}` should have maximum length `{Constants.MAX_EQUIPPED_WEAPONS}`; instead has length of `{len(self.equipped_inventory_weapon_identifiers)}`")
+      raise ValueError(f"{weapons_length=} should have maximum length {Constants.MAX_EQUIPPED_WEAPONS}; instead has {len(self.equipped_inventory_weapon_identifiers)=}.")
     if weapons_length < Constants.MAX_EQUIPPED_WEAPONS:
       for _ in range(weapons_length, Constants.MAX_EQUIPPED_WEAPONS):
         self.equipped_inventory_weapon_identifiers.append(None)
   
   def get_equipped_inventory_weapon_names(self) -> list[Optional[str]]:
     if len(self.equipped_inventory_weapon_identifiers) > Constants.MAX_EQUIPPED_WEAPONS:
-      raise ValueError(f"`{self.equipped_inventory_weapon_identifiers=}` should have max length `{Constants.MAX_EQUIPPED_WEAPONS}`; instead has `{len(self.equipped_inventory_weapon_identifiers)=}`.")
+      raise ValueError(f"{self.equipped_inventory_weapon_identifiers=} should have maximum length {Constants.MAX_EQUIPPED_WEAPONS}; instead has {len(self.equipped_inventory_weapon_identifiers)=}.")
     weapon_names: list[Optional[str]] = []
     for active_weapon_id in self.equipped_inventory_weapon_identifiers:
       if active_weapon_id == None: weapon_name = None
@@ -146,7 +144,7 @@ class CombatInterface(AbstractScreen):
       return
     weapon_name: Optional[str] = self.get_equipped_inventory_weapon_names()[index]
     if weapon_name == None: 
-      raise TypeError(f"Weapon name should not be of type `None` at `{index=}` in `{self.get_equipped_inventory_weapon_names()=}` (`{weapon_name=}`)")
+      raise TypeError(f"Weapon name should not be of type `None` at {index=} in {self.get_equipped_inventory_weapon_names()=} ({weapon_name=}).")
     weapon: Weapon = self.game_data.weapons[weapon_identifier]
     attack_damage: float = weapon.damage
     weapon_parry: ParryAbility = self.game_data.get_weapon_parry(weapon)
@@ -178,7 +176,7 @@ class CombatInterface(AbstractScreen):
 
   def get_equipped_inventory_equipable_texts(self) -> list[Optional[str]]:
     if len(self.equipped_inventory_equipable_identifiers) > Constants.MAX_EQUIPPED_EQUIPABLES:
-      raise ValueError(f"`{self.equipped_inventory_equipable_identifiers=}` should have maximum length `{Constants.MAX_EQUIPPED_EQUIPABLES}`; instead has length of `{len(self.equipped_inventory_equipable_identifiers)}`")
+      raise ValueError(f"{self.equipped_inventory_equipable_identifiers=} should have maximum length {Constants.MAX_EQUIPPED_EQUIPABLES}; instead has length of {len(self.equipped_inventory_equipable_identifiers)}.")
     
     equipable_texts: list[Optional[str]] = []
     for active_equipable_id in self.equipped_inventory_equipable_identifiers:
@@ -224,7 +222,6 @@ class CombatInterface(AbstractScreen):
       self.equipable_text_variables[i].set(display)
 
   # info box
-
   @access_info_box
   def add_info(self, info: Optional[str] = None) -> None:
     info = unpack_optional_string(info, default="")
@@ -261,7 +258,7 @@ class CombatInterface(AbstractScreen):
     self.set_user_buttons_toggled(ToggleState.OFF)
 
   def set_user_buttons_state(self, state: str, include_attack: bool = True, include_parry: bool = True, include_confirm: bool = True) -> None:
-    """Sets whether the user buttons are enabled or not"""
+    """Sets whether the user buttons are enabled or not."""
     self.set_user_buttons_attributes("state", state, include_attack, include_parry, include_confirm)
 
   def enable_user_buttons(self, include_attack: bool = True, include_parry: bool = True, include_confirm: bool = True) -> None:
@@ -272,7 +269,7 @@ class CombatInterface(AbstractScreen):
 
   # weapon buttons
   def set_weapon_button_attribute(self, weapon_index: int, button_type: WeaponUIComponentName, attribute: str, value: Any) -> None:
-    if button_type not in [WeaponUIComponentName.ATTACK, WeaponUIComponentName.PARRY]: raise TypeError(f"\'button_type\'=`{button_type}` not one of `{WeaponUIComponentName.ATTACK}`, `{WeaponUIComponentName.PARRY}`.")
+    if button_type not in [WeaponUIComponentName.ATTACK, WeaponUIComponentName.PARRY]: raise TypeError(f"`button_type`=`{button_type}` not one of `{WeaponUIComponentName.ATTACK}`, `{WeaponUIComponentName.PARRY}`.")
     weapon_interface: WeaponInterface = self.weapon_interfaces[weapon_index]
     selected_button: ToggleableButton = weapon_interface[button_type]
     selected_button[attribute] = value
@@ -338,14 +335,11 @@ class CombatInterface(AbstractScreen):
 
   def update_damage_resistance_label(self) -> None:
     character_damage_resistance: float= self.game_data.get_active_character().damage_resistance
-    logging.debug(f"{character_damage_resistance=}")
     self.set_damage_resistance_label(character_damage_resistance)
 
   def wait_until_confirmed(self) -> None:
     if self.is_quitting: return None
-    logging.info("WAIT_VARIABLE START")
     self.wait_variable(self.is_confirm_pressed)
-    logging.info("WAIT_VARIABLE END")
     self.is_confirm_pressed.set(False)
 
   def get_character_action(self) -> CombatAction:

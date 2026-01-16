@@ -1,6 +1,9 @@
 # in root
 /.vscode
 /output.*
+/*_count_data.*
+/collection_to_text_config.*
+/file_structure.*
 # in source
 src/data/
 src/**/__pycache__/

@@ -24,7 +24,7 @@ class EnemyAbility(Stored):
   
   @staticmethod
   def identical_condition(enemy_ability_row: list[Any]) -> Condition:
-    return Condition(lambda _, row: False)
+    return lambda _, row: False
 
 def instantiate_enemy_ability(enemy_ability_data: list[Any] = [], loaded: bool = True) -> EnemyAbility:
   enemy_id: int = enemy_ability_data[0]

@@ -41,7 +41,7 @@ class BaseFrame(tk.Frame):
       widget.grid(column=column, row=row, **placement_args)
     if return_widget: return widget
 
-  def create_widget_on_grid[W: tk.Widget](self, widget_type: Type[W], position: Position, container: Optional[tk.Frame] = None, return_widget: bool = False, placement_options: Optional[dict[str, Any]] = None, **kwargs) -> Optional[W]:
+  def create_widget_on_grid[WidgetType: tk.Widget](self, widget_type: Type[WidgetType], position: Position, container: Optional[tk.Frame] = None, return_widget: bool = False, placement_options: Optional[dict[str, Any]] = None, **kwargs) -> Optional[WidgetType]:
     """Creates a new widget of the type specified and adds it to a grid."""
     return self.create_widget(widget_type, position=position, container=container, return_widget=return_widget, placement_options=placement_options, **kwargs)
   

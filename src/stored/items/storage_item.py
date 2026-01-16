@@ -32,7 +32,7 @@ class StorageItem(AbstractStorageItem):
   
   @staticmethod
   def identical_condition(storage_item_row: list[Any]) -> Condition:
-    return Condition(lambda _, row: False)
+    return lambda _, row: False
 
 def instantiate_storage_item(storage_item_data: list[Any] = [], loaded: bool = True) -> StorageItem:
   storage_id: int = storage_item_data[0]

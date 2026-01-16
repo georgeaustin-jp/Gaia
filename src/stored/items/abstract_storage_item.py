@@ -21,7 +21,7 @@ class AbstractStorageItem(Stored):
   
   @staticmethod
   def identical_condition(abstract_storage_item_row: list[Any]) -> Condition:
-    return Condition(lambda _, row: False)
+    return lambda _, row: False
 
 def instantiate_abstract_storage_item(abstract_storage_item_data: list[Any] = [], loaded: bool = True) -> AbstractStorageItem:
   item_id: int = abstract_storage_item_data[0]

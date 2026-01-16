@@ -2,7 +2,6 @@ import networkx as nx
 
 from tools.typing_tools import *
 from tools.constants import Constants
-from tools.logging_tools import *
 from tools.positional_tools import *
 
 class FightingEnemyGraph(Sized):
@@ -32,20 +31,10 @@ class FightingEnemyGraph(Sized):
   def __len__(self) -> int:
     return self.dimensions[0]*self.dimensions[1]
   
-  def __iter__(self):
-    self.l: int = 0
-    return self
-  
-  def __next__(self) -> Optional[int]:
-    if self.l >= len(self): raise StopIteration
-    p: Position = self.length_to_point(self.l)
-    self.l += 1
-    return self.get_fighting_enemy_id(p)
-  
   # other methods
 
   def length_to_point(self, length: int) -> Position:
-    x: int = length % self.dimensions[1]
+    x: int = length % self.dimensions[0]
     y: int = length // self.dimensions[0]
     return (x,y)
 
@@ -55,6 +44,7 @@ class FightingEnemyGraph(Sized):
     
     :param function: Takes an input of `position: Position` first, taking `**kwargs` afterward.
     :type function: Callable[..., None]
+    :param kwargs: Keyword arguments passed into `function`.
     """
     node_count: int = len(self)
     for i in range(node_count):

@@ -16,7 +16,7 @@ class DynamicButton(tk.Button):
   
   @command.setter
   def command(self, command: Callable[..., None]) -> None:
-    def command_generator() -> Callable[..., None]:
+    def command_generator() -> ButtonCommand:
       text: Optional[str] = self.text
       if text == None: raise ValueError(f"`{self.text}` mustn't be `None` at this point.")
       command_inputs = self.command_args_dict[text]

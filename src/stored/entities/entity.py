@@ -23,8 +23,7 @@ class Entity(Stored):
   
   @staticmethod
   def identical_condition(entity_row) -> Condition:
-    return Condition(lambda _, row: entity_row[0] == row[0])
-  
+    return lambda _, row: entity_row[0] == row[0]
 
 def instantiate_entity(entity_data: list[Any], loaded: bool = True) -> Entity:
   name: str = entity_data[0]

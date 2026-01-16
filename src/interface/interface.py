@@ -2,16 +2,15 @@ import tkinter as tk
 
 from tools.typing_tools import *
 from tools.constants import Constants, ScreenName
-from tools.logging_tools import *
 
 from interface.abstract_screen import AbstractScreen
 from interface.character_selection import CharacterSelection
 from interface.character_creation import CharacterCreation
 from interface.world_selection import WorldSelection
 from interface.world_creation import WorldCreation
-from interface.combat_interface import CombatInterface
+from interface.combat_screen import CombatScreen
 from interface.home_screen import HomeScreen
-from interface.storage_interface import StorageInterface
+from interface.storage_screen import StorageScreen
 from interface.exploration_screen import ExplorationScreen
 
 from game_data import GameData
@@ -40,9 +39,9 @@ class Interface(tk.Tk):
       ScreenName.CHARACTER_CREATION: CharacterCreation,
       ScreenName.WORLD_SELECTION: WorldSelection,
       ScreenName.WORLD_CREATION: WorldCreation,
-      ScreenName.COMBAT: CombatInterface,
+      ScreenName.COMBAT: CombatScreen,
       ScreenName.HOME: HomeScreen,
-      ScreenName.STORAGE: StorageInterface,
+      ScreenName.STORAGE: StorageScreen,
       ScreenName.EXPLORATION: ExplorationScreen,
     }
 
@@ -60,8 +59,8 @@ class Interface(tk.Tk):
     for screen in self.screens.values():
       screen.set_character_name_label(character_name)
 
-  def get_combat_interface(self) -> CombatInterface:
-    return cast(CombatInterface, self.screens[ScreenName.COMBAT])
+  def get_combat_screen(self) -> CombatScreen:
+    return cast(CombatScreen, self.screens[ScreenName.COMBAT])
 
   def run(self, **kwargs) -> None:
     self.show_screen(self.START_SCREEN, **kwargs)

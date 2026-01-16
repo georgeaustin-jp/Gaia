@@ -35,7 +35,7 @@ class InventoryItem(AbstractStorageItem):
   
   @staticmethod
   def identical_condition(inventory_item_row: list[Any]) -> Condition:
-    return Condition(lambda _, row: row[0] == inventory_item_row[0] and row[1] == inventory_item_row[1])
+    return lambda _, row: row[0] == inventory_item_row[0] and row[1] == inventory_item_row[1]
   
   # built-in methods
   

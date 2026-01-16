@@ -29,7 +29,7 @@ class ItemAbility(Stored):
   
   @staticmethod
   def identical_condition(item_ability_row: list[Any]) -> Condition:
-    return Condition(lambda _, row: False)
+    return lambda _, row: False
   
   # built-in methods
 

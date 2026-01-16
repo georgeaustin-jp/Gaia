@@ -15,10 +15,10 @@ class ActionType:
 @dataclass
 class Attack(ActionType):
   """
-  Docstring for Attack
-
   :param quantity: Amount of base damage the attack does.
   :type quantity: float
+  :param effects: The effects the attack applies to the target.
+  :type effects: Queue[AbilityAction]
   """
   effects: Queue[AbilityAction] = Queue()
 
@@ -31,8 +31,6 @@ class Attack(ActionType):
 @dataclass
 class Parry(ActionType):
   """
-  Docstring for Parry
-
   :param quantity: Threshold of damage received before the sender starts taking damage.
   :type quantity: float
   :param reflect_proportion: The percentage of damage blocked by the parry which will be reflected at the attacker.
@@ -43,8 +41,6 @@ class Parry(ActionType):
 @dataclass
 class Heal(ActionType):
   """
-  Docstring for Heal
-
   :param quantity: The amount the target is healed. Greater than or equal to `0`.
   :type quantity: float
   """

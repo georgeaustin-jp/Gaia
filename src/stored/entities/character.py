@@ -34,7 +34,7 @@ class Character(FightingEntity):
   
   @staticmethod
   def identical_condition(entity_row: list[Any]) -> Condition:
-    return Condition(lambda _, row: entity_row[0] == row[0] and entity_row[1] == row[1])
+    return lambda _, row: entity_row[0] == row[0] and entity_row[1] == row[1]
   
   @staticmethod
   def get_default_max_health() -> float: return 100

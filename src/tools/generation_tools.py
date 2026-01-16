@@ -1,5 +1,4 @@
 from tools.typing_tools import *
-from tools.logging_tools import *
 from tools.constants import Constants
 
 import random
@@ -64,11 +63,9 @@ def generate_random_int_in_range(lower: int, upper: int) -> int:
   if lower >= upper: raise ValueError(f"Bound {lower=} cannot be greater than or equal to bound {upper=}.")
   return random.randrange(lower, upper)
 
-def generate_structure_item_count() -> int:
-  return generate_random_int_in_range(Constants.MIN_STRUCTURE_ITEM_COUNT, Constants.MAX_STRUCTURE_ITEM_COUNT)
+def generate_structure_item_count() -> int: return generate_random_int_in_range(Constants.MIN_STRUCTURE_ITEM_COUNT, Constants.MAX_STRUCTURE_ITEM_COUNT)
 
-def generate_enemy_count() -> int:
-  return generate_random_int_in_range(Constants.MIN_ENEMIES, Constants.MAX_ENEMIES)
+def generate_enemy_count() -> int: return generate_random_int_in_range(Constants.MIN_ENEMIES, Constants.MAX_ENEMIES)
 
 def select_random_identifier(dictionary: dict[int, Any]) -> int:
   identifiers: list[int] = list(dictionary.keys())
@@ -79,6 +76,3 @@ def get_random_position(dimensions: Position) -> Position:
   x: int = generate_random_int_in_range(0, dimensions[0])
   y: int = generate_random_int_in_range(0, dimensions[1])
   return (x,y)
-
-## decision-making-related
-

@@ -34,4 +34,4 @@ class Queue[QueueType](Sized, Loggable):
 
   @log_loggable_args
   def put(self, value: QueueType) -> None:
-    self.__queue.append(value)
+    return self.__queue.append(value)

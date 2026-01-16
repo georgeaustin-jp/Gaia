@@ -2,7 +2,6 @@ from tools.typing_tools import *
 from tools.ability_names import AbilityTypeName
 from tools.constants import ItemType
 from tools.dictionary_tools import filter_dictionary
-from tools.logging_tools import *
 
 from game_data import GameData
 
@@ -243,13 +242,12 @@ class EffectManager:
     if fighting_enemy_id == None:
       effects = self.character_effects
     else:
-      logging.debug(f"{self.fighting_enemy_effects=}")
       effects = self.fighting_enemy_effects[fighting_enemy_id]
     is_ignite_ability: Callable[[ActiveEffect], bool] = lambda effect: effect.effect_ability.get_ability_type_name() == AbilityTypeName.IGNITE
     ignition_effects: list[ActiveEffect] = list(filter(lambda effect: is_ignite_ability(effect), effects))
     if len(ignition_effects) == 0: return None
     elif len(ignition_effects) == 1:
       ignition_duration: Optional[int] = ignition_effects[0].turns_remaining
-      if ignition_duration == None: raise ValueError(f"`{ignition_effects[0]=}` has `{ignition_duration=}`, which cannot be `None`.")
+      if ignition_duration == None: raise ValueError(f"{ignition_effects[0]=} has {ignition_duration=}, which cannot be `None`.")
       return ignition_duration
-    raise BufferError(f"Multiple ignition effects found: `{ignition_effects=}`.") # TODO: edit effect application to make it impossible to have multiple ignitions applied at once 
+    raise BufferError(f"Multiple ignition effects found: {ignition_effects=}.") # TODO: edit effect application to make it impossible to have multiple ignitions applied at once 

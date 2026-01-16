@@ -26,7 +26,7 @@ class ParryAbility(AbstractAbility):
   
   @staticmethod
   def identical_condition(parry_ability_row: list[Any]) -> Condition:
-    return Condition(lambda _, row: False)
+    return lambda _, row: False
   
   # built-in methods
 

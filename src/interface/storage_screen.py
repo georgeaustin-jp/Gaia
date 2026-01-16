@@ -17,7 +17,7 @@ from stored.items.abstract_storage_item import AbstractStorageItem
 
 from custom_tkinter.toggleable_button import ToggleableButton
 
-class StorageInterface(AbstractScreen):
+class StorageScreen(AbstractScreen):
   def __init__(self, root, parent: tk.Frame, game_data: GameData, **kwargs) -> None:
     self.storage_indicator = tk.StringVar()
 
@@ -122,6 +122,12 @@ class StorageInterface(AbstractScreen):
   
   # methods for loading the screen
 
+  def equip_button_command_generator(self, equip_button: ToggleableButton, abstract_storage_item_id: int, switch_button: ToggleableButton) -> ButtonCommand:
+    def equip_button_command() -> None:
+      self.game_data.toggle_inventory_item_equipped(equip_button, abstract_storage_item_id)
+      switch_button.is_enabled = not bool(equip_button.is_toggled)
+    return equip_button_command
+
   def create_item_frame(self, abstract_storage_item_id: int, index: int, container: tk.Frame, is_character_inventory: bool = False, is_equipped: bool = False, **kwargs) -> tk.Frame:
     """
     Creates a frame that contains all required information about a single item. Includes the following (from left to right):
@@ -143,16 +149,19 @@ class StorageInterface(AbstractScreen):
     # creating the frame
     item_frame: tk.Frame = unpack_optional(self.create_frame_on_grid((0,index), container=container, dimensions=(4,1), exclude_columns=[0,2,3], return_frame=True, placement_options={"sticky": "ew"}, **kwargs))
     # populating it
-    if item.item_type in [ItemType.WEAPON, ItemType.EQUIPABLE] and is_character_inventory:
-      initially_toggled = ToggleState.bool_to_state(is_equipped)
-      equip_button: ToggleableButton = unpack_optional(self.create_toggleable_button((0,0), container=item_frame, text="Equip", initially_toggled=initially_toggled, return_button=True)) # button for equipping / unequipping items
-      equip_button.command = lambda: self.game_data.toggle_inventory_item_equipped(equip_button, abstract_storage_item_id)
-    self.create_widget_on_grid(tk.Label, (1,0), container=item_frame, text=item_name) # name of item
-    self.create_widget_on_grid(tk.Label, (2,0), container=item_frame, text=f"({str(stack_size)})") # stack size
-
+    ## inventory-switching button
     switch_button = unpack_optional(self.create_toggleable_button((3,0), container=item_frame, text=self.get_storage_switch_button_text(is_character_inventory), return_button=True)) # for switching between storage and inventory
     if is_character_inventory: self.inventory_item_swap_buttons[abstract_storage_item_id] = switch_button
     else: self.storage_item_swap_buttons[abstract_storage_item_id] = switch_button
+    ## equipping button
+    if item.item_type in [ItemType.WEAPON, ItemType.EQUIPABLE] and is_character_inventory:
+      initially_toggled = ToggleState.bool_to_state(is_equipped)
+      equip_button: ToggleableButton = unpack_optional(self.create_toggleable_button((0,0), container=item_frame, text="Equip", initially_toggled=initially_toggled, return_button=True)) # button for equipping / unequipping items
+      equip_button.command = self.equip_button_command_generator(equip_button, abstract_storage_item_id, switch_button)
+      switch_button.is_enabled = not initially_toggled
+    ## other
+    self.create_widget_on_grid(tk.Label, (1,0), container=item_frame, text=item_name) # name of item
+    self.create_widget_on_grid(tk.Label, (2,0), container=item_frame, text=f"({str(stack_size)})") # stack size
 
     return item_frame
   
@@ -226,7 +235,6 @@ class StorageInterface(AbstractScreen):
     self.return_button = self.create_return(**kwargs)
 
   def create_return(self, **kwargs) -> tk.Button:
-    logging.debug(f"{self.game_data.is_storage_at_home()=}")
     if self.game_data.is_storage_at_home():
       return super().create_return(ScreenName.HOME, return_message="Return to home screen", **kwargs)
     else:

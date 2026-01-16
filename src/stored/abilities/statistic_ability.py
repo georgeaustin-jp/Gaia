@@ -26,7 +26,7 @@ class StatisticAbility(AbstractAbility):
   
   @staticmethod
   def identical_condition(statistic_ability_row: list[Any]) -> Condition:
-    return Condition(lambda _, row: statistic_ability_row[0] == row[0])
+    return lambda _, row: statistic_ability_row[0] == row[0]
   
   # offensiveness and decision-making methods
 

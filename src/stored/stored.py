@@ -27,7 +27,7 @@ class Stored:
   
   @staticmethod
   def identical_condition(_stored_row: list[Any]) -> Condition:
-    return Condition(lambda _, _row: False)
+    return lambda _, _row: False
 
 def instantiate_stored(_stored_data: list[Any] = [], loaded: bool = True) -> Stored:
   return Stored()
@@ -57,7 +57,7 @@ class SUBCLASS(Stored):
   
   @staticmethod
   def identical_condition(sub_class_row: list[Any]) -> Condition:
-    return Condition(lambda _, row: False)
+    return lambda _, row: False
 
 def instantiate_sub_class(sub_class_data: list[Any] = [], loaded: bool = True) -> SUBCLASS:
   return SUBCLASS()

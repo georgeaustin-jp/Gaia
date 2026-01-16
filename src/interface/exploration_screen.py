@@ -29,7 +29,6 @@ class ExplorationScreen(AbstractScreen):
     self.continue_exploration_button["state"] = tk.NORMAL
 
   def reload_gui(self) -> None:
-    logging.debug(f"{self.is_entering_combat=}, {self.is_entering_structure=}")
     if self.is_nothing_happening(): self.reset_gui()
     elif self.is_entering_combat: # if the character has just finished combat
       self.make_combat_unavailable()

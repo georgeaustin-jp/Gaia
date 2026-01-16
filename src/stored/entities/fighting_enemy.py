@@ -49,13 +49,9 @@ class FightingEnemy(FightingEntity):
   
   @staticmethod
   def identical_condition(fighting_enemy_row: list[Any]) -> Condition:
-    return Condition(lambda _, row: False)
+    return lambda _, row: False
   
   # built-in methods
-
-  @validate_action_name
-  def get_action_offensiveness(self, action_name: ActionName) -> float:
-    return self.__action_offensiveness_table[action_name]
   
   @validate_action_name
   def set_action_offensiveness(self, action_name: ActionName, offensiveness: float) -> None:

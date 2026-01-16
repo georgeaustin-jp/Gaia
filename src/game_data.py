@@ -1,12 +1,11 @@
 from tools.typing_tools import *
-from tools.logging_tools import *
 from tools.constants import *
 from tools.dictionary_tools import filter_dictionary, get_next_available_identifier
 from tools.generation_tools import *
 from tools.ability_names import *
 
 from database.database import Database
-from database.condition import Condition, everything, nothing, matching_identifiers
+from database.condition import Condition, everything, matching_identifiers
 
 from stored.stored import Stored
 from stored.user import User
@@ -38,7 +37,7 @@ from data_structures.queue import Queue
 class GameData:
   def __init__(self) -> None:
     self.save_on_delete: bool = True # determines whether the current state of the database will be saved once it is deleted
-
+    
     self.database = Database("game_data")
 
     self.users: dict[int, User] = {}
@@ -56,7 +55,7 @@ class GameData:
 
     self.storages: dict[int, Storage] = {}
     self.storage_items: dict[int, StorageItem] = {}
-    self.active_storage_id: Optional[int] = None # placeholder, TODO: set default value to `None`
+    self.active_storage_id: Optional[int] = None
     self.home_storage: Optional[int] = None
     self.away_storage: Optional[int] = None
 
@@ -105,7 +104,7 @@ class GameData:
     }
 
     self.table_templates: dict[TableName, list[str]] = { # comments next to templates indicate whether each has been given their own storage variables in `GameData`
-      TableName.USER: ["UserID", "Name", "PasswordHash", "CharacterQuantity", "WorldQuantity"], # Y
+      TableName.USER: ["UserID", "Name"], # Y
       TableName.CHARACTER: ["CharacterID", "UserID", "Name", "Health", "MaxHealth"], # Y
       TableName.WORLD: ["WorldID", "UserID", "Name", "Seed"], # Y
       TableName.INVENTORY_ITEM: ["InventoryItemID", "CharacterID", "ItemID", "StackSize", "Equipped"], # Y
@@ -114,7 +113,7 @@ class GameData:
 
       TableName.ITEM: ["ItemID", "ItemType", "Name"], # Y
       TableName.ITEM_ABILITY: ["ItemAbilityID", "ItemID", "AbilityID"], # Y
-      TableName.WEAPON: ["WeaponID", "ItemID", "Damage", "UsesAmmunition", "ManaUsed", "Active"], # Y
+      TableName.WEAPON: ["WeaponID", "ItemID", "Damage", "Active"], # Y
       TableName.EQUIPABLE: ["EquipableID", "ItemID"], # Y
       TableName.ABILITY: ["AbilityID", "Text", "Type"], # Y
       TableName.PARRY_ABILITY: ["ParryAbilityID", "AbilityID", "DamageThreshold", "ReflectionProportion"], # Y
@@ -159,16 +158,16 @@ class GameData:
     """Called only once: by parent `App` after being initialised. Loads the database into memory, creating it if it doesn't already exist in storage. If the database doesn't already exist in storage, some default data is created."""
     database_exists: bool = self.database_exists()
     if not database_exists:
-      self.init_database_main() # creates a database with an empty `MAIN.toml` file.
+      self.init_database() # creates a database with an empty `MAIN.toml` file.
       self.load_default_data() # default data is loaded into `GameData` memory ONLY.
-    existing_table_names: list[str] = self.database.load_main_data()
-    self.load_database()
-    self.create_tables(existing_table_names) 
-    self.save()
-    self.load()
-    logging.debug(f"{self.characters}")
+    else:
+      existing_table_names: list[str] = self.database.load_main_data()
+      self.load_database()
+      self.create_tables(existing_table_names) 
+      self.save()
+      self.load()
   
-  def init_database_main(self, table_names: list[str] = []) -> None:
+  def init_database(self, table_names: list[str] = []) -> None:
     """
     Called when no database exists in order to create a new one for use. Only creates the `MAIN.toml` file.
     
@@ -176,46 +175,222 @@ class GameData:
     :type table_names: list[str]
     """
     self.database.create_main(table_names)
+    self.database.init_tables(self.table_templates)
     self.save()
 
   def load_default_data(self) -> None:
     """Loads data into `self` after a new database has been initialised."""
-    self.users = {0: User("User", "1234", loaded=False)}
+    self.users = {0: User("User", loaded=False)}
     self.items = {
-      0: Item(ItemType.WEAPON, "Bronze sword", loaded=False),
-      1: Item(ItemType.WEAPON, "Mace", loaded=False),
-      2: Item(ItemType.WEAPON, "Dagger", loaded=False),
+      # 12 weapons (2 starter)
+      ## starters
+      0: Item(ItemType.WEAPON, "Tin Dagger", loaded=False),
+      1: Item(ItemType.WEAPON, "Mahogany Staff", loaded=False),
+      ## daggers: high damage with weak parry
+      2: Item(ItemType.WEAPON, "Glass Dagger", loaded=False),
+      3: Item(ItemType.WEAPON, "Surtur's Brimstone Dagger", loaded=False),
+      ## staffs: low-to-mid damage with high tolerance and low reflection parry
+      4: Item(ItemType.WEAPON, "Spear-Staff", loaded=False),
+      5: Item(ItemType.WEAPON, "Runic Sceptre", loaded=False),
+      ## swords: all-rounders
+      6: Item(ItemType.WEAPON, "Excalibur", loaded=False),
+      7: Item(ItemType.WEAPON, "Crimson Broadsword", loaded=False),
+      8: Item(ItemType.WEAPON, "Sabre of the World Tree", loaded=False),
+      ## misc
+      9: Item(ItemType.WEAPON, "The Mace", loaded=False),
+      10: Item(ItemType.WEAPON, "Gauntlets of Muspelheim", loaded=False),
+      11: Item(ItemType.WEAPON, "Pickaxe-Axe", loaded=False),
+
+      # 11 equipables (2 starter)
+      ## starters
+      12: Item(ItemType.WEAPON, "Leather Boots", loaded=False),
+      13: Item(ItemType.WEAPON, "Tunic", loaded=False),
+      ## accessories: medium damage resistance
+      14: Item(ItemType.WEAPON, "Hardened Gloves", loaded=False),
+      15: Item(ItemType.WEAPON, "Runes of Protection", loaded=False),
+      16: Item(ItemType.WEAPON, "Damaged Shield", loaded=False),
+      17: Item(ItemType.WEAPON, "Resistance Charm", loaded=False),
+      18: Item(ItemType.WEAPON, "Mask", loaded=False),
+      ## armour: high damage resistance
+      19: Item(ItemType.WEAPON, "Traveller's Helmate", loaded=False),
+      20: Item(ItemType.WEAPON, "Traveller's Breastplate", loaded=False),
+      21: Item(ItemType.WEAPON, "Traveller's Leggings", loaded=False),
+      22: Item(ItemType.WEAPON, "Traveller's Boots", loaded=False),
     }
     self.weapons = {
-      0: Weapon(0, 10, loaded=False),
-      1: Weapon(1, 15, loaded=False),
-      2: Weapon(2, 5, loaded=False),
+      0: Weapon(0, 7, loaded=False), # Tin Dagger
+      1: Weapon(1, 4, loaded=False), # Mahogany Staff
+      2: Weapon(2, 22, loaded=False), # Glass Dagger
+      3: Weapon(3, 18, loaded=False), # Surtur's Brimstone Dagger
+      4: Weapon(4, 13, loaded=False), # Spear-Staff
+      5: Weapon(5, 6, loaded=False), # Runic Sceptre
+      6: Weapon(6, 19, loaded=False), # Excalibur
+      7: Weapon(7, 15, loaded=False), # Crimson Broadsword
+      8: Weapon(8, 13, loaded=False), # Sabre of the World Tree
+      9: Weapon(9, 10, loaded=False), # The Mace
+      10: Weapon(10, 8, loaded=False), # Gauntlets of Muspelheim
+      11: Weapon(11, 16, loaded=False), # Pickaxe-Axe
     }
     self.equipables = {
-
-    }
-    self.inventory_items = {
-      0: InventoryItem(0, 0, 1, True, loaded=False),
-      1: InventoryItem(0, 1, 1, True, loaded=False),
-      2: InventoryItem(0, 2, 1, True, loaded=False),
+      0: Equipable(12, loaded=False),
+      1: Equipable(13, loaded=False),
+      2: Equipable(14, loaded=False),
+      3: Equipable(15, loaded=False),
+      4: Equipable(16, loaded=False),
+      5: Equipable(17, loaded=False),
+      6: Equipable(18, loaded=False),
+      7: Equipable(19, loaded=False),
+      8: Equipable(20, loaded=False),
+      9: Equipable(21, loaded=False),
+      10: Equipable(22, loaded=False),
     }
     self.enemies = {
-      0: Enemy("Shep", 5, 1, 0.1, False),
-      1: Enemy("Skeleton", 10, 5, 0.5, False),
+      # 15 regular enemies
+      ## skeleton
+      0: Enemy("Skeleton", 18, 6, 20, is_boss=False, loaded=False),
+      1: Enemy("Brimstone Skeleton", 15, 5, 17, is_boss=False, loaded=False),
+      2: Enemy("Skeleton Archer", 17, 5, 23, is_boss=False, loaded=False),
+      3: Enemy("Armoured Skeleton", 26, 5, 22, is_boss=False, loaded=False),
+      ## spiders
+      4: Enemy("Hunting Spider", 8, 3, 10, is_boss=False, loaded=False),
+      5: Enemy("Large Hunting Spider", 13, 5, 12, is_boss=False, loaded=False),
+      6: Enemy("Vampiric Hunting Spider", 12, 5, 16, is_boss=False, loaded=False),
+      ## possesed objects
+      7: Enemy("Possesed Armour", 38, 8, 24, is_boss=False, loaded=False),
+      8: Enemy("Posessed Blades", 23, 10, 19, is_boss=False, loaded=False),
+      9: Enemy("Posessed Flaming Skull", 8, 5, 28, is_boss=False, loaded=False),
+      ## misc
+      10: Enemy("Mimic", 19, 15, 35, is_boss=False, loaded=False),
+      11: Enemy("Chaos Spawn", 17, 10, 50, is_boss=False, loaded=False),
+      12: Enemy("Resurrected Knight", 26, 12, 40, is_boss=False, loaded=False),
+      13: Enemy("Rabid Boar", 12, 4, 8, is_boss=False, loaded=False),
+      14: Enemy("Shep", 5, 1, 1, is_boss=False, loaded=False),
+      # 3 bosses
+      15: Enemy("Elite Skeleton Warrior", 125, 26, 90, is_boss=True, loaded=False),
+      16: Enemy("Giant Hunting Spider", 160, 21, 80, is_boss=True, loaded=False),
+      17: Enemy("Seeker of Chaos", 100, 35, 120, is_boss=True, loaded=False),
+    }
+    self.enemy_abilities = {
+      # ignition
+      0: EnemyAbility(1, 0, is_used_in_attack=True, loaded=False),
+      1: EnemyAbility(9, 0, is_used_in_attack=True, loaded=False),
+      2: EnemyAbility(11, 0, is_used_in_attack=True, loaded=False),
+      3: EnemyAbility(17, 0, is_used_in_attack=True, loaded=False),
+      # piercing
+      4: EnemyAbility(2, 1, is_used_in_attack=True, loaded=False),
+      5: EnemyAbility(6, 1, is_used_in_attack=True, loaded=False),
+      6: EnemyAbility(8, 1, is_used_in_attack=True, loaded=False),
+      7: EnemyAbility(12, 1, is_used_in_attack=True, loaded=False),
+      # weakening
+      8: EnemyAbility(7, 2, is_used_in_attack=True, loaded=False),
+      9: EnemyAbility(10, 3, is_used_in_attack=True, loaded=False),
+      10: EnemyAbility(13, 3, is_used_in_attack=True, loaded=False),
+      11: EnemyAbility(16, 3, is_used_in_attack=True, loaded=False),
+      # healing
+      12: EnemyAbility(0, 4, is_used_in_attack=True, loaded=False),
+      13: EnemyAbility(2, 4, is_used_in_attack=True, loaded=False),
+      14: EnemyAbility(3, 4, is_used_in_attack=True, loaded=False),
+      15: EnemyAbility(6, 5, is_used_in_attack=True, loaded=False),
+      16: EnemyAbility(7, 4, is_used_in_attack=True, loaded=False),
+      17: EnemyAbility(10, 6, is_used_in_attack=True, loaded=False),
+      18: EnemyAbility(11, 5, is_used_in_attack=True, loaded=False),
+      19: EnemyAbility(12, 5, is_used_in_attack=True, loaded=False),
+      20: EnemyAbility(15, 4, is_used_in_attack=True, loaded=False),
+      21: EnemyAbility(16, 5, is_used_in_attack=True, loaded=False),
+      22: EnemyAbility(17, 6, is_used_in_attack=True, loaded=False),
     }
     self.abilities = {
-      0: Ability("Small heal", AbilityTypeName.HEAL),
-      1: Ability("Moderate heal", AbilityTypeName.HEAL),
-      2: Ability("Significant heal", AbilityTypeName.HEAL),
+      # general abilities
+      0: Ability("Sets fire to the target, dealing 3 damage-per-turn for 3 turns", AbilityTypeName.IGNITE, loaded=False),
+      1: Ability("Damage received is not reduced by resistances", AbilityTypeName.PIERCE, loaded=False),
+      2: Ability("Cursed", AbilityTypeName.WEAKEN, loaded=False),
+      # enemy abilities
+      ## weakening
+      3: Ability("Weakened immune system", AbilityTypeName.WEAKEN, loaded=False),
+      ## healing
+      4: Ability("Small heal", AbilityTypeName.HEAL, loaded=False),
+      5: Ability("Moderate heal", AbilityTypeName.HEAL, loaded=False),
+      6: Ability("Significant heal", AbilityTypeName.HEAL, loaded=False),
+      # item abilities
+      ## weapons
+      ### parrying
+      7: Ability("", AbilityTypeName.PARRY, loaded=False), # Mahogany Staff
+      8: Ability("", AbilityTypeName.PARRY, loaded=False), # Surtur's Brimstone Dagger
+      9: Ability("", AbilityTypeName.PARRY, loaded=False), # Spear-Staff
+      10: Ability("", AbilityTypeName.PARRY, loaded=False), # Runic Sceptre
+      11: Ability("", AbilityTypeName.PARRY, loaded=False), # Crimson Broadsword
+      12: Ability("", AbilityTypeName.PARRY, loaded=False), # Sabre of the World Tree
+      13: Ability("", AbilityTypeName.PARRY, loaded=False), # The Mace
+      14: Ability("", AbilityTypeName.PARRY, loaded=False), # Gauntlets of Muspelheim
+      15: Ability("", AbilityTypeName.PARRY, loaded=False), # Pickaxe-Axe
+      ## equipables
+      16: Ability("Low resistance", AbilityTypeName.DEFEND, loaded=False),
+      17: Ability("Medium resistance", AbilityTypeName.DEFEND, loaded=False),
+      18: Ability("High resistance", AbilityTypeName.DEFEND, loaded=False),
     }
     self.statistic_abilities = {
-      0: StatisticAbility(0, AbilityTypeName.HEAL, 10, 1),
-      1: StatisticAbility(1, AbilityTypeName.HEAL, 20, 1),
-      2: StatisticAbility(2, AbilityTypeName.HEAL, 30, 1),
+      # healing
+      0: StatisticAbility(4, AbilityTypeName.HEAL, 5, 1, loaded=False),
+      1: StatisticAbility(5, AbilityTypeName.HEAL, 10, 1, loaded=False),
+      2: StatisticAbility(6, AbilityTypeName.HEAL, 15, 1, loaded=False),
+      # weaken
+      3: StatisticAbility(2, AbilityTypeName.WEAKEN, 0.15, 2, loaded=False), # curse
+      4: StatisticAbility(3, AbilityTypeName.WEAKEN, 0.1, 2, loaded=False), # immune system
+      # defend
+      5: StatisticAbility(16, AbilityTypeName.DEFEND, 0.01, None, loaded=False),
+      6: StatisticAbility(17, AbilityTypeName.DEFEND, 0.025, None, loaded=False),
+      7: StatisticAbility(18, AbilityTypeName.DEFEND, 0.05, None, loaded=False),
+    }
+    self.parry_abilities = {
+      0: ParryAbility(7, 10, 0.25, loaded=False),
+      1: ParryAbility(8, 5, 0.8, loaded=False),
+      2: ParryAbility(9, 12, 0.6, loaded=False),
+      3: ParryAbility(10, 13, 0.15, loaded=False),
+      4: ParryAbility(11, 11, 0.4, loaded=False),
+      5: ParryAbility(12, 9, 0.9, loaded=False),
+      6: ParryAbility(13, 14, 0.3, loaded=False),
+      7: ParryAbility(14, 16, 0.3, loaded=False),
+      8: ParryAbility(15, 10, 0.55, loaded=False),
+    }
+    self.item_abilities = {
+      # ignition
+      0: ItemAbility(3, 0, loaded=False),
+      1: ItemAbility(10, 0, loaded=False),
+      # piercing
+      2: ItemAbility(2, 1, loaded=False),
+      3: ItemAbility(4, 1, loaded=False),
+      4: ItemAbility(9, 1, loaded=False),
+      5: ItemAbility(11, 1, loaded=False),
+      # weakening
+      6: ItemAbility(5, 2, loaded=False),
+      7: ItemAbility(7, 2, loaded=False),
+      8: ItemAbility(10, 2, loaded=False),
+      # defending
+      9: ItemAbility(12, 16, loaded=False),
+      10: ItemAbility(13, 16, loaded=False),
+      11: ItemAbility(14, 17, loaded=False),
+      12: ItemAbility(15, 17, loaded=False),
+      13: ItemAbility(16, 17, loaded=False),
+      14: ItemAbility(17, 17, loaded=False),
+      15: ItemAbility(18, 17, loaded=False),
+      16: ItemAbility(19, 18, loaded=False),
+      17: ItemAbility(20, 18, loaded=False),
+      18: ItemAbility(21, 18, loaded=False),
+      19: ItemAbility(22, 18, loaded=False),
+      # parrying
+      20: ItemAbility(1, 7, loaded=False),
+      21: ItemAbility(3, 8, loaded=False),
+      22: ItemAbility(4, 9, loaded=False),
+      23: ItemAbility(5, 10, loaded=False),
+      24: ItemAbility(7, 11, loaded=False),
+      25: ItemAbility(8, 12, loaded=False),
+      26: ItemAbility(9, 13, loaded=False),
+      27: ItemAbility(10, 14, loaded=False),
+      28: ItemAbility(11, 15, loaded=False),
     }
 
-
   def create_tables(self, existing_table_names: list[str]) -> None:
+    """Initialises all given tables in memory."""
     for (table_name, table_columns) in self.table_templates.items():
       if not table_name in existing_table_names:
         self.database.create_table(table_name, table_columns)
@@ -245,7 +420,7 @@ class GameData:
       storage_name = storage_options[0]
       is_in_database = storage_options[1]
     else:
-      raise TypeError(f"`{storage_options=}`, with `{type(storage_options)=}`, doesn't match with any expected type (`StorageAttrName`, `tuple[StorageAttrName, bool]`).")
+      raise TypeError(f"{storage_options=} with {type(storage_options)=}, doesn't match with any expected type (`StorageAttrName`, `tuple[StorageAttrName, bool]`).")
 
     return (storage_name, is_in_database)
 
@@ -281,7 +456,7 @@ class GameData:
     :param raw_data: The data which is to take the place of the existing data found in the database.
     :type raw_data: list[Any]
     """
-    match_condition = Condition(lambda id, _row: id == identifier) 
+    match_condition = lambda id, _row: id == identifier
     self.update_database(table_name, raw_data, match_condition)
 
   def insert_into_database(self, table_name: TableName, raw_data: list[Any], identifier: Optional[int] = None) -> Optional[int]:
@@ -303,7 +478,7 @@ class GameData:
     return True
     
   def select_from_storage[StoredType: Stored](self, storage: dict[int, StoredType], condition: Condition) -> dict[int, StoredType]:
-    return {identifier: stored for identifier, stored in storage.items() if condition.evaluate(identifier, stored.get_raw_data())}
+    return {identifier: stored for identifier, stored in storage.items() if condition(identifier, stored.get_raw_data())}
 
   def is_stored_unique_in_self[StoredType: Stored](self, storage_name: StorageAttrName, identical_condition: Condition) -> bool:
     storage: dict[int, StoredType] = getattr(self, storage_name)
@@ -316,7 +491,7 @@ class GameData:
     return self.is_stored_unique_in_table(table_name, identical_condition) and self.is_stored_unique_in_self(storage_name, identical_condition) # if either are false, then the stored must not be unique
 
   # returns the stored's identifier and the stored which was created
-  def insert_stored[StoredType: Stored](self, stored_type: Type[StoredType], stored_data: list[Any], identical_condition: Condition, storage_name: StorageAttrName) -> tuple[int, StoredType]:
+  def insert_stored[StoredType: Stored](self, stored_type: Type[StoredType], stored_data: list[Any], storage_name: StorageAttrName) -> tuple[int, StoredType]:
     """
     Inserts a record both into the database and the appropriate storage attribute in `self`. Automatically finds the next insertion point.
     
@@ -324,44 +499,26 @@ class GameData:
     :type stored_type: type[StoredType]
     :param stored_data: The raw data of a single `StoredType` object. Does not include the identifier of the object.
     :type stored_data: list[Any]
-    :param identical_condition: What must be true if 2 objects are identical.
-    :type identical_condition: Condition
     :param storage_name: The storage attribute of `self` which the created object will be stored at.
     :type storage_name: StorageAttrName
     :return: A tuple, with the first element being the stored identifier and the second element being the newly created object.
     :rtype: tuple[int, StoredType]
     """
     table_name: TableName = stored_type.get_table_name()
+    identical_condition: Condition = stored_type.identical_condition(stored_data)
     new_stored: StoredType = cast(StoredType, stored_type.instantiate(stored_data))
     if not self.is_stored_unique(stored_type, storage_name, identical_condition):
       del new_stored
       raise Exception(f"stored object (type `{stored_type}`) with data `{stored_data}` already exists in table `{table_name}`.")
     identifier: int = get_next_available_identifier(getattr(self, storage_name)) # generates its own identifier instead of relying on the database to generate it
-    logging.debug(f"{identifier=}, {stored_type=}, {stored_data=}")
     self.insert_into_database(table_name, stored_data, identifier)
     self.insert_into_storage(storage_name, identifier, new_stored)
     return (identifier, new_stored)
-
-  def insert_user(self, raw_data: list[Any]) -> int:
-    identical_condition = Condition(lambda _identifier, row: row[0] == raw_data[0]) # checks if user
-    (identifier, _) = self.insert_stored(User, raw_data, identical_condition, StorageAttrName.USERS)
-    return identifier
-
-  def insert_character(self, raw_data: list[Any]) -> int:
-    identical_condition = Condition(lambda _identifier, row: row[1] == raw_data[1])
-    (identifier, _) = self.insert_stored(Character, raw_data, identical_condition, StorageAttrName.CHARACTERS)
-    return identifier
-
-  def insert_world(self, raw_data: list[Any]) -> int:
-    identical_condition = Condition(lambda _identifier, row: row[1] == raw_data[1])
-    (identifier, _) = self.insert_stored(World, raw_data, identical_condition, StorageAttrName.WORLDS)
-    return identifier
 
   def save_stored[StoredType: Stored](self, stored_type: Type[StoredType], storage_name: StorageAttrName) -> None:
     """
     Saves from one variable in the `GameData` object to `Database`. Does not insert objects into their respective variables in `self`.
     
-    :param self: Object the method is called on.
     :param stored_type: The object type that is to be saved, being a subclass of `StoredType`.
     :type stored_type: Type[StoredType]
     :param storage_name: Name of the variable being saved to memory.
@@ -377,7 +534,7 @@ class GameData:
         self.insert_into_database(table_name, raw_data)
 
   def save(self) -> None:
-    """Saves all targeted data stored in memory (in \'self\') to the database."""
+    """Saves all targeted data stored in memory (in `self`) to the database."""
     for (target, storage_options) in self.save_load_targets.items():
       (storage_name, is_in_database) = self.get_save_load_storage_options(storage_options)
       if not is_in_database: continue # skips if not stored in database
@@ -385,7 +542,7 @@ class GameData:
     self.database.save()
 
   def delete_stored[StoredType: Stored](self, stored_type: Type[StoredType], identifier: int, storage_name: StorageAttrName) -> None:
-    """Deletes a specific value from both the appropriate storage attribute in \'self\' and the subsequent table in \'Database\'."""
+    """Deletes a specific value from both the appropriate storage attribute in `self` and the subsequent table in `Database`."""
     # deleting from 'self'
     updated_storage: dict[int, StoredType] = getattr(self, storage_name)
     del updated_storage[identifier]
@@ -395,17 +552,6 @@ class GameData:
     condition: Condition = matching_identifiers(identifier)
     self.database.delete_from(table_name, condition)
 
-  # user methods
-
-  def set_active_user(self, user: User) -> None:
-    self.active_user = user
-
-  def get_user_names(self) -> list:
-    user_names: list = []
-    for user in self.users.values():
-      user_names.append(user.name) 
-    return user_names
-  
   # weapon methods
   
   def get_weapon_name(self, weapon_id: int) -> str:
@@ -429,14 +575,14 @@ class GameData:
     weapon_parry_abilities_identifiers: list[int] = list(weapon_parry_abilities.keys())
     parries_dict: dict[int, ParryAbility] = filter_dictionary(self.parry_abilities, lambda _, parry_ability: parry_ability.ability_id in weapon_parry_abilities_identifiers)
     parries_list: list[ParryAbility] = list(parries_dict.values())
-    if len(parries_list) != 1: raise LookupError(f"Multiple or no parry abilities found for `{weapon=}`: `{parries_dict=}`.")
+    if len(parries_list) != 1: raise LookupError(f"Multiple or no parry abilities found for {weapon=} ({parries_dict=}).")
     return parries_list[0]
   
   # character methods
   
   def get_active_character(self) -> Character:
     if self.active_character_id == None:
-      raise AttributeError(f"Trying to access \'self.active_character_id\' when no active character has been selected (\'self.active_character_id\'=\'None\')")
+      raise AttributeError(f"Trying to access `active_character_id` when no active character has been selected ({self.active_character_id=}).")
     active_character: Character = self.characters[self.active_character_id]
     return active_character
   
@@ -516,7 +662,6 @@ class GameData:
   def toggle_inventory_item_equipped(self, toggleable_button: ToggleableButton, inventory_item_id: int) -> None:
     being_equipped: bool = bool(toggleable_button.is_toggled)
     self.set_inventory_item_equipped(inventory_item_id, being_equipped)
-    logging.debug(f"\'self.inventory_items\'=`{self.inventory_items}`")
   
   def get_relevant_storage_items(self, storage_id: int) -> dict[int, StorageItem]:
     filter_expression: Callable[[int, StorageItem], bool] = lambda _, storage_item: storage_item.storage_id == storage_id
@@ -528,17 +673,15 @@ class GameData:
     item_id: int = inventory_item.item_id
     stack_size: int = inventory_item.stack_size
     # TODO: handle what happens if the item is equipped such that it doesn't throw an error
-    if inventory_item.equipped: raise Exception("Moving inventory items while they are equipped is not yet implemented")
+    if inventory_item.equipped: raise Exception("Moving inventory items while they are equipped is not yet implemented.")
     raw_storage_item_data: list[Any] = [storage_id, item_id, stack_size]
     
     same_item: Callable[[int, StorageItem], bool] = lambda _, storage_item: storage_id == storage_item.storage_id and item_id == storage_item.item_id
     matching_items: dict[int, StorageItem] = filter_dictionary(self.storage_items, same_item)
     matching_items_quantity: int = len(matching_items)
-    logging.debug(f"| BEFORE MOVE (inv->store): \'matching_items_quantity\'=`{matching_items_quantity}`")
 
     if matching_items_quantity == 0: # if there are no items of the same type (in the target storage)
-      identical_condition = Condition(lambda _identifier, _row: False) # there must be no matching items for this block to execute, so there is no need for a functional identical condition
-      self.insert_stored(StorageItem, raw_storage_item_data, identical_condition, StorageAttrName.STORAGE_ITEMS)
+      self.insert_stored(StorageItem, raw_storage_item_data, StorageAttrName.STORAGE_ITEMS)
     elif matching_items_quantity == 1: # if there is one instance of same-type items (in the target storage)
       matched_item_id: int = list(matching_items.keys())[0] # there will always be an item at index 0
       matched_item: StorageItem = list(matching_items.values())[0] 
@@ -547,10 +690,9 @@ class GameData:
       self.update_database_record(StorageItem.get_table_name(), matched_item_id, raw_storage_item_data)
       self.storage_items[matched_item_id].stack_size = new_stack_size
     else: # erroneous case where there are 2 or more matches
-      raise Exception(f"\'matching_items_quantity\'=`{matching_items_quantity}` greater than \'1\' (\'matching_items\'=`{matching_items}`)")
+      raise Exception(f"{matching_items_quantity=} greater than `1` ({matching_items=}).")
     
     self.delete_stored(InventoryItem, inventory_item_id, StorageAttrName.INVENTORY_ITEMS)
-    logging.debug(f"| AFTER MOVE (inv->store): \'matching_items_quantity\'=`{matching_items_quantity}`")
 
   def move_storage_item_to_inventory(self, storage_item_id: int) -> None:
     character_id: int = unpack_optional(self.active_character_id) # 'unpack_optional' should never throw an exception here
@@ -563,11 +705,9 @@ class GameData:
     same_item: Callable[[int, InventoryItem], bool] = lambda _,inv_item: character_id == inv_item.character_id and item_id == inv_item.item_id
     matching_items: dict[int, InventoryItem] = filter_dictionary(self.inventory_items, same_item)
     matching_items_quantity: int = len(matching_items)
-    logging.debug(f"| BEFORE MOVE (store->inv): \'matching_items_quantity\'=`{matching_items_quantity}`")
 
     if matching_items_quantity == 0: # if there are no items of the same type in the target storage
-      identical_condition = Condition(lambda _identifier, _row: False) # there must be no matching items for this block to execute, so there is no need for a functional identical condition
-      self.insert_stored(InventoryItem, raw_inventory_item_data, identical_condition, StorageAttrName.INVENTORY_ITEMS)
+      self.insert_stored(InventoryItem, raw_inventory_item_data, StorageAttrName.INVENTORY_ITEMS)
     elif matching_items_quantity == 1: # if there is one instance of items of the same type in the target storage
       matched_item_id: int = list(matching_items.keys())[0]
       matched_item: InventoryItem = list(matching_items.values())[0] # there will always be an item at index 0
@@ -576,20 +716,18 @@ class GameData:
       self.update_database_record(InventoryItem.get_table_name(), matched_item_id, raw_inventory_item_data)
       self.inventory_items[matched_item_id].stack_size = new_stack_size
     else: # erroneous case where there are 2 or more matches
-      raise Exception(f"\'matching_items_quantity\'=`{matching_items_quantity}` greater than \'1\' (\'matching_items\'=`{matching_items}`)")
+      raise Exception(f"{matching_items_quantity=} greater than `1` ({matching_items=}).")
     
     self.delete_stored(StorageItem, storage_item_id, StorageAttrName.STORAGE_ITEMS)
-    logging.debug(f"| AFTER MOVE (store->inv): \'matching_items_quantity\'=`{matching_items_quantity}`")
 
   def is_storage_at_home(self) -> Optional[bool]:
-    """Determines whether the storage is a \"Home\" storage or not."""
+    """Determines whether the storage is a `Home` storage or not."""
     storage_id: Optional[int] = self.active_storage_id
     if storage_id == None: return None
-    logging.debug(f"{storage_id=}")
     storage_type: StorageType = self.storages[storage_id].storage_type
     if storage_type == StorageType.HOME: return True
     elif storage_type == StorageType.CHEST: return False
-    else: raise ValueError(f"Unknown \'storage_type\'=`{storage_type}`")
+    else: raise ValueError(f"Unknown {storage_type=}.")
 
   def get_inventory_item_name(self, inventory_item_id: int) -> str:
     selected_inventory_item: InventoryItem = self.inventory_items[inventory_item_id]
@@ -678,10 +816,9 @@ class GameData:
     away_storage_id: Optional[int] = self.away_storage
     if away_storage_id == None: raise TypeError(f"{self.away_storage=} cannot be `None` when encountering a structure.")
     item_identifiers: Queue[int] = Queue(self.get_multiple_unique_random_item_identifiers(item_count))
-    identical_condition = nothing()
     while not item_identifiers.empty():
       item_id: int = item_identifiers.get()
-      self.insert_stored(StorageItem, [away_storage_id, item_id, 1], identical_condition, StorageAttrName.STORAGE_ITEMS)
+      self.insert_stored(StorageItem, [away_storage_id, item_id, 1], StorageAttrName.STORAGE_ITEMS)
   
   def finish_structure_encounter(self) -> None:
     """Deletes items in the structure after it has been accessed."""

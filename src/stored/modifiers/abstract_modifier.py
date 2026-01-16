@@ -21,7 +21,7 @@ class AbstractModifier(Stored):
   
   @staticmethod
   def identical_condition(abstract_modifier_row: list[Any]) -> Condition:
-    return Condition(lambda _, row: False)
+    return lambda _, row: False
 
 def instantiate_abstract_modifier(abstract_modifier_data: list[Any] = [], loaded: bool = True) -> AbstractModifier:
   return AbstractModifier()

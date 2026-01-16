@@ -1,6 +1,5 @@
 import tkinter as tk
 
-from tools.logging_tools import *
 from tools.typing_tools import *
 from tools.constants import *
 from tools.tkinter_tools import *
@@ -8,8 +7,6 @@ from tools.tkinter_tools import *
 class ToggleableButton(tk.Button):
   """A button whose state can be toggled each time it is pressed."""
   def __init__(self, master: Optional[tk.Misc] = None, initially_toggled: ToggleState = ToggleState.OFF, initially_enabled: bool = True, on_colour: str = Constants.ON_COLOUR, off_colour: str = Constants.OFF_COLOUR, disabled_colour: str = Constants.DISABLED_COLOUR, **kwargs) -> None:
-    if "toggleable" in kwargs.keys():
-      raise NameError("Constructor for `ToggleableButton` no longer takes the parameter `toggleable`")
     super().__init__(master, **kwargs)
     self.on_colour = on_colour
     self.off_colour = off_colour

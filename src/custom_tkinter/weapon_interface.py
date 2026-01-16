@@ -11,6 +11,7 @@ from interface.base_frame import BaseFrame
 from tools.typing_tools import Position
 
 class WeaponInterface(BaseFrame):
+  """User interface with one weapon. Used in `CombatScreen`."""
   def __init__(self, root: tk.Misc, parent: tk.Frame, weapon_name: Optional[str] = None, attack_damage: Optional[float] = None, parry_damage_threshold: Optional[float] = None, parry_reflection_proportion: Optional[float] = None, dimensions: Position = Constants.WEAPON_INTERFACE_DIMENSIONS, **kwargs) -> None:
     super().__init__(root=root, parent=parent)
     

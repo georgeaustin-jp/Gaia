@@ -26,8 +26,6 @@ The significance of each value of the tuple is as follows:
 2. `args` - command positional arguments. If there is `0` or `1`, a collection need not be used, but any more requires a tuple.
 """
 
-
-
 # functions
 
 def unpack_optional[T](option: Optional[T]) -> T:

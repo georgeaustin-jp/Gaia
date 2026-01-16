@@ -21,7 +21,7 @@ class FightingEnemyModifier(Stored):
   
   @staticmethod
   def identical_condition(fighting_enemy_modifier_row: list[Any]) -> Condition:
-    return Condition(lambda _, row: False)
+    return lambda _, row: False
 
 def instantiate_fighting_enemy_modifier(fighting_enemy_modifier_data: list[Any] = [], loaded: bool = True) -> FightingEnemyModifier:
   return FightingEnemyModifier()

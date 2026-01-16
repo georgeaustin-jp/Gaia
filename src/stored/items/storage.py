@@ -22,7 +22,7 @@ class Storage(Stored):
   
   @staticmethod
   def identical_condition(storage_row: list[Any]) -> Condition:
-    return Condition(lambda _, row: False)
+    return lambda _, row: False
 
 def instantiate_storage(storage_data: list[Any] = [], loaded: bool = True) -> Storage:
   world_id: int = storage_data[0]
