@@ -1,6 +1,7 @@
 # Gaia
 
 *v0.1.1-alpha*
+
 *See `patch_notes.md` for additional information about this version*
 
 ## Description
