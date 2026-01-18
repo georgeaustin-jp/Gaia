@@ -413,7 +413,7 @@ class CombatScreen(AbstractScreen):
   def is_health_potion_button_toggled(self) -> bool:
     return bool(self.health_potion_button.is_toggled)
 
-  def get_action_type(self) -> ActionType: # TODO: remove placeholders, give functionality
+  def get_action_type(self) -> ActionType:
     action: ActionType
     using_health_potion: bool = self.is_health_potion_button_toggled()
     using_weapons: bool = not self.is_no_weapon_buttons_toggled()
@@ -434,7 +434,7 @@ class CombatScreen(AbstractScreen):
       parry_data: Optional[tuple[float, float]] = self.get_selected_weapon_parry_data()
       if parry_data == None: raise NoParryError(parry_data)
       (damage_threshold, reflection_proportion) = parry_data
-      action = Parry(damage_threshold, reflection_proportion) # TODO: implement parrying
+      action = Parry(damage_threshold, reflection_proportion)
       self.parry_used = True
     elif not targeting_no_enemies and not is_attacking: # handles the case where an enemy is selected, but the character has no attack selected
       raise NoAttackSelectedForEnemyError()
@@ -447,7 +447,7 @@ class CombatScreen(AbstractScreen):
       raise UnknownActionError()
     return action
   
-  def get_selected_weapon_attack_damage(self) -> float: # TODO: introduce abilities
+  def get_selected_weapon_attack_damage(self) -> float:
     weapon_buttons_selected: int = 0 # if weapon_interface.is_attack_toggled: return False
     for (i, weapon_interface) in enumerate(self.weapon_interfaces):
       is_attack_toggled: ToggleState = weapon_interface.is_attack_toggled
@@ -457,7 +457,7 @@ class CombatScreen(AbstractScreen):
       if weapon_buttons_selected > 1:
         raise TooManyWeaponButtonsSelectedError(i)
     weapon_identifier: Optional[int] = self.equipped_inventory_weapon_identifiers[selected_weapon_identifier_index]
-    if weapon_identifier == None: raise TypeError("\'weapon_identifier\' can never be \'None\'")
+    if weapon_identifier == None: raise TypeError(f"{weapon_identifier=} should never be `None`.")
     return self.game_data.weapons[weapon_identifier].damage
   
   def get_selected_weapon_parry_data(self) -> Optional[tuple[float, float]]:

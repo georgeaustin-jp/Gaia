@@ -1,8 +1,7 @@
 from tools.typing_tools import *
 from tools.constants import Constants
 from tools.ability_names import AbilityTypeName
-
-#from stored.abilities.ability import Ability
+from tools.custom_exceptions import AbstractMethodCallError
 
 @dataclass
 class AbilityAction():
@@ -11,7 +10,7 @@ class AbilityAction():
   Subclasses of `ParryAction`, `IgniteAction`, `DefendAction`, `WeakenAction`, `HealAction` and `PierceAction`."""
   initial_duration: Optional[int]
 
-  def get_ability_type_name(self) -> AbilityTypeName: raise NotImplementedError()
+  def get_ability_type_name(self) -> AbilityTypeName: raise AbstractMethodCallError(AbilityAction.__name__, self.get_ability_type_name.__name__)
 
 @dataclass
 class IgniteAction(AbilityAction):

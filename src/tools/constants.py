@@ -40,7 +40,7 @@ class Constants:
   GRID_HEIGHT: int = 3
   MIN_ENEMIES: int = 1
   MAX_ENEMIES: int = 5
-  BOSS_ENCOUNTER_PROBABILITY: float = 0 # TODO: set back to `0.05` once some bosses exist
+  BOSS_ENCOUNTER_PROBABILITY: float = 0.05
   IGNITE_DURATION: int = 3
   IGNITE_DAMAGE: float = 3
   PIERCE_OFFENSIVENESS: float = 0.5
@@ -55,16 +55,16 @@ class Constants:
   DISABLED_RELIEF: Literal['flat'] = tk.FLAT
   ENEMY_ATTACK_LABEL_COLOUR: str = "#FF5C5C"
   ENEMY_HEAL_LABEL_COLOUR: str = "#8FFF87"
-  MIN_SCREEN_WIDTH: int = 750
-  MIN_SCREEN_HEIGHT: int = 450
-  MAX_SCREEN_WIDTH: int = 1000
-  MAX_SCREEN_HEIGHT: int = 600
+  MIN_SCREEN_WIDTH: int = 825
+  MIN_SCREEN_HEIGHT: int = 500
+  MAX_SCREEN_WIDTH: int = 1150
+  MAX_SCREEN_HEIGHT: int = 700
   WEAPON_INTERFACE_DIMENSIONS: Position = (4,3)
   DEFAULT_FONT: str = "Segoe UI"
   DEFAULT_FONT_SIZE: int = 9
   # constants related to exploration
-  COMBAT_ENCOUNTER_PROBABILITY: float = 0 # TODO: set back to 0.4
-  STRUCTURE_ENCOUNTER_PROBABILITY: float = 1 # TODO: set back to 0.25
+  COMBAT_ENCOUNTER_PROBABILITY: float = 0.4
+  STRUCTURE_ENCOUNTER_PROBABILITY: float = 0.25
   MIN_STRUCTURE_ITEM_COUNT: int = 1
   MAX_STRUCTURE_ITEM_COUNT: int = 2
   # misc

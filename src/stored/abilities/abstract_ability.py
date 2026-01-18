@@ -1,4 +1,5 @@
 from tools.typing_tools import *
+from tools.custom_exceptions import AbstractMethodCallError
 
 from database.condition import Condition
 from stored.stored import *
@@ -28,9 +29,9 @@ class AbstractAbility(Stored):
   
   # offensiveness and decision-making methods
 
-  def calculate_offensiveness(self) -> float: raise NotImplementedError()
+  def calculate_offensiveness(self) -> float: raise AbstractMethodCallError(AbstractAbility.__name__, self.calculate_offensiveness.__name__)
 
-  def get_ability_action(self) -> AbilityAction: raise NotImplementedError()
+  def get_ability_action(self) -> AbilityAction: raise AbstractMethodCallError(AbstractAbility.__name__, self.get_ability_action.__name__)
 
 def instantiate_abstract_ability(abstract_ability_data: list[Any] = [], loaded: bool = True) -> AbstractAbility:
   ability_id: int = abstract_ability_data[0]

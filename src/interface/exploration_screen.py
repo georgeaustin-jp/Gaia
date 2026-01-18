@@ -92,8 +92,6 @@ class ExplorationScreen(AbstractScreen):
     super().load(**kwargs)
 
   def create(self, enter_structure: ButtonCommand, begin_combat: ButtonCommand, **kwargs):
-    self.create_widget(tk.Button, text="Combat (placeholder)", command=lambda: begin_combat()) # TODO: remove
-
     self.continue_exploration_button = unpack_optional(self.create_widget(tk.Button, text="Continue exploration", command=lambda: self.continue_exploration(), return_widget=True))
 
     self.create_message()
@@ -109,3 +107,5 @@ class ExplorationScreen(AbstractScreen):
     return_command: Callable[[ScreenName], None] = self.return_command_generator(kwargs["return_command"])
     self.create_return(ScreenName.HOME, return_command=return_command)
     self.create_quit()
+    
+    if self.game_data.is_dev_mode_enabled: self.create_widget(tk.Button, text="DEV_MODE: Enter combat", command=lambda: begin_combat())

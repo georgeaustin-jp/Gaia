@@ -127,3 +127,7 @@ class InvalidPositionError(AbstractError):
 class PathError(AbstractError):
   def __init__(self, path: str, *args: object) -> None:
     super().__init__(f"Invalid path ({path=})", *args)
+
+class AbstractMethodCallError(AbstractError):
+  def __init__(self, class_name: str, method_name: str, *args: object) -> None:
+    super().__init__(f"Tried to call abstract method `{method_name}` in class `{class_name}`.", *args)

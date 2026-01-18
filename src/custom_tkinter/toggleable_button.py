@@ -73,7 +73,7 @@ class ToggleableButton(tk.Button):
     self.config(bg=self.off_colour, relief=Constants.OFF_RELIEF)
 
   def display_value(self, value: ToggleState) -> None: # TODO: maybe add an exception raise to the end of this if `value` is neither `ToggleState.ON` or `ToggleState.OFF`?
-    if not self.is_enabled: raise ValueError(f"Trying to call \'display_value\' when button is not enabled (\'self.is_enabled\'=`{self.is_enabled}`)")
+    if not self.is_enabled: raise ValueError(f"Trying to call `display_value` when button is not enabled ({self.is_enabled=}).")
     if value == ToggleState.ON: self.display_toggled()
     elif value == ToggleState.OFF: self.display_untoggled()
 

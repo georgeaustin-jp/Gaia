@@ -1,6 +1,7 @@
 # Gaia
 
-*Current version: v0.1.0-alpha*
+*v0.1.1-alpha*
+*See `patch_notes.md` for this version's patches and updates.*
 
 ## Description
 
@@ -15,3 +16,13 @@ python src/main.py
 
 ## How to play
 
+Equip up to 3 weapons and 4 equipables before entering combat. Weapons deal damage and can parry. Equipables increase your damage resistance by up to 5% each.
+
+For each round of combat, you can select 2 actions out of the following:
+ 1. Attack an enemy
+ 2. Parry attacks
+ 3. Heal
+
+Once you have selected your actions, the enemies will select theirs. The actions of both sides will then be executed in sequence.
+
+You win once all your enemies have been killed. If you are killed, then you die and return home.

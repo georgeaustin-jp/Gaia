@@ -16,3 +16,9 @@
  * Fixed enemy heal/attack abilities being incorrectly selected
  * Added character health display rounding
  * Fixed invalid storage methods for enemy abilities
+ * Removed placeholder values
+ * Added a developer mode
+ * Added custom exception for calling abstract methods
+ * Added a dataclass for storing database main data 
+ * Changed window minimum and maximum size
+ * Updated `README.md`

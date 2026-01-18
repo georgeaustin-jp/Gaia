@@ -39,8 +39,9 @@ from data_structures.queue import Queue
 from ability_action import *
 
 class GameData:
-  def __init__(self) -> None:
+  def __init__(self, is_dev_mode_enabled: bool = False) -> None:
     self.save_on_delete: bool = True # determines whether the current state of the database will be saved once it is deleted
+    self.is_dev_mode_enabled: bool = is_dev_mode_enabled
 
     VERSION: str = "v0.1.1-alpha"
     
@@ -679,7 +680,6 @@ class GameData:
     fighting_enemy: FightingEnemy = self.fighting_enemies[fighting_enemy_id]
     return fighting_enemy.max_health
   
-  @log_all
   def get_enemy_abilities_for_attacking(self, enemy_id: int) -> Optional[dict[int, Ability]]:
     """Assumes enemy has only one ability used in an attack."""
     enemy_attack_abilities_dict: dict[int, EnemyAbility] = filter_dictionary(self.enemy_abilities, lambda _, enemy_ability: enemy_ability.enemy_id == enemy_id and enemy_ability.is_used_in_attack)
@@ -694,7 +694,6 @@ class GameData:
       enemy_abilities_for_attacking[ability_id] = ability
     return enemy_abilities_for_attacking
   
-  @log_all
   def get_enemy_ability_for_heal(self, enemy_id: int) -> Optional[tuple[int, Ability]]:
     """Gets the enemy's healing ability."""
     heal_abilities_dict: dict[int, StatisticAbility] = filter_dictionary(self.statistic_abilities, lambda _, statistic_ability: statistic_ability.ability_type == AbilityTypeName.HEAL)
@@ -733,8 +732,7 @@ class GameData:
     inventory_item: InventoryItem = self.inventory_items[inventory_item_id]
     item_id: int = inventory_item.item_id
     stack_size: int = inventory_item.stack_size
-    # TODO: handle what happens if the item is equipped such that it doesn't throw an error
-    if inventory_item.equipped: raise Exception("Moving inventory items while they are equipped is not yet implemented.")
+    if inventory_item.equipped: raise Exception("Cannot move an equipped item to storage.")
     raw_storage_item_data: list[Any] = [storage_id, item_id, stack_size]
     
     same_item: Callable[[int, StorageItem], bool] = lambda _, storage_item: storage_id == storage_item.storage_id and item_id == storage_item.item_id
@@ -844,7 +842,7 @@ class GameData:
     heal_data: Optional[tuple[int, Ability]] = self.get_enemy_ability_for_heal(enemy_id)
     if heal_data == None: heal_ability_id = None
     else: heal_ability_id = heal_data[0]
-    
+
     fighting_enemy.set_action_identifiers(attack_ability_ids, heal_ability_id)
   
   def finish_combat_encounter(self) -> None:
