@@ -1,7 +1,6 @@
 # Gaia
 
-*v0.1.1-alpha*
-*See `patch_notes.md` for this version's patches and updates.*
+*Current version: v0.1.0-alpha*
 
 ## Description
 
