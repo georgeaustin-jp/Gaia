@@ -24,5 +24,5 @@ class HomeScreen(AbstractScreen):
     go_exploring: Callable[[], None] = kwargs["go_exploring"]
     self.create_widget(tk.Button, text="Go exploring", command=lambda: go_exploring())
 
-    self.create_return(ScreenName.WORLD_SELECTION, text="Return to world selection", **kwargs)
-    self.create_quit(**kwargs)
+    self.create_return(ScreenName.WORLD_SELECTION, return_message="Return to world selection")
+    self.create_quit()

@@ -4,6 +4,6 @@
 /*_count_data.*
 /collection_to_text_config.*
 /file_structure.*
+/data/
 # in source
-src/data/
 src/**/__pycache__/

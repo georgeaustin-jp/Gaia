@@ -101,9 +101,9 @@ class App:
   def begin_world_creation(self, _kwargs: dict[str, Any] = {}) -> None:
     self.show_screen(ScreenName.WORLD_CREATION, world=self.game_data.worlds)
 
-  def create_world(self, world_name: str, world_seed: str) -> None:
+  def create_world(self, world_name: str) -> None:
     active_user_id: int = unpack_optional(self.game_data.active_user_id)
-    (world_identifier, _) = self.game_data.insert_stored(World, [active_user_id, world_name, world_seed], StorageAttrName.WORLDS)
+    (world_identifier, _) = self.game_data.insert_stored(World, [active_user_id, world_name], StorageAttrName.WORLDS)
     self.game_data.insert_stored(Storage, [world_identifier, StorageType.HOME], StorageAttrName.STORAGES)
     self.game_data.insert_stored(Storage, [world_identifier, StorageType.CHEST], StorageAttrName.STORAGES)
     self.select_world(world_identifier)

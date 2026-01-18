@@ -1,9 +1,9 @@
 from tools.typing_tools import *
 from tools.dictionary_tools import *
 
-from database.condition import Condition, filter_dictionary, get_condition_inverse
+from database.condition import Condition, get_condition_inverse
 
-from tools.exceptions import InsertAtExistingIdentifierError
+from tools.custom_exceptions import InsertAtExistingIdentifierError
 
 class Table:
   def __init__(self, name: str, column_names: list[str]) -> None:

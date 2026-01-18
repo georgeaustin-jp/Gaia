@@ -72,7 +72,7 @@ class WeakenAction(AbilityAction):
 
 @dataclass
 class HealAction(AbilityAction):
-  initial_duration: int = 1
+  initial_duration: Optional[int] = 1
   heal_amount: float = 0
 
   def get_ability_type_name(self) -> AbilityTypeName: return AbilityTypeName.HEAL

@@ -43,6 +43,6 @@ class WorldSelection(Selection):
 
     self.create_widget(tk.Button, text="Create world", command=lambda: self.begin_world_creation())
 
-    self.create_return(ScreenName.CHARACTER_SELECTION, **kwargs)
-    self.create_quit(**kwargs)
+    self.create_return(ScreenName.CHARACTER_SELECTION)
+    self.create_quit()
     

@@ -1,5 +1,5 @@
 from tools.typing_tools import *
-from tools.exceptions import *
+from tools.custom_exceptions import *
 from tools.logging_tools import *
 
 class Queue[QueueType](Sized, Loggable):

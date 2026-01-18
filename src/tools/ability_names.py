@@ -1,9 +1,9 @@
 from tools.typing_tools import *
+from tools.constants import BaseDatabaseStrEnum
 
 # enums
 
-@unique
-class AbilityTypeName(StrEnum):
+class AbilityTypeName(BaseDatabaseStrEnum):
   """The names of the different types of abilities.
   
   Includes `PARRY`, `IGNITE`, `PIERCE`, `WEAKEN`, `DEFEND` and `HEAL`."""

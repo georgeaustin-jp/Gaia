@@ -14,8 +14,6 @@ class Creation(AbstractScreen):
     self.create_widget(tk.Label, text=prompt)
     self.create_widget(tk.Entry, textvariable=entry_string)
 
-  
-
   def fail_creation(self, message: str) -> None:
     self.message.set(message)
 

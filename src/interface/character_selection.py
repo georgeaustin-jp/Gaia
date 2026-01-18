@@ -33,7 +33,7 @@ class CharacterSelection(Selection):
     super().load(**kwargs)
     characters: dict[int, Character] = self.game_data.characters
     button_inputs: list[DynamicButtonInput] = self.get_all_characters_dynamic_button_inputs(characters)
-    self.create_buttons_dynamically(button_inputs, command=lambda identifier: self.select_character(identifier), container=self.scrollable_character_frame_parent)
+    self.create_buttons_dynamically(button_inputs, command=lambda identifier: self.select_character(identifier), container=self.scrollable_character_frame_parent, placement_options={"sticky": "ew"})
 
   def create(self, **kwargs) -> None:
     self.scrollable_character_frame_parent = unpack_optional(self.create_frame(return_frame=True, dimensions=(1,1)))
@@ -41,4 +41,4 @@ class CharacterSelection(Selection):
 
     creation_command: Callable[[Optional[dict[str, Any]]], None] = kwargs["begin_character_creation"]
     self.create_widget(tk.Button, text="Create character", command=lambda: creation_command(None))
-    self.create_quit(**kwargs)
+    self.create_quit()

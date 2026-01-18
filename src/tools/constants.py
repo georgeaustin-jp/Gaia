@@ -1,9 +1,15 @@
 import tkinter as tk
+from tkinter import font
 
 from tools.typing_tools import *
 
 @unique
-class ScreenName(Enum):
+class BaseDatabaseStrEnum(StrEnum):
+  """Base class for classes inheriting from `StrEnum` which need to have their values stored in the database."""
+  def __get__(self, *args, **kwargs): return self.value
+
+@unique
+class ScreenName(StrEnum):
   # main screen names
   CHARACTER_CREATION = "character_creation"
   CHARACTER_SELECTION = "character_selection"
@@ -54,6 +60,8 @@ class Constants:
   MAX_SCREEN_WIDTH: int = 1000
   MAX_SCREEN_HEIGHT: int = 600
   WEAPON_INTERFACE_DIMENSIONS: Position = (4,3)
+  DEFAULT_FONT: str = "Segoe UI"
+  DEFAULT_FONT_SIZE: int = 9
   # constants related to exploration
   COMBAT_ENCOUNTER_PROBABILITY: float = 0 # TODO: set back to 0.4
   STRUCTURE_ENCOUNTER_PROBABILITY: float = 1 # TODO: set back to 0.25
@@ -79,10 +87,13 @@ class DefaultTkInitOptions():
   PACK: dict[str, Any] = field(default_factory=lambda: {"expand": True, "fill": tk.NONE})
   ## widget specific
   FRAME_PACK: dict[str, Any] = field(default_factory=lambda: {"fill": tk.BOTH})
+  DYNAMIC_BUTTON_GRID: dict[str, Any] = field(default_factory=lambda: {"sticky": ""})
 
   # widget creation
   WIDGET: dict[str, Any] = field(default_factory=lambda: {"borderwidth": 2}) # applied to all widgets
+  LABEL: dict[str, Any] = field(default_factory=lambda: {})
   BUTTON: dict[str, Any] = field(default_factory=lambda: {"padx": 2, "pady": 2})
+  DYNAMIC_BUTTON: dict[str, Any] = field(default_factory=lambda: {"padx": 2, "pady": 2, "anchor": tk.CENTER})
   FRAME: dict[str, Any] = field(default_factory=lambda: {"relief": tk.RIDGE, "padx": 2, "pady": 2})
   CTK_SCROLLABLE_FRAME: dict[str, Any] = field(default_factory=lambda: {"corner_radius": 0})
   WEAPON_INTERFACE_DESCRIPTORS: dict[str, Any] = field(default_factory=lambda: {"relief": tk.SOLID, "borderwidth": 1, "padx": 1, "pady": 1})
@@ -112,7 +123,12 @@ class TableName(StrEnum):
 
   NONE = "" # for subclasses of `Stored` where the object won't be stored in the database
 
-  def __get__(self, *args) -> str: return self.value
+  def __get__(self, *args, **kwargs) -> str: return self.value
+
+@dataclass
+class TableNameData():
+  name: TableName
+  is_static: bool
 
 @unique
 class StorageAttrName(StrEnum):
@@ -158,8 +174,7 @@ class ComparisonFlag(IntEnum):
   EQUAL = 0
   GREATER = 1
 
-@unique
-class ItemType(StrEnum):
+class ItemType(BaseDatabaseStrEnum):
   WEAPON = "Weapon"
   EQUIPABLE = "Equipable"
 
@@ -174,8 +189,7 @@ class ItemFrameCollectionName(StrEnum):
   INVENTORY = "inventory_item_frames"
   STORAGE = "storage_item_frames"
 
-@unique
-class StorageType(StrEnum):
+class StorageType(BaseDatabaseStrEnum):
   """Determines what type some storage is. Either the storage at home or a chest."""
   HOME = "Home"
   CHEST = "Chest"
@@ -188,8 +202,7 @@ class WeaponUIComponentName(StrEnum):
   ATTACK_DAMAGE = "attack_damage"
   PARRY = "parry"
 
-@unique
-class ActionName(StrEnum):
+class ActionName(BaseDatabaseStrEnum):
   """The names for the different types of actions can be used.
   
   One of `ATTACK`, `PARRY` or `HEAL`."""

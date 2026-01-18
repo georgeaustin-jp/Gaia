@@ -1,24 +1,29 @@
 from tools.typing_tools import *
 from tools.constants import TableName
-from tools.logging_tools import *
 
 from database.table import Table
 from database.condition import Condition
 from database.file_handler import FileHandler
+from database.database_main_data import DatabaseMainData
 
 class Database:
-  def __init__(self, name: str, tables: dict[str, Table] = {}, table_names: list[str] = []) -> None:
+  def __init__(self, name: str, version: str, tables: dict[str, Table] = {}, table_names: list[str] = []) -> None:
     self.name: str = name
+    self.VERSION: str = version
     self.tables: dict[str, Table] = tables
     self.file_handler = FileHandler()
-    self.table_names: list[str] = table_names
+    self.table_names = table_names
     self.deleted_table_names: list[str] = []
 
     self.save_on_delete: bool = True
 
+  # built-in methods
+
   def __del__(self) -> None:
     if self.save_on_delete:
       self.save()
+
+  # other
   
   def exists(self) -> bool:
     """Uses the `file_handler.does_data_directory_exist()` method to determine whether the database has already been created in memory or not."""
@@ -29,8 +34,8 @@ class Database:
     if not self.file_handler.does_data_directory_exist():
       self.file_handler.create_directory("data")
     if table_names != []: self.table_names = table_names
-    formatted_table_names: dict[str, Any] = {"tables": self.table_names}
-    self.file_handler.save_file("MAIN", formatted_table_names)
+    main_data: DatabaseMainData = DatabaseMainData(self.table_names, self.VERSION)
+    self.file_handler.save_file("MAIN", main_data.to_dict())
 
   def init_tables(self, table_templates: dict[TableName, list[str]]) -> None:
     for (table_name, columns) in table_templates.items():
@@ -38,8 +43,11 @@ class Database:
 
   def load(self) -> None:
     """Fetches the database from storage, loading all tables specified in `self.table_names`. Raises a `ValueError` if `self.table_names` is empty."""
-    self.table_names = self.load_main_data()
-    if self.table_names == []: raise ValueError(f"Expected a non-empty list of table names; instead got {self.table_names}.")
+    main_data: DatabaseMainData = self.load_main_data()
+    table_names: list[str] = main_data.table_names
+    version: str = main_data.version
+    if table_names == []: raise ValueError(f"Expected a non-empty list of table names; instead got {table_names}.")
+    self.table_names = table_names
     for table_name in self.table_names:
       raw_table: dict = self.file_handler.load_file(table_name)
       self.load_table(table_name, raw_table)
@@ -58,13 +66,11 @@ class Database:
       table.insert_with_identifier(row, identifier)
     self.tables[table_name] = table
 
-  def load_main_data(self) -> list[str]:
+  def load_main_data(self) -> DatabaseMainData:
     if self.file_handler.does_data_directory_exist():
-      main_data: list[str] = self.file_handler.load_file("MAIN")["tables"]
-    elif list(self.tables.keys()) != []:
-      main_data = list(self.tables.keys())
-    else:
-      main_data = []
+      raw_main_data: dict[str, Any] = self.file_handler.load_file("MAIN")
+      main_data: DatabaseMainData = DatabaseMainData(raw_main_data["table_names"], raw_main_data["version"])
+    else: raise Exception(f"`data` directory doesn't exist.")
     return main_data
 
   def save(self) -> None:
@@ -75,15 +81,20 @@ class Database:
       self.file_handler.delete_file(deleted_table_name)
 
   def save_main_data(self) -> None:
-    main_data: dict[str, list[str]] = {"tables": self.table_names}
-    if main_data["tables"] == []:
-      main_data["tables"] = self.load_main_data()
-    self.file_handler.save_file("MAIN", main_data)
+    main_data: DatabaseMainData = DatabaseMainData(self.table_names, self.VERSION)
+    if main_data.table_names == []:
+      main_data = self.load_main_data()
+    self.file_handler.save_file("MAIN", main_data.to_dict())
 
   def save_table(self, table_name: str) -> None:
     table: Table = self.find_table(table_name)
     file: dict = table.to_file()
     self.file_handler.save_file(table_name, file)
+
+  def is_version_updated(self) -> bool:
+    main_data: DatabaseMainData = self.load_main_data()
+    if main_data.version != self.VERSION: return True
+    return False
 
   # SQL queries
 

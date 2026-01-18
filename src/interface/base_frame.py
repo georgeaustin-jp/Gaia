@@ -25,6 +25,8 @@ class BaseFrame(tk.Frame):
     """Creates a new widget of the type specified, either on a grid or to be packed."""
     if container == None: container = self.default_frame
     init_args = add_if_vacant(kwargs.copy(), DefaultTkInitOptions().WIDGET)
+    if issubclass(widget_type, tk.Label):
+      init_args = add_if_vacant(init_args, DefaultTkInitOptions().LABEL)
     if issubclass(widget_type, ctk.CTkScrollableFrame): # `CTkScrollableFrame.__init__` takes a different name for defining the border width: this block handles that
       init_args["border_width"] = init_args["borderwidth"]
       del init_args["borderwidth"]
@@ -66,8 +68,8 @@ class BaseFrame(tk.Frame):
     try: kwargs["command"]
     except: kwargs["command"] = lambda: None
     if placement_options == None: placement_options = {}.copy()
-    placement_args = add_if_vacant(placement_options, DefaultTkInitOptions().BUTTON).copy()
-    return self.create_widget(tk.Button, position=position, container=container, placement_options=placement_args, return_widget=return_button, **kwargs)
+    kwargs = add_if_vacant(kwargs, DefaultTkInitOptions().BUTTON).copy()
+    return self.create_widget(tk.Button, position=position, container=container, placement_options=placement_options, return_widget=return_button, **kwargs)
   
   def create_toggleable_button(self, position: Optional[Position] = None, container: Optional[tk.Frame] = None, return_button: bool = False, initially_toggled: ToggleState = ToggleState.OFF, placement_options: dict[str, Any] = {}, **kwargs) -> Optional[ToggleableButton]:
     """Creates a new toggleable button, either being packed (if `position=None`) or placed on a grid (otherwise)."""

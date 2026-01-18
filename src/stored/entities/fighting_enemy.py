@@ -26,14 +26,19 @@ class FightingEnemy(FightingEntity):
     self.decision_error_bound: float = get_decision_error_bound(self.intelligence)
 
     self.__action_offensiveness_table: dict[ActionName, float] = {
-      ActionName.ATTACK: 0,
-      ActionName.HEAL: 0,
-    }
-    self.ability_id_table: dict[ActionName, Optional[int]] = {}
+      ActionName.ATTACK: 0.0,
+      ActionName.HEAL: 0.0,
+    }.copy()
+    self.ability_id_table: dict[ActionName, Optional[Union[int, list[int]]]] = {}.copy()
 
-    self.VALID_ACTION_NAMES: list[ActionName] = [ActionName.ATTACK, ActionName.HEAL]
+    self.VALID_ACTION_NAMES: list[ActionName] = [ActionName.ATTACK, ActionName.HEAL].copy()
 
     self.aggressiveness: float
+
+  # built-in methods
+
+  def __repr__(self) -> str:
+    return f"FightingEnemy({self.enemy_id=}, {self.name=}, {self.health=}, {self.max_health=}, {self.attack_damage=}, {self.intelligence=}, {self.__action_offensiveness_table=}, {self.ability_id_table})"
 
   # `Stored` methods
 
@@ -59,8 +64,8 @@ class FightingEnemy(FightingEntity):
   
   # decision making methods
 
-  def set_action_identifiers(self, attack_ability_id: Optional[int], heal_ability_id: Optional[int]) -> None:
-    self.ability_id_table[ActionName.ATTACK] = attack_ability_id
+  def set_action_identifiers(self, attack_ability_ids: Optional[list[int]], heal_ability_id: Optional[int]) -> None:
+    self.ability_id_table[ActionName.ATTACK] = attack_ability_ids
     self.ability_id_table[ActionName.HEAL] = heal_ability_id
 
   ## calculating action values

@@ -236,7 +236,7 @@ class StorageScreen(AbstractScreen):
 
   def create_return(self, **kwargs) -> tk.Button:
     if self.game_data.is_storage_at_home():
-      return super().create_return(ScreenName.HOME, return_message="Return to home screen", **kwargs)
+      return super().create_return(ScreenName.HOME, return_message="Return to home screen")
     else:
       return super().create_return(ScreenName.EXPLORATION, return_message="Return to exploration", return_command=self.leave_structure_command)
     

@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import font
 
 from tools.typing_tools import *
 from tools.constants import Constants, ScreenName
@@ -21,7 +22,11 @@ class Interface(tk.Tk):
     
     self.START_SCREEN: ScreenName = start_screen
 
-    self.title("Gaia")
+    default_font = font.nametofont("TkDefaultFont")
+    default_font.configure(family=Constants.DEFAULT_FONT, size=Constants.DEFAULT_FONT_SIZE)
+
+    game_title: str = f"Gaia {game_data.VERSION}"
+    self.title(game_title)
 
     self.geometry(f"{Constants.MIN_SCREEN_WIDTH}x{Constants.MIN_SCREEN_HEIGHT}")
 

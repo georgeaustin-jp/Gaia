@@ -1,9 +1,11 @@
 import tkinter as tk
 from functools import reduce
 
+from tools.logging_tools import *
+
 from tools.typing_tools import *
 from tools.dictionary_tools import filter_dictionary
-from tools.exceptions import *
+from tools.custom_exceptions import *
 from tools.constants import *
 from tools.positional_tools import length_to_point
 
@@ -147,9 +149,13 @@ class CombatScreen(AbstractScreen):
       raise TypeError(f"Weapon name should not be of type `None` at {index=} in {self.get_equipped_inventory_weapon_names()=} ({weapon_name=}).")
     weapon: Weapon = self.game_data.weapons[weapon_identifier]
     attack_damage: float = weapon.damage
-    weapon_parry: ParryAbility = self.game_data.get_weapon_parry(weapon)
-    parry_damage_threshold: float = weapon_parry.damage_threshold
-    parry_reflection_proportion: float = weapon_parry.reflection_proportion
+    # getting parry data
+    weapon_parry: Optional[ParryAbility] = self.game_data.get_weapon_parry(weapon)
+    parry_damage_threshold: Optional[float] = None # values if no parry is found
+    parry_reflection_proportion: Optional[float] = None
+    if weapon_parry != None:
+      parry_damage_threshold = weapon_parry.damage_threshold
+      parry_reflection_proportion = weapon_parry.reflection_proportion
     weapon_interface.load(weapon_name, attack_damage, parry_damage_threshold, parry_reflection_proportion)
 
   def load_weapon_interfaces(self) -> None:
@@ -321,8 +327,8 @@ class CombatScreen(AbstractScreen):
 
   def set_health_label(self, health: float) -> None:
     if health < 0:
-      raise ValueError(f"Cannot set \'displayed_health\' to be less than zero (`{health}` < 0)")
-    display: str = f"{health}HP"
+      raise ValueError(f"Cannot set `displayed_health` to be less than zero ({health=} < 0)")
+    display: str = f"{health:.2f}HP"
     self.displayed_health.set(display)
 
   def update_health_label(self) -> None:
@@ -425,7 +431,9 @@ class CombatScreen(AbstractScreen):
     elif using_health_potion: # health potion button can't be toggled from this point
       raise TooManyButtonsSelectedError(f"\'health_potion_button\' is toggled when other buttons are as well") 
     elif is_parrying and not is_attacking and targeting_no_enemies: # handles character parries
-      (damage_threshold, reflection_proportion) = self.get_selected_weapon_parry_data()
+      parry_data: Optional[tuple[float, float]] = self.get_selected_weapon_parry_data()
+      if parry_data == None: raise NoParryError(parry_data)
+      (damage_threshold, reflection_proportion) = parry_data
       action = Parry(damage_threshold, reflection_proportion) # TODO: implement parrying
       self.parry_used = True
     elif not targeting_no_enemies and not is_attacking: # handles the case where an enemy is selected, but the character has no attack selected
@@ -452,7 +460,7 @@ class CombatScreen(AbstractScreen):
     if weapon_identifier == None: raise TypeError("\'weapon_identifier\' can never be \'None\'")
     return self.game_data.weapons[weapon_identifier].damage
   
-  def get_selected_weapon_parry_data(self) -> tuple[float, float]:
+  def get_selected_weapon_parry_data(self) -> Optional[tuple[float, float]]:
     """
     :return: A pair of floats. The first number is the parry damage threshold. The second is the parry reflection proportion.
     :rtype: tuple[float, float]
@@ -468,7 +476,8 @@ class CombatScreen(AbstractScreen):
     weapon_identifier: Optional[int] = self.equipped_inventory_weapon_identifiers[selected_weapon_identifier_index]
     if weapon_identifier == None: raise TypeError("\'weapon_identifier\' can never be \'None\'")
     weapon: Weapon = self.game_data.weapons[weapon_identifier]
-    parry_ability = self.game_data.get_weapon_parry(weapon)
+    parry_ability: Optional[ParryAbility] = self.game_data.get_weapon_parry(weapon)
+    if parry_ability == None: return None
     return (parry_ability.damage_threshold, parry_ability.reflection_proportion)
   
   def init_enemy_name_variables(self) -> None:
@@ -502,7 +511,7 @@ class CombatScreen(AbstractScreen):
       enemy_interface_widgets[1].config(bg=Constants.DISABLED_COLOUR)
       enemy_interface_widgets[2].config(bg=Constants.DISABLED_COLOUR)
 
-      heal_ability_id: Optional[int] = None
+      heal_ability_id: Optional[int] = None # set default value
       if fighting_enemy_id != None:
         enemy_interface_widgets[1].config(bg=Constants.ENEMY_ATTACK_LABEL_COLOUR)
         enemy_interface_widgets[2].config(bg=Constants.ENEMY_HEAL_LABEL_COLOUR)
@@ -519,11 +528,11 @@ class CombatScreen(AbstractScreen):
 
         damage_str = format(fighting_enemy.attack_damage)
 
-        heal_ability_id = fighting_enemy.ability_id_table[ActionName.HEAL]
+        heal_ability_id = cast(int, fighting_enemy.ability_id_table[ActionName.HEAL])
 
       if heal_ability_id != None:
         heal_ability: Ability = self.game_data.abilities[heal_ability_id]
-        heal_ability_action: HealAction = cast(HealAction, heal_ability.get_ability_action())
+        heal_ability_action: HealAction = cast(HealAction, self.game_data.get_ability_action(heal_ability_id, heal_ability))
         heal_str = format(heal_ability_action.heal_amount)
 
       text_variables[0].set(button_display)
@@ -606,4 +615,4 @@ class CombatScreen(AbstractScreen):
     self.info_scrollbar = unpack_optional(self.create_scrollbar_on_grid((4,5), return_scrollbar=True, placement_options={"columnspan": 2}, command=self.info_box.yview))
     self.info_box.configure(yscrollcommand=self.info_scrollbar.set)
 
-    self.create_quit(**kwargs)
+    self.create_quit()

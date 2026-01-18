@@ -46,9 +46,6 @@ class Ability(Stored):
     """For more information, see `ability_type_name_to_abstract_ability_class_name` in `ability_names`."""
     return ability_type_name_to_abstract_ability_class_name(self.ability_type)
   
-  def get_ability_action(self) -> AbilityAction:
-    raise NotImplementedError()
-  
 def instantiate_ability(ability_data: list[Any], loaded: bool = True) -> Ability:
   text: str = ability_data[0]
   ability_type: AbilityTypeName = ability_data[1]

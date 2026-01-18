@@ -29,5 +29,5 @@ class EnemyAbility(Stored):
 def instantiate_enemy_ability(enemy_ability_data: list[Any] = [], loaded: bool = True) -> EnemyAbility:
   enemy_id: int = enemy_ability_data[0]
   ability_id: int = enemy_ability_data[1]
-  is_used_in_attack: bool = enemy_ability_data[1]
+  is_used_in_attack: bool = enemy_ability_data[2]
   return EnemyAbility(enemy_id, ability_id, is_used_in_attack, loaded)

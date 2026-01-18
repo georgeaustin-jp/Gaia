@@ -1,11 +1,13 @@
 from tools.typing_tools import *
 from tools.constants import *
-from tools.dictionary_tools import filter_dictionary, get_next_available_identifier
+from tools.dictionary_tools import filter_dictionary, get_next_available_identifier, add_if_vacant
 from tools.generation_tools import *
 from tools.ability_names import *
+from tools.logging_tools import *
 
 from database.database import Database
 from database.condition import Condition, everything, matching_identifiers
+from database.database_main_data import DatabaseMainData
 
 from stored.stored import Stored
 from stored.user import User
@@ -34,11 +36,15 @@ from stored.modifiers.fighting_enemy_modifier import FightingEnemyModifier
 
 from data_structures.queue import Queue
 
+from ability_action import *
+
 class GameData:
   def __init__(self) -> None:
     self.save_on_delete: bool = True # determines whether the current state of the database will be saved once it is deleted
+
+    VERSION: str = "v0.1.1-alpha"
     
-    self.database = Database("game_data")
+    self.database = Database("game_data", VERSION)
 
     self.users: dict[int, User] = {}
     self.active_user_id: Optional[int] = 0 # defaults as 0
@@ -103,14 +109,15 @@ class GameData:
       ItemAbility: StorageAttrName.ITEM_ABILITIES,
     }
 
-    self.table_templates: dict[TableName, list[str]] = { # comments next to templates indicate whether each has been given their own storage variables in `GameData`
+    self.dynamic_table_templates: dict[TableName, list[str]] = { # comments next to templates indicate whether each has been given their own storage variables in `GameData`
       TableName.USER: ["UserID", "Name"], # Y
       TableName.CHARACTER: ["CharacterID", "UserID", "Name", "Health", "MaxHealth"], # Y
-      TableName.WORLD: ["WorldID", "UserID", "Name", "Seed"], # Y
+      TableName.WORLD: ["WorldID", "UserID", "Name"], # Y
       TableName.INVENTORY_ITEM: ["InventoryItemID", "CharacterID", "ItemID", "StackSize", "Equipped"], # Y
       TableName.STORAGE: ["StorageID", "WorldID", "StorageType"], # Y
       TableName.STORAGE_ITEM: ["StorageItemID", "StorageID", "ItemID", "StackSize"], # Y
-
+    }
+    self.static_table_templates: dict[TableName, list[str]] = {
       TableName.ITEM: ["ItemID", "ItemType", "Name"], # Y
       TableName.ITEM_ABILITY: ["ItemAbilityID", "ItemID", "AbilityID"], # Y
       TableName.WEAPON: ["WeaponID", "ItemID", "Damage", "Active"], # Y
@@ -144,15 +151,28 @@ class GameData:
     if type(identifier) != int and identifier != None: raise TypeError(f"{identifier=} with type {type(identifier)} is not `int` or `None`.")
     self.__active_character_id = identifier
 
+  @property
+  def table_templates(self) -> dict[TableName, list[str]]: return add_if_vacant(self.static_table_templates, self.dynamic_table_templates)
+
+  @property
+  def VERSION(self) -> str: return self.database.VERSION
+
   # database and data loading methods
 
   def database_exists(self) -> bool:
     """Determines whether the database has already been created in memory or not by calling the \'self.database.exists()\' method."""
     return self.database.exists()
+  
+  def reload_static_data_on_update(self) -> None:
+    """Reloads the default data in `load_default_data` to match with the most recent data. Returns without reloading if there has not been an update."""
+    if not self.database.is_version_updated(): return None
+    self.load_default_data()
+    self.save()
 
   def load_database(self) -> None:
-    """Calls \'self.database.load()\'"""
+    """Calls `database.load()`. If the game has updated, the static tables will be reloaded."""
     self.database.load()
+    self.reload_static_data_on_update()
 
   def load_game_data(self) -> None:
     """Called only once: by parent `App` after being initialised. Loads the database into memory, creating it if it doesn't already exist in storage. If the database doesn't already exist in storage, some default data is created."""
@@ -161,7 +181,8 @@ class GameData:
       self.init_database() # creates a database with an empty `MAIN.toml` file.
       self.load_default_data() # default data is loaded into `GameData` memory ONLY.
     else:
-      existing_table_names: list[str] = self.database.load_main_data()
+      main_data: DatabaseMainData = self.database.load_main_data()
+      existing_table_names: list[str] = main_data.table_names
       self.load_database()
       self.create_tables(existing_table_names) 
       self.save()
@@ -171,7 +192,7 @@ class GameData:
     """
     Called when no database exists in order to create a new one for use. Only creates the `MAIN.toml` file.
     
-    :param table_names: The names of the tables which are to be created.
+    :param table_names: The names of the tables which are to be created. Defaults to `[]`.
     :type table_names: list[str]
     """
     self.database.create_main(table_names)
@@ -203,19 +224,19 @@ class GameData:
 
       # 11 equipables (2 starter)
       ## starters
-      12: Item(ItemType.WEAPON, "Leather Boots", loaded=False),
-      13: Item(ItemType.WEAPON, "Tunic", loaded=False),
+      12: Item(ItemType.EQUIPABLE, "Leather Boots", loaded=False),
+      13: Item(ItemType.EQUIPABLE, "Tunic", loaded=False),
       ## accessories: medium damage resistance
-      14: Item(ItemType.WEAPON, "Hardened Gloves", loaded=False),
-      15: Item(ItemType.WEAPON, "Runes of Protection", loaded=False),
-      16: Item(ItemType.WEAPON, "Damaged Shield", loaded=False),
-      17: Item(ItemType.WEAPON, "Resistance Charm", loaded=False),
-      18: Item(ItemType.WEAPON, "Mask", loaded=False),
+      14: Item(ItemType.EQUIPABLE, "Hardened Gloves", loaded=False),
+      15: Item(ItemType.EQUIPABLE, "Runes of Protection", loaded=False),
+      16: Item(ItemType.EQUIPABLE, "Damaged Shield", loaded=False),
+      17: Item(ItemType.EQUIPABLE, "Resistance Charm", loaded=False),
+      18: Item(ItemType.EQUIPABLE, "Mask", loaded=False),
       ## armour: high damage resistance
-      19: Item(ItemType.WEAPON, "Traveller's Helmate", loaded=False),
-      20: Item(ItemType.WEAPON, "Traveller's Breastplate", loaded=False),
-      21: Item(ItemType.WEAPON, "Traveller's Leggings", loaded=False),
-      22: Item(ItemType.WEAPON, "Traveller's Boots", loaded=False),
+      19: Item(ItemType.EQUIPABLE, "Traveller's Helmate", loaded=False),
+      20: Item(ItemType.EQUIPABLE, "Traveller's Breastplate", loaded=False),
+      21: Item(ItemType.EQUIPABLE, "Traveller's Leggings", loaded=False),
+      22: Item(ItemType.EQUIPABLE, "Traveller's Boots", loaded=False),
     }
     self.weapons = {
       0: Weapon(0, 7, loaded=False), # Tin Dagger
@@ -287,17 +308,17 @@ class GameData:
       10: EnemyAbility(13, 3, is_used_in_attack=True, loaded=False),
       11: EnemyAbility(16, 3, is_used_in_attack=True, loaded=False),
       # healing
-      12: EnemyAbility(0, 4, is_used_in_attack=True, loaded=False),
-      13: EnemyAbility(2, 4, is_used_in_attack=True, loaded=False),
-      14: EnemyAbility(3, 4, is_used_in_attack=True, loaded=False),
-      15: EnemyAbility(6, 5, is_used_in_attack=True, loaded=False),
-      16: EnemyAbility(7, 4, is_used_in_attack=True, loaded=False),
-      17: EnemyAbility(10, 6, is_used_in_attack=True, loaded=False),
-      18: EnemyAbility(11, 5, is_used_in_attack=True, loaded=False),
-      19: EnemyAbility(12, 5, is_used_in_attack=True, loaded=False),
-      20: EnemyAbility(15, 4, is_used_in_attack=True, loaded=False),
-      21: EnemyAbility(16, 5, is_used_in_attack=True, loaded=False),
-      22: EnemyAbility(17, 6, is_used_in_attack=True, loaded=False),
+      12: EnemyAbility(0, 4, is_used_in_attack=False, loaded=False),
+      13: EnemyAbility(2, 4, is_used_in_attack=False, loaded=False),
+      14: EnemyAbility(3, 4, is_used_in_attack=False, loaded=False),
+      15: EnemyAbility(6, 5, is_used_in_attack=False, loaded=False),
+      16: EnemyAbility(7, 4, is_used_in_attack=False, loaded=False),
+      17: EnemyAbility(10, 6, is_used_in_attack=False, loaded=False),
+      18: EnemyAbility(11, 5, is_used_in_attack=False, loaded=False),
+      19: EnemyAbility(12, 5, is_used_in_attack=False, loaded=False),
+      20: EnemyAbility(15, 4, is_used_in_attack=False, loaded=False),
+      21: EnemyAbility(16, 5, is_used_in_attack=False, loaded=False),
+      22: EnemyAbility(17, 6, is_used_in_attack=False, loaded=False),
     }
     self.abilities = {
       # general abilities
@@ -569,14 +590,50 @@ class GameData:
       weapon_item_abilities_ability_identifiers.append(item_ability.ability_id)
     return filter_dictionary(self.abilities, lambda identifier, _: identifier in weapon_item_abilities_ability_identifiers)
   
-  def get_weapon_parry(self, weapon: Weapon) -> ParryAbility:
+  def get_weapon_parry(self, weapon: Weapon) -> Optional[ParryAbility]:
     weapon_abilities: dict[int, Ability] = self.get_weapon_abilities(weapon)
-    weapon_parry_abilities: dict[int, Ability] = filter_dictionary(weapon_abilities, lambda _, ability: ability.ability_type == AbilityTypeName.PARRY)
+    is_parry_ability: Callable[[int, Ability], bool] = lambda _, ability: ability.ability_type == AbilityTypeName.PARRY
+    weapon_parry_abilities: dict[int, Ability] = filter_dictionary(weapon_abilities, is_parry_ability)
     weapon_parry_abilities_identifiers: list[int] = list(weapon_parry_abilities.keys())
     parries_dict: dict[int, ParryAbility] = filter_dictionary(self.parry_abilities, lambda _, parry_ability: parry_ability.ability_id in weapon_parry_abilities_identifiers)
     parries_list: list[ParryAbility] = list(parries_dict.values())
-    if len(parries_list) != 1: raise LookupError(f"Multiple or no parry abilities found for {weapon=} ({parries_dict=}).")
+    if len(parries_list) == 0: return None
+    if len(parries_list) > 1: raise LookupError(f"Multiple parry abilities found for {weapon=} ({parries_dict=}).")
     return parries_list[0]
+  
+  # abilities
+
+  def get_statistic_abilities_dict(self, ability_id: int) -> dict[int, StatisticAbility]:
+    ability_type: AbilityTypeName = self.abilities[ability_id].ability_type
+    is_specific_statistic_ability: Callable[[int, StatisticAbility], bool] = lambda _, statistic_ability: statistic_ability.ability_type == ability_type and statistic_ability.ability_id == ability_id
+    return filter_dictionary(self.statistic_abilities, is_specific_statistic_ability)
+  
+  def get_statistic_abilities_list(self, ability_id: int) -> list[StatisticAbility]:
+    return list(self.get_statistic_abilities_dict(ability_id).values())
+  
+  def get_action_statistic_ability(self, ability_id: int) -> StatisticAbility:
+    statistic_abilities: list[StatisticAbility] = self.get_statistic_abilities_list(ability_id)
+    if len(statistic_abilities) != 1: raise BufferError(f"Expected `1` statistic ability; instead got '{len(statistic_abilities)}' ({statistic_abilities=}).")
+    return statistic_abilities[0]
+  
+  def get_ability_action(self, ability_id: int, ability: Ability) -> AbilityAction:
+    match ability.ability_type:
+      case AbilityTypeName.IGNITE:
+        return IgniteAction()
+      case AbilityTypeName.HEAL:
+        heal_ability = self.get_action_statistic_ability(ability_id)
+        return HealAction(initial_duration=heal_ability.initial_duration, heal_amount=heal_ability.amount)
+      case AbilityTypeName.DEFEND:
+        defend_ability = self.get_action_statistic_ability(ability_id)
+        return DefendAction(initial_duration=defend_ability.initial_duration, resistance=defend_ability.amount)
+      case AbilityTypeName.WEAKEN:
+        weaken_ability = self.get_action_statistic_ability(ability_id)
+        return WeakenAction(initial_duration=weaken_ability.initial_duration, vulnerability=weaken_ability.amount)
+      case AbilityTypeName.PIERCE:
+        return PierceAction()
+      case AbilityTypeName.PARRY:
+        raise Exception(f"Invalid method of obtaining a parry ability action.")
+      case _: raise ValueError(f"{ability.ability_type=} not recognised.")
   
   # character methods
   
@@ -622,23 +679,27 @@ class GameData:
     fighting_enemy: FightingEnemy = self.fighting_enemies[fighting_enemy_id]
     return fighting_enemy.max_health
   
-  def get_enemy_attack_ability(self, enemy_id: int) -> Optional[tuple[int, Ability]]:
+  @log_all
+  def get_enemy_abilities_for_attacking(self, enemy_id: int) -> Optional[dict[int, Ability]]:
     """Assumes enemy has only one ability used in an attack."""
     enemy_attack_abilities_dict: dict[int, EnemyAbility] = filter_dictionary(self.enemy_abilities, lambda _, enemy_ability: enemy_ability.enemy_id == enemy_id and enemy_ability.is_used_in_attack)
 
     if len(enemy_attack_abilities_dict) == 0: return None
-    if len(enemy_attack_abilities_dict) > 1: raise BufferError(f"{enemy_attack_abilities_dict=}; expected a dictionary of length `1`.")
 
-    enemy_attack_ability: EnemyAbility = list(enemy_attack_abilities_dict.values())[0]
-    ability_id: int = enemy_attack_ability.ability_id
-    ability: Ability = self.abilities[ability_id]
-    return (ability_id, ability)
+    enemy_attack_abilities: list[EnemyAbility] = list(enemy_attack_abilities_dict.values())
+    enemy_abilities_for_attacking: dict[int, Ability] = {}
+    for enemy_attack_ability in enemy_attack_abilities:
+      ability_id: int = enemy_attack_ability.ability_id
+      ability: Ability = self.abilities[ability_id]
+      enemy_abilities_for_attacking[ability_id] = ability
+    return enemy_abilities_for_attacking
   
-  def get_enemy_heal_ability(self, enemy_id: int) -> Optional[tuple[int, Ability]]:
+  @log_all
+  def get_enemy_ability_for_heal(self, enemy_id: int) -> Optional[tuple[int, Ability]]:
     """Gets the enemy's healing ability."""
     heal_abilities_dict: dict[int, StatisticAbility] = filter_dictionary(self.statistic_abilities, lambda _, statistic_ability: statistic_ability.ability_type == AbilityTypeName.HEAL)
     heal_ability_identifiers: list[int] = list(heal_abilities_dict.keys())
-    enemy_heal_abilities_dict: dict[int, EnemyAbility] = filter_dictionary(self.enemy_abilities, lambda _, enemy_ability: enemy_ability.enemy_id == enemy_id and enemy_ability.ability_id in heal_ability_identifiers)
+    enemy_heal_abilities_dict: dict[int, EnemyAbility] = filter_dictionary(self.enemy_abilities, lambda _, enemy_ability: enemy_ability.enemy_id == enemy_id and enemy_ability.ability_id in heal_ability_identifiers and not enemy_ability.is_used_in_attack)
 
     if len(enemy_heal_abilities_dict) == 0: return None
     if len(enemy_heal_abilities_dict) > 1: raise BufferError(f"{enemy_heal_abilities_dict=}; expected a dictionary of length `1`.")
@@ -773,16 +834,18 @@ class GameData:
   def set_fighting_enemy_abilities(self, fighting_enemy: FightingEnemy) -> None:
     """Sets the attack and heal abilities for a given fighting enemy. Having no attack ability means the enemy has only a standard attack. Having no heal ability means the enemy cannot heal."""
     enemy_id: int = fighting_enemy.enemy_id
-    # attack ability
-    attack_data: Optional[tuple[int, Ability]] = self.get_enemy_attack_ability(enemy_id)
-    if attack_data == None: attack_ability_id = None
-    else: (attack_ability_id, _) = attack_data
+    # attack abilities
+    attack_ability_ids: Optional[list[int]]
+    attack_data: Optional[dict[int, Ability]] = self.get_enemy_abilities_for_attacking(enemy_id)
+    if attack_data == None: attack_ability_ids = None
+    else: attack_ability_ids = list(attack_data.keys())
     # heal ability
-    heal_data: Optional[tuple[int, Ability]] = self.get_enemy_heal_ability(enemy_id)
+    heal_ability_id: Optional[int]
+    heal_data: Optional[tuple[int, Ability]] = self.get_enemy_ability_for_heal(enemy_id)
     if heal_data == None: heal_ability_id = None
-    else: (heal_ability_id, _) = heal_data
-
-    fighting_enemy.set_action_identifiers(attack_ability_id, heal_ability_id)
+    else: heal_ability_id = heal_data[0]
+    
+    fighting_enemy.set_action_identifiers(attack_ability_ids, heal_ability_id)
   
   def finish_combat_encounter(self) -> None:
     for i in range(len(self.fighting_enemy_graph)):

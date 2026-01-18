@@ -108,4 +108,4 @@ class ExplorationScreen(AbstractScreen):
 
     return_command: Callable[[ScreenName], None] = self.return_command_generator(kwargs["return_command"])
     self.create_return(ScreenName.HOME, return_command=return_command)
-    self.create_quit(**kwargs)
+    self.create_quit()

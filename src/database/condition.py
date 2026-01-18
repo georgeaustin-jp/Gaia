@@ -1,7 +1,5 @@
 from tools.typing_tools import *
 
-from tools.dictionary_tools import filter_dictionary
-
 type Condition = Callable[[int, list[Any]], bool]
 
 def everything() -> Condition: return lambda _identifier, _row: True
@@ -12,4 +10,4 @@ def matching_identifiers(specific_identifier: int) -> Condition:
   return lambda identifier, _row: specific_identifier == identifier
 
 def get_condition_inverse(condition: Condition) -> Condition:
-  return lambda identifier, row: not condition.get_condition()(identifier, row)
+  return lambda identifier, row: not condition(identifier, row)

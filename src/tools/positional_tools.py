@@ -1,5 +1,5 @@
 from tools.typing_tools import *
-from tools.exceptions import InvalidPositionError
+from tools.custom_exceptions import InvalidPositionError
 from math import sqrt, pow
 
 # decorators

@@ -36,4 +36,4 @@ class CharacterCreation(Creation):
 
     self.create_confirm(self.create_character)
 
-    self.create_return(ScreenName.CHARACTER_SELECTION, **kwargs)
+    self.create_return(ScreenName.CHARACTER_SELECTION)

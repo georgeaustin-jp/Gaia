@@ -106,8 +106,11 @@ class HealthSetError(AbstractError):
 
 class InvalidTurnsError(AbstractError):
   def __init__(self, turns: int, *args: object) -> None:
-    self.message = f"Tried to set `self.turns_remaining` to invalid {turns=}."
-    super().__init__(self.message, *args)
+    super().__init__(f"Tried to set `self.turns_remaining` to invalid {turns=}.", *args)
+
+class NoParryError(AbstractError):
+  def __init__(self, parry_data: Optional[tuple[float, float]], *args: object) -> None:
+    super().__init__(f"Tried to parry when {parry_data=}.", *args)
 
 # other
 
@@ -120,3 +123,7 @@ class InvalidPositionError(AbstractError):
     else: self.message += "dimensions"
     self.message += "."
     super().__init__(self.message, *args)
+
+class PathError(AbstractError):
+  def __init__(self, path: str, *args: object) -> None:
+    super().__init__(f"Invalid path ({path=})", *args)

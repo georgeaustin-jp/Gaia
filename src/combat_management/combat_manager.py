@@ -1,6 +1,6 @@
 from tools.constants import *
 from tools.typing_tools import *
-from tools.exceptions import *
+from tools.custom_exceptions import *
 from tools.positional_tools import length_to_point
 
 import game_data as gd
@@ -324,20 +324,23 @@ class CombatManager:
       attack_damage: float = fighting_enemy.attack_damage
       attack = Attack(attack_damage)
       # adding abilities
-      attack_ability_id: Optional[int] = fighting_enemy.ability_id_table[ActionName.ATTACK]
-      if attack_ability_id != None:
+      attack_ability_ids: Optional[Union[int, list[int]]] = fighting_enemy.ability_id_table[ActionName.ATTACK]
+      if attack_ability_ids == None: return attack
+      if type(attack_ability_ids) == int: attack_ability_ids = [attack_ability_ids]
+      attack_ability_ids = cast(list[int], attack_ability_ids)
+      for attack_ability_id in attack_ability_ids:
         attack_ability: Ability = self.game_data.abilities[attack_ability_id]
-        attack_ability_action: AbilityAction = attack_ability.get_ability_action()
+        attack_ability_action: AbilityAction = self.game_data.get_ability_action(attack_ability_id, attack_ability)
         attack.add_ability_action(attack_ability_action)
       return attack
     # healing
     if action_name == ActionName.HEAL:
       # initialising
-      heal_ability_id: Optional[int] = fighting_enemy.ability_id_table.get(ActionName.HEAL)
+      heal_ability_id: Optional[int] = cast(Optional[int], fighting_enemy.ability_id_table.get(ActionName.HEAL))
       if heal_ability_id == None: raise ValueError(f"Tried to get {action_name=} for {fighting_enemy=} when no healing ability exists.")
       # adding ability
       heal_ability: Ability = self.game_data.abilities[heal_ability_id]
-      heal_ability_action: AbilityAction = heal_ability.get_ability_action()
+      heal_ability_action: AbilityAction = self.game_data.get_ability_action(heal_ability_id, heal_ability)
       if type(heal_ability_action) != HealAction: raise TypeError(f"{heal_ability_action=} not of type `HealAction`.")
       heal_amount: float = heal_ability_action.heal_amount
       return Heal(heal_amount)
