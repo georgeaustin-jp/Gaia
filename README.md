@@ -1,6 +1,6 @@
 # Gaia
 
-*Current version: v0.1.0-alpha*
+*Current version: v0.1.1-alpha*
 
 ## Description
 
