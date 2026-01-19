@@ -12,7 +12,6 @@ from database.database_main_data import DatabaseMainData
 from stored.stored import Stored
 from stored.user import User
 from stored.entities.character import Character
-from stored.modifiers.character_modifier import CharacterModifier
 from stored.world import World
 
 from stored.items.item import Item
@@ -32,7 +31,6 @@ from data_structures.fighting_enemy_graph import FightingEnemyGraph
 from custom_tkinter.toggleable_button import ToggleableButton
 from stored.entities.enemy import Enemy
 from stored.entities.fighting_enemy import FightingEnemy
-from stored.modifiers.fighting_enemy_modifier import FightingEnemyModifier
 
 from data_structures.queue import Queue
 
@@ -52,7 +50,6 @@ class GameData:
 
     self.characters: dict[int, Character] = {}
     self.active_character_id = None
-    self.character_modifiers: dict[int, CharacterModifier] = {}
 
     self.worlds: dict[int, World] = {}
     self.active_world_id: Optional[int] = None
@@ -72,7 +69,6 @@ class GameData:
     self.enemies: dict[int, Enemy] = {}
     self.fighting_enemies: dict[int, FightingEnemy] = {}
     self.fighting_enemy_graph = FightingEnemyGraph()
-    self.fighting_enemy_modifiers: dict[int, FightingEnemyModifier] = {}
     self.enemy_abilities: dict[int, EnemyAbility] = {}
 
     self.abilities: dict[int, Ability] = {}
@@ -87,7 +83,6 @@ class GameData:
     self.save_load_targets: dict[type[Stored], Union[StorageAttrName, tuple[StorageAttrName, bool]]] = { 
       User: StorageAttrName.USERS,
       Character: StorageAttrName.CHARACTERS,
-      CharacterModifier: (StorageAttrName.CHARACTER_MODIFIERS, False),
 
       World: StorageAttrName.WORLDS,
 
@@ -101,7 +96,6 @@ class GameData:
 
       Enemy: StorageAttrName.ENEMIES,
       FightingEnemy: (StorageAttrName.FIGHTING_ENEMIES, False),
-      FightingEnemyModifier: (StorageAttrName.FIGHTING_ENEMY_MODIFIERS, False),
       EnemyAbility: StorageAttrName.ENEMY_ABILITIES,
 
       Ability: StorageAttrName.ABILITIES,

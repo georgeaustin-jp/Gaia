@@ -1,6 +1,7 @@
 import toml
 import os
 import pathlib
+import re
 
 from tools.typing_tools import *
 from tools.custom_exceptions import PathError
@@ -16,7 +17,7 @@ class FileHandler:
     return current_path
 
   def data_path(self) -> str:
-    if self.__current_path == "Gaia":
+    if re.match(r'Gaia(-[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta))?)?', self.__current_path):
       return os.path.join("data")
     raise PathError(self.__current_path)
   
