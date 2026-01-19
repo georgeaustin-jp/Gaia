@@ -6,6 +6,8 @@ import re
 from tools.typing_tools import *
 from tools.custom_exceptions import PathError
 
+from database.config_data import ConfigData
+
 class FileHandler:
   def __init__(self, ) -> None:
     self.__current_path: str = self.get_current_path()
@@ -31,22 +33,30 @@ class FileHandler:
 
   # file methods
 
-  def file_path(self, file_name: str) -> str:
+  def toml_file_path(self, file_name: str, in_data_directory: bool = True) -> str:
     toml_suffix: str = "toml"
     file_name_suffix: str = file_name.split(".")[-1]
     if file_name_suffix != toml_suffix:
       file_name = file_name + f".{toml_suffix}"
-    return os.path.join(self.data_path(), file_name)
+    if in_data_directory:
+      return os.path.join(self.data_path(), file_name)
+    return os.path.join(file_name)
 
   def save_file(self, file_name: str, data: dict[str, Any]) -> None:
-    file_path: str = self.file_path(file_name)
+    file_path: str = self.toml_file_path(file_name)
     with open(file_path, 'w') as f:
       toml.dump(data, f)
     
-  def load_file(self, file_name: str) -> dict[str, Any]:
-    file_path: str = self.file_path(file_name)
+  def load_file(self, file_name: str, in_data_directory: bool = True) -> dict[str, Any]:
+    file_path: str = self.toml_file_path(file_name, in_data_directory)
     return toml.load(file_path)
   
   def delete_file(self, file_name: str) -> None:
-    file_path: str = self.file_path(file_name)
+    file_path: str = self.toml_file_path(file_name)
     os.remove(file_path)
+
+  # config methods
+
+  def get_config_data(self) -> ConfigData:
+    config_raw_data: dict[str, Any] = self.load_file("config.toml", False)
+    return ConfigData(version=config_raw_data["version"])

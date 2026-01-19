@@ -40,10 +40,8 @@ class GameData:
   def __init__(self, is_dev_mode_enabled: bool = False) -> None:
     self.save_on_delete: bool = True # determines whether the current state of the database will be saved once it is deleted
     self.is_dev_mode_enabled: bool = is_dev_mode_enabled
-
-    VERSION: str = "v0.1.1-alpha"
     
-    self.database = Database("game_data", VERSION)
+    self.database = Database("game_data")
 
     self.users: dict[int, User] = {}
     self.active_user_id: Optional[int] = 0 # defaults as 0
@@ -150,7 +148,7 @@ class GameData:
   def table_templates(self) -> dict[TableName, list[str]]: return add_if_vacant(self.static_table_templates, self.dynamic_table_templates)
 
   @property
-  def VERSION(self) -> str: return self.database.VERSION
+  def VERSION(self) -> str: return self.database.config_data.version
 
   # database and data loading methods
 

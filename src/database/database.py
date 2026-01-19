@@ -5,15 +5,17 @@ from database.table import Table
 from database.condition import Condition
 from database.file_handler import FileHandler
 from database.database_main_data import DatabaseMainData
+from database.config_data import ConfigData
 
 class Database:
-  def __init__(self, name: str, version: str, tables: dict[str, Table] = {}, table_names: list[str] = []) -> None:
+  def __init__(self, name: str, tables: dict[str, Table] = {}, table_names: list[str] = []) -> None:
     self.name: str = name
-    self.VERSION: str = version
     self.tables: dict[str, Table] = tables
     self.file_handler = FileHandler()
     self.table_names = table_names
     self.deleted_table_names: list[str] = []
+
+    self.config_data: ConfigData = self.get_config_data()
 
     self.save_on_delete: bool = True
 
@@ -24,6 +26,9 @@ class Database:
       self.save()
 
   # other
+
+  def get_config_data(self) -> ConfigData:
+    return self.file_handler.get_config_data()
   
   def exists(self) -> bool:
     """Uses the `file_handler.does_data_directory_exist()` method to determine whether the database has already been created in memory or not."""
@@ -34,7 +39,7 @@ class Database:
     if not self.file_handler.does_data_directory_exist():
       self.file_handler.create_directory("data")
     if table_names != []: self.table_names = table_names
-    main_data: DatabaseMainData = DatabaseMainData(self.table_names, self.VERSION)
+    main_data: DatabaseMainData = DatabaseMainData(self.table_names, self.config_data.version)
     self.file_handler.save_file("MAIN", main_data.to_dict())
 
   def init_tables(self, table_templates: dict[TableName, list[str]]) -> None:
@@ -81,7 +86,7 @@ class Database:
       self.file_handler.delete_file(deleted_table_name)
 
   def save_main_data(self) -> None:
-    main_data: DatabaseMainData = DatabaseMainData(self.table_names, self.VERSION)
+    main_data: DatabaseMainData = DatabaseMainData(self.table_names, self.config_data.version)
     if main_data.table_names == []:
       main_data = self.load_main_data()
     self.file_handler.save_file("MAIN", main_data.to_dict())
@@ -93,7 +98,7 @@ class Database:
 
   def is_version_updated(self) -> bool:
     main_data: DatabaseMainData = self.load_main_data()
-    if main_data.version != self.VERSION: return True
+    if main_data.version != self.config_data.version: return True
     return False
 
   # SQL queries
