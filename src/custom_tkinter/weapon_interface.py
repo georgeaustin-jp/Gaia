@@ -5,10 +5,10 @@ from tools.tkinter_tools import Position
 from tools.typing_tools import *
 from tools.tkinter_tools import *
 from tools.dictionary_tools import add_if_vacant
+from tools.logging_tools import *
 
 from custom_tkinter.toggleable_button import ToggleableButton
 from interface.base_frame import BaseFrame
-from tools.typing_tools import Position
 
 class WeaponInterface(BaseFrame):
   """User interface with one weapon. Used in `CombatScreen`."""
@@ -55,6 +55,9 @@ class WeaponInterface(BaseFrame):
         return self.__parry_button
       case _:
         return super().__getitem__(key)
+      
+  def __repr__(self) -> str:
+    return f"WeaponInterface(weapon_name={self.__weapon_name_text.get()}, {self.__attack_damage=}, {self.__parry_damage_threshold=}, {self.__parry_reflection_proportion=})"
 
   # getter and setter methods
 

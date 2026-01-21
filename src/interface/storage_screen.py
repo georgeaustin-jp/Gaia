@@ -1,6 +1,8 @@
 import tkinter as tk
 import custom_tkinter as ctk
 
+from tools.logging_tools import *
+
 from tools.typing_tools import *
 from tools.constants import *
 from tools.dictionary_tools import filter_dictionary
@@ -118,14 +120,22 @@ class StorageScreen(AbstractScreen):
       del self.storage_item_swap_buttons[storage_item_id]
 
     self.load(**kwargs) # reloads buttons at the end
+
+  def reset_swap_item_buttons_dict(self, swap_item_buttons_dict: dict[int, ToggleableButton]) -> None:
+    for swap_button in swap_item_buttons_dict.values():
+      swap_button.is_toggled = ToggleState.OFF
+
+  def reset_swap_item_buttons(self) -> None:
+    self.reset_swap_item_buttons_dict(self.inventory_item_swap_buttons)
+    self.reset_swap_item_buttons_dict(self.storage_item_swap_buttons)
   
   # methods for loading the screen
 
   def equip_button_command_generator(self, equip_button: ToggleableButton, abstract_storage_item_id: int, switch_button: ToggleableButton) -> ButtonCommand:
     def equip_button_command() -> None:
       self.game_data.toggle_inventory_item_equipped(equip_button, abstract_storage_item_id)
+      switch_button.is_toggled = ToggleState.OFF
       switch_button.is_enabled = not bool(equip_button.is_toggled)
-
     return equip_button_command
 
   def create_item_frame(self, abstract_storage_item_id: int, index: int, container: tk.Frame, is_character_inventory: bool = False, is_equipped: bool = False, **kwargs) -> tk.Frame:
@@ -151,7 +161,7 @@ class StorageScreen(AbstractScreen):
     item_frame: tk.Frame = unpack_optional(self.create_frame_on_grid((0,index), container=container, dimensions=(5,1), exclude_columns=[0,2,3,4], return_frame=True, placement_options={"sticky": "ew"}, **kwargs))
     # populating it
     ## inventory-switching button
-    switch_button = unpack_optional(self.create_toggleable_button((4,0), container=item_frame, text=self.get_storage_switch_button_text(is_character_inventory), return_button=True)) # for switching between storage and inventory
+    switch_button: ToggleableButton = unpack_optional(self.create_toggleable_button((4,0), container=item_frame, text=self.get_storage_switch_button_text(is_character_inventory), return_button=True)) # for switching between storage and inventory
     if is_character_inventory: self.inventory_item_swap_buttons[abstract_storage_item_id] = switch_button
     else: self.storage_item_swap_buttons[abstract_storage_item_id] = switch_button
     ## equipping button
@@ -182,6 +192,15 @@ class StorageScreen(AbstractScreen):
       frame.destroy()
     item_frames = [].copy()
     self[attribute_name] = item_frames
+
+  def clear_swap_item_buttons_dict(self, swap_item_buttons_dict: dict[int, ToggleableButton]) -> dict[int, ToggleableButton]:
+    for item_button in swap_item_buttons_dict.values():
+      item_button.destroy()
+    return {}
+
+  def clear_swap_item_buttons(self) -> None:
+    self.inventory_item_swap_buttons = self.clear_swap_item_buttons_dict(self.inventory_item_swap_buttons)
+    self.storage_item_swap_buttons = self.clear_swap_item_buttons_dict(self.storage_item_swap_buttons)
 
   def load_abstract_storage_items[AbstractStorageItemType: AbstractStorageItem](self, storage_items: dict[int, AbstractStorageItemType], is_character_inventory: bool = False, **kwargs) -> None:
     """
@@ -222,6 +241,7 @@ class StorageScreen(AbstractScreen):
       self.is_inventory = False
     self.clear_item_frames(ItemFrameCollectionName.INVENTORY)
     self.clear_item_frames(ItemFrameCollectionName.STORAGE)
+    self.clear_swap_item_buttons()
 
     is_storage_at_home: Optional[bool] = self.game_data.is_storage_at_home()
     if is_storage_at_home == None: return
@@ -243,6 +263,7 @@ class StorageScreen(AbstractScreen):
 
     self.destroy_return()
     self.return_button = self.create_return(**kwargs)
+    self.reset_swap_item_buttons()
 
   def create_return(self, **kwargs) -> tk.Button:
     if self.game_data.is_storage_at_home():

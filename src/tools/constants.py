@@ -35,12 +35,12 @@ class Constants:
   # constants related to the fighting part of combat:
   MAX_EQUIPPED_WEAPONS: int = 3
   MAX_EQUIPPED_EQUIPABLES: int = 4
-  HEALTH_POTION_AMOUNT: float = 30
+  HEALTH_POTION_AMOUNT: float = 25
   GRID_WIDTH: int = 3
   GRID_HEIGHT: int = 3
   MIN_ENEMIES: int = 1
   MAX_ENEMIES: int = 5
-  BOSS_ENCOUNTER_PROBABILITY: float = 0.05
+  BOSS_ENCOUNTER_PROBABILITY: float = 0.06
   IGNITE_DURATION: int = 3
   IGNITE_DAMAGE: float = 3
   PIERCE_OFFENSIVENESS: float = 0.5
@@ -63,8 +63,8 @@ class Constants:
   DEFAULT_FONT: str = "Segoe UI"
   DEFAULT_FONT_SIZE: int = 9
   # constants related to exploration
-  COMBAT_ENCOUNTER_PROBABILITY: float = 0.4
-  STRUCTURE_ENCOUNTER_PROBABILITY: float = 0.25
+  COMBAT_ENCOUNTER_PROBABILITY: float = 0 # TODO 0.6
+  STRUCTURE_ENCOUNTER_PROBABILITY: float = 1 # TODO 0.55
   MIN_STRUCTURE_ITEM_COUNT: int = 1
   MAX_STRUCTURE_ITEM_COUNT: int = 2
   # misc

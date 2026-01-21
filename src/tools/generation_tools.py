@@ -63,7 +63,7 @@ def generate_random_int_in_range(lower: int, upper: int) -> int:
   if lower >= upper: raise ValueError(f"Bound {lower=} cannot be greater than or equal to bound {upper=}.")
   return random.randrange(lower, upper)
 
-def generate_structure_item_count() -> int: return generate_random_int_in_range(Constants.MIN_STRUCTURE_ITEM_COUNT, Constants.MAX_STRUCTURE_ITEM_COUNT)
+def generate_structure_item_count() -> int: return generate_random_int_in_range(Constants.MIN_STRUCTURE_ITEM_COUNT, Constants.MAX_STRUCTURE_ITEM_COUNT+1)
 
 def generate_enemy_count() -> int: return generate_random_int_in_range(Constants.MIN_ENEMIES, Constants.MAX_ENEMIES)
 

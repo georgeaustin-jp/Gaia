@@ -15,8 +15,8 @@ from stored.items.storage import Storage
 from stored.items.inventory_item import InventoryItem
 
 class App:
-  def __init__(self) -> None:
-    self.game_data = GameData()
+  def __init__(self, is_dev_mode_enabled: bool = False) -> None:
+    self.game_data = GameData(is_dev_mode_enabled)
     self.game_data.load_game_data()
 
     interface_init_options: dict[str, Any] = {
@@ -127,6 +127,12 @@ class App:
     self.show_screen(ScreenName.EXPLORATION)
 
   def begin_combat(self) -> None:
+    equipped_weapon_ids: list[int] = self.game_data.get_equipped_weapon_identifiers()
+    weapons_length: int = len(equipped_weapon_ids)
+    if weapons_length > Constants.MAX_EQUIPPED_WEAPONS:
+      self.interface.screens[ScreenName.EXPLORATION].message.set(f"Number of equipped weapons ({weapons_length}) exceeds the maximum number you're able to bring ({Constants.MAX_EQUIPPED_WEAPONS}).")
+      return None
+    #self.add_info(f"Number of equipped weapons ({weapons_length}) exceeds the maximum number you're able to bring ({Constants.MAX_EQUIPPED_WEAPONS}).")
     self.game_data.generate_fighting_enemies()
     self.show_screen(ScreenName.COMBAT)
     self.combat_manager.begin_combat()

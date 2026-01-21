@@ -101,6 +101,17 @@ class FightingEntity(Stored):
   
   # variable-setting methods
 
+  def reset_state(self) -> None:
+    self.reset_health()
+    self.reset_damage_resistance()
+    self.is_ignited = False
+    self.is_pierced = False
+    self.is_parrying = False
+    self.parry_damage_threshold = None
+    self.parry_reflection_proportion = None
+    self.aggressiveness = 0
+
+  ## health
   def set_health(self, new_health: float) -> None:
     if new_health > self.max_health or new_health < 0:
       raise HealthSetError(new_health, self.max_health)
@@ -127,15 +138,19 @@ class FightingEntity(Stored):
     self.change_health(-1*modified_damage_amount)
     return f"Recieved {modified_damage_amount}DMG"
 
-  def apply_damage_resistance(self, damage_amount: float) -> float:
-    new_damage_amount: float = damage_amount * (1-self.damage_resistance)
-    if new_damage_amount < 0: raise ValueError(f"`{new_damage_amount=}` is less than `0` after `{self.damage_resistance=}` was applied.")
-    return new_damage_amount
-
   def heal(self, heal_amount: float) -> str:
     if heal_amount < 0:
       raise ValueError(f"{heal_amount=} less than zero.")
     return self.change_health(heal_amount)
+  
+  ## damage resistance / vulnerability
+  def apply_damage_resistance(self, damage_amount: float) -> float:
+    new_damage_amount: float = damage_amount * (1-self.damage_resistance)
+    if new_damage_amount < 0: raise ValueError(f"`{new_damage_amount=}` is less than `0` after `{self.damage_resistance=}` was applied.")
+    return new_damage_amount
+  
+  def reset_damage_resistance(self) -> None:
+    self.damage_resistance = 0
 
   # ability / modifier methods
 

@@ -151,7 +151,7 @@ class CombatManager:
     self.reset_round_number()
     self.combat_screen.parry_used = False
 
-    self.game_data.get_active_character().reset_health()
+    self.game_data.get_active_character().reset_state()
 
     equipables_messages: list[str] = self.effect_manager.apply_equipped_equipables_effects()
     self.add_info_list(equipables_messages)
@@ -165,6 +165,7 @@ class CombatManager:
 
     self.combat_screen.enable_return(character_won)
     self.effect_manager.remove_all_effects_from_active_character()
+    self.game_data.get_active_character().reset_state()
 
   def play_round(self) -> bool:
     """

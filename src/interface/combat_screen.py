@@ -1,5 +1,7 @@
 import tkinter as tk
 
+from tools.logging_tools import *
+
 from tools.typing_tools import *
 from tools.dictionary_tools import filter_dictionary
 from tools.custom_exceptions import *
@@ -47,7 +49,6 @@ def access_info_box[ReturnType](func: Callable[..., ReturnType]) -> Callable[...
 
 class CombatScreen(AbstractScreen):
   def __init__(self, root, parent: tk.Frame, game_data: GameData, **kwargs) -> None:
-    self.equipped_inventory_weapon_identifiers: list[Optional[int]] = []
     self.weapon_interfaces: list[WeaponInterface] = []
 
     self.equipped_inventory_equipable_identifiers: list[Optional[int]] = []
@@ -75,53 +76,6 @@ class CombatScreen(AbstractScreen):
     super().__init__(root, parent, game_data, **kwargs)
 
   # weapon label operations
-
-  def get_equipped_inventory_weapon_identifiers(self) -> list[Optional[int]]:
-    """
-    Gets the `InventoryItemID` for all weapons the active character has equipped from their inventory.
-    
-    :return: A list of inventory item identifiers. Never contains `None` elements, but the typing describes it as such to match with the type of `self.equipped_inventory_weapon_identifiers`.
-    :rtype: list[Optional[int]]
-    """
-    inventory_items: dict[int, InventoryItem] = self.game_data.get_character_inventory_items() # all items in the inventory of the currently active character
-    equipped_inventory_items: dict[int, InventoryItem] = filter_dictionary(inventory_items, lambda _, inv_item: inv_item.equipped) # all items from their inventory which they have equipped
-    equipped_inventory_weapons_dict: dict[int, InventoryItem] = filter_dictionary(equipped_inventory_items, lambda _, inv_item: self.game_data.items[inv_item.item_id].item_type == ItemType.WEAPON)
-    return list(equipped_inventory_weapons_dict.keys())
-  
-  def get_equipped_inventory_weapon_identifiers_length(self) -> int:
-    """
-    Gets the number of elements in the `self.equipped_inventory_weapon_identifiers` attribute, including elements of value `None`.
-    
-    :return: The length of the `self.equipped_inventory_weapon_identifiers` attribute (value >= 0).
-    :rtype: int
-    """
-    return len(self.equipped_inventory_weapon_identifiers)
-
-  def get_non_null_equipped_inventory_weapon_ids(self) -> list[int]:
-    is_weapon_id_not_null: Callable[[Optional[int]], bool] = lambda weapon_id: weapon_id != None
-    filtered_weapon_ids: list[Optional[int]] = list(filter(is_weapon_id_not_null, self.equipped_inventory_weapon_identifiers)) # removes all `None` entries
-    cast_optional_to_int: Callable[[Optional[int]], int] = lambda weapon_id: cast(int, weapon_id)
-    return list(map(cast_optional_to_int, filtered_weapon_ids)) # converts from type `list[Optional[int]]` to `list[int]`
-
-  def load_equipped_inventory_weapon_identifiers(self) -> None: 
-    self.equipped_inventory_weapon_identifiers = [].copy() # clears active weapons
-    self.equipped_inventory_weapon_identifiers = self.get_equipped_inventory_weapon_identifiers()
-    weapons_length: int = self.get_equipped_inventory_weapon_identifiers_length()
-    if weapons_length > Constants.MAX_EQUIPPED_WEAPONS:
-      raise ValueError(f"{weapons_length=} should have maximum length {Constants.MAX_EQUIPPED_WEAPONS}; instead has {len(self.equipped_inventory_weapon_identifiers)=}.")
-    if weapons_length < Constants.MAX_EQUIPPED_WEAPONS:
-      for _ in range(weapons_length, Constants.MAX_EQUIPPED_WEAPONS):
-        self.equipped_inventory_weapon_identifiers.append(None)
-  
-  def get_equipped_inventory_weapon_names(self) -> list[Optional[str]]:
-    if len(self.equipped_inventory_weapon_identifiers) > Constants.MAX_EQUIPPED_WEAPONS:
-      raise ValueError(f"{self.equipped_inventory_weapon_identifiers=} should have maximum length {Constants.MAX_EQUIPPED_WEAPONS}; instead has {len(self.equipped_inventory_weapon_identifiers)=}.")
-    weapon_names: list[Optional[str]] = []
-    for active_weapon_id in self.equipped_inventory_weapon_identifiers:
-      if active_weapon_id == None: weapon_name = None
-      else: weapon_name = self.game_data.get_inventory_item_name(active_weapon_id)
-      weapon_names.append(weapon_name)
-    return weapon_names
   
   def init_weapon_interfaces(self, weapon_grid: tk.Frame, placement_options: dict[str, Any] = {}, **kwargs) -> None:
     weapon_interfaces: list[WeaponInterface] = []
@@ -131,20 +85,24 @@ class CombatScreen(AbstractScreen):
     self.weapon_interfaces = weapon_interfaces
   
   def load_weapon_label_names(self) -> None:
-    weapon_names: list[Optional[str]] = self.get_equipped_inventory_weapon_names()
+    weapon_names: list[str] = self.game_data.get_equipped_weapon_names()
     for (i, weapon_name) in enumerate(weapon_names):
       self.weapon_interfaces[i].weapon_name = weapon_name
 
   def load_weapon_interface_at(self, index: int) -> None:
     weapon_interface: WeaponInterface = self.weapon_interfaces[index]
-    weapon_identifier: Optional[int] = self.equipped_inventory_weapon_identifiers[index]
-    if weapon_identifier == None: 
+    if index >= len(self.game_data.equipped_weapon_identifiers):
       weapon_interface.load()
-      return
-    weapon_name: Optional[str] = self.get_equipped_inventory_weapon_names()[index]
-    if weapon_name == None: 
-      raise TypeError(f"Weapon name should not be of type `None` at {index=} in {self.get_equipped_inventory_weapon_names()=} ({weapon_name=}).")
+      return None
+    weapon_identifier: int = self.game_data.equipped_weapon_identifiers[index]
+    logging.debug(f"{weapon_identifier=}")
+    equipped_weapon_names: list[str] = self.game_data.get_equipped_weapon_names()
+    weapon_name: Optional[str] = equipped_weapon_names[index]
+    logging.debug(f"BEFORE: {index=}, {weapon_interface=}, {weapon_name=}")
+    logging.debug(f"{equipped_weapon_names=}")
     weapon: Weapon = self.game_data.weapons[weapon_identifier]
+    logging.debug(f"{self.game_data.weapons=}")
+    logging.debug(f"{weapon=}")
     attack_damage: float = weapon.damage
     # getting parry data
     weapon_parry: Optional[ParryAbility] = self.game_data.get_weapon_parry(weapon)
@@ -154,6 +112,7 @@ class CombatScreen(AbstractScreen):
       parry_damage_threshold = weapon_parry.damage_threshold
       parry_reflection_proportion = weapon_parry.reflection_proportion
     weapon_interface.load(weapon_name, attack_damage, parry_damage_threshold, parry_reflection_proportion)
+    logging.debug(f"AFTER: {weapon_interface=}")
 
   def load_weapon_interfaces(self) -> None:
     for i in range(Constants.MAX_EQUIPPED_WEAPONS):
@@ -298,7 +257,10 @@ class CombatScreen(AbstractScreen):
   def update_weapon_states(self) -> None:
     """Operates under the assumption that all weapon buttons are initially enabled."""
     for i in range(Constants.MAX_EQUIPPED_WEAPONS):
-      weapon_id: Optional[int] = self.equipped_inventory_weapon_identifiers[i]
+      try:
+        weapon_id: Optional[int] = self.game_data.equipped_weapon_identifiers[i]
+      except:
+        weapon_id = None
       selected_weapon_interface: WeaponInterface = self.weapon_interfaces[i]
       weapon_used: bool = cast(bool, selected_weapon_interface.is_weapon_used)
       if weapon_used or weapon_id == None:self.disable_attack_button(i)
@@ -306,7 +268,10 @@ class CombatScreen(AbstractScreen):
 
   def reset_weapon_states(self) -> None:
     for i in range(Constants.MAX_EQUIPPED_WEAPONS):
-      weapon_id: Optional[int] = self.equipped_inventory_weapon_identifiers[i]
+      try:
+        weapon_id: Optional[int] = self.game_data.equipped_weapon_identifiers[i]
+      except:
+        weapon_id = None
       if weapon_id != None:
         self.enable_attack_button(i)
         self.enable_parry_button(i)
@@ -453,7 +418,7 @@ class CombatScreen(AbstractScreen):
         selected_weapon_identifier_index = i
       if weapon_buttons_selected > 1:
         raise TooManyWeaponButtonsSelectedError(i)
-    weapon_identifier: Optional[int] = self.equipped_inventory_weapon_identifiers[selected_weapon_identifier_index]
+    weapon_identifier: Optional[int] = self.game_data.equipped_weapon_identifiers[selected_weapon_identifier_index]
     if weapon_identifier == None: raise TypeError(f"{weapon_identifier=} should never be `None`.")
     return self.game_data.weapons[weapon_identifier].damage
   
@@ -470,7 +435,7 @@ class CombatScreen(AbstractScreen):
         selected_weapon_identifier_index = i
       if weapon_buttons_selected > 1:
         raise TooManyWeaponButtonsSelectedError(i)
-    weapon_identifier: Optional[int] = self.equipped_inventory_weapon_identifiers[selected_weapon_identifier_index]
+    weapon_identifier: Optional[int] = self.game_data.equipped_weapon_identifiers[selected_weapon_identifier_index]
     if weapon_identifier == None: raise TypeError("\'weapon_identifier\' can never be \'None\'")
     weapon: Weapon = self.game_data.weapons[weapon_identifier]
     parry_ability: Optional[ParryAbility] = self.game_data.get_weapon_parry(weapon)
@@ -563,7 +528,7 @@ class CombatScreen(AbstractScreen):
   # loading and creating
     
   def load(self, **kwargs) -> None:
-    self.load_equipped_inventory_weapon_identifiers()
+    self.game_data.load_equipped_weapon_identifiers()
     self.load_weapon_interfaces()
     self.load_equipped_inventory_equipable_identifiers()
     self.load_equipable_label_texts()

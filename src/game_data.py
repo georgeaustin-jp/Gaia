@@ -63,6 +63,7 @@ class GameData:
 
     self.weapons: dict[int, Weapon] = {}
     self.equipables: dict[int, Equipable] = {}
+    self.equipped_weapon_identifiers: list[int] = []
 
     self.enemies: dict[int, Enemy] = {}
     self.fighting_enemies: dict[int, FightingEnemy] = {}
@@ -113,7 +114,7 @@ class GameData:
     self.static_table_templates: dict[TableName, list[str]] = {
       TableName.ITEM: ["ItemID", "ItemType", "Name"], # Y
       TableName.ITEM_ABILITY: ["ItemAbilityID", "ItemID", "AbilityID"], # Y
-      TableName.WEAPON: ["WeaponID", "ItemID", "Damage", "Active"], # Y
+      TableName.WEAPON: ["WeaponID", "ItemID", "Damage"], # Y
       TableName.EQUIPABLE: ["EquipableID", "ItemID"], # Y
       TableName.ABILITY: ["AbilityID", "Text", "Type"], # Y
       TableName.PARRY_ABILITY: ["ParryAbilityID", "AbilityID", "DamageThreshold", "ReflectionProportion"], # Y
@@ -121,6 +122,8 @@ class GameData:
       TableName.ENEMY: ["EnemyID", "Name", "MaxHealth", "AttackDamage", "Intelligence", "IsBoss"], # Y
       TableName.ENEMY_ABILITY: ["EnemyAbilityID", "EnemyID", "AbilityID", "IsUsedInAttack"], # Y
     }
+
+    self.is_boss_encounter: bool = False
 
   # built-in methods
 
@@ -594,6 +597,25 @@ class GameData:
     if len(parries_list) > 1: raise LookupError(f"Multiple parry abilities found for {weapon=} ({parries_dict=}).")
     return parries_list[0]
   
+  def get_equipped_weapon_identifiers(self) -> list[int]:
+    is_equipped_weapon: Callable[[int, InventoryItem], float] = lambda _, inv_item: self.items[inv_item.item_id].item_type == ItemType.WEAPON and inv_item.equipped
+    equipped_inventory_weapons: dict[int, InventoryItem] = filter_dictionary(self.inventory_items, is_equipped_weapon)
+    equipped_weapon_identifiers: list[int] = []
+    for equipped_inventory_weapon in equipped_inventory_weapons.values():
+      item_id: int = equipped_inventory_weapon.item_id
+      is_selected_weapon: Callable[[int, Weapon], bool] = lambda _, weapon: weapon.item_id == item_id
+      weapon_item: dict[int, Weapon] = filter_dictionary(self.weapons, is_selected_weapon)
+      if len(weapon_item) > 1: raise BufferError(f"Multiple values found for {weapon_item=} with {item_id}.")
+      weapon_id: int = list(weapon_item.keys())[0]
+      equipped_weapon_identifiers.append(weapon_id)
+    return equipped_weapon_identifiers
+  
+  def load_equipped_weapon_identifiers(self) -> None:
+    self.equipped_weapon_identifiers = self.get_equipped_weapon_identifiers()
+
+  def get_equipped_weapon_names(self) -> list[str]:
+    return [self.items[self.weapons[i].item_id].name for i in self.equipped_weapon_identifiers]
+  
   # abilities
 
   def get_statistic_abilities_dict(self, ability_id: int) -> dict[int, StatisticAbility]:
@@ -806,7 +828,7 @@ class GameData:
   
   def get_multiple_random_enemy_identifiers(self, n: int, get_boss: bool) -> list[int]:
     if n < 0: raise ValueError(f"{n=} cannot be less than 0.")
-    if n > 1 and get_boss: raise Exception(f"Cannot get more than {n=} bosses.")
+    if n > 1 and get_boss: raise Exception(f"Cannot get more than `1` bosses; {n=} tried to be retrieved.")
     if n == 0: return [] # base case
     enemy_id: int = self.get_random_enemy_identifier(get_boss)
     return [enemy_id] + self.get_multiple_random_enemy_identifiers(n-1, get_boss) # recursive call
@@ -818,9 +840,11 @@ class GameData:
     return self.set_fighting_enemy_at(position, fighting_enemy_id)
   
   def generate_fighting_enemies(self) -> None:
-    enemy_count: int = generate_enemy_count()
-    is_boss: bool = is_boss_encounter()
-    enemy_identifiers: Queue[int] = Queue(self.get_multiple_random_enemy_identifiers(enemy_count, is_boss))
+    self.is_boss_encounter = is_boss_encounter()
+    enemy_count: int = 1
+    if not self.is_boss_encounter:
+      enemy_count = generate_enemy_count()
+    enemy_identifiers: Queue[int] = Queue(self.get_multiple_random_enemy_identifiers(enemy_count, self.is_boss_encounter))
     while not enemy_identifiers.empty():
       enemy_id: int = enemy_identifiers.get()
       enemy: Enemy = self.enemies[enemy_id]
