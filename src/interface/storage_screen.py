@@ -96,9 +96,9 @@ class StorageScreen(AbstractScreen):
   # swapping items between inventories
 
   def move_items_if_valid(self, **kwargs) -> None:
-    """Ensures a swap is valid before it is executed. Calls \'self.move_items\' if no faults occur."""
+    """Ensures a swap is valid before it is executed. Calls `move_items` if no faults occur."""
     storage_id: Optional[int] = self.game_data.active_storage_id
-    if storage_id == None: raise KeyError(f"Trying to access a storage when no storage is currently active (\'self.game_data.active_storage_id\'=`{self.game_data.active_storage_id}`).")
+    if storage_id == None: raise KeyError(f"Trying to access a storage when no storage is currently active ({self.game_data.active_storage_id=}).")
     self.move_items(storage_id, **kwargs)
     self.load(**kwargs)
 
@@ -125,6 +125,7 @@ class StorageScreen(AbstractScreen):
     def equip_button_command() -> None:
       self.game_data.toggle_inventory_item_equipped(equip_button, abstract_storage_item_id)
       switch_button.is_enabled = not bool(equip_button.is_toggled)
+
     return equip_button_command
 
   def create_item_frame(self, abstract_storage_item_id: int, index: int, container: tk.Frame, is_character_inventory: bool = False, is_equipped: bool = False, **kwargs) -> tk.Frame:
@@ -132,8 +133,9 @@ class StorageScreen(AbstractScreen):
     Creates a frame that contains all required information about a single item. Includes the following (from left to right):
       1. Equip/unequip the item (optional)
       2. Item name
-      3. Stack size
-      4. Button to select whether the item should be swapped
+      3. Item type
+      4. Stack size
+      5. Button to select whether the item should be swapped
     
     :param container: The base frame which the item frame will be appended to.
     :type container: Frame
@@ -146,10 +148,10 @@ class StorageScreen(AbstractScreen):
     item: Item = self.game_data.items[item_id]
     item_name: str = item.name
     # creating the frame
-    item_frame: tk.Frame = unpack_optional(self.create_frame_on_grid((0,index), container=container, dimensions=(4,1), exclude_columns=[0,2,3], return_frame=True, placement_options={"sticky": "ew"}, **kwargs))
+    item_frame: tk.Frame = unpack_optional(self.create_frame_on_grid((0,index), container=container, dimensions=(5,1), exclude_columns=[0,2,3,4], return_frame=True, placement_options={"sticky": "ew"}, **kwargs))
     # populating it
     ## inventory-switching button
-    switch_button = unpack_optional(self.create_toggleable_button((3,0), container=item_frame, text=self.get_storage_switch_button_text(is_character_inventory), return_button=True)) # for switching between storage and inventory
+    switch_button = unpack_optional(self.create_toggleable_button((4,0), container=item_frame, text=self.get_storage_switch_button_text(is_character_inventory), return_button=True)) # for switching between storage and inventory
     if is_character_inventory: self.inventory_item_swap_buttons[abstract_storage_item_id] = switch_button
     else: self.storage_item_swap_buttons[abstract_storage_item_id] = switch_button
     ## equipping button
@@ -160,7 +162,8 @@ class StorageScreen(AbstractScreen):
       switch_button.is_enabled = not initially_toggled
     ## other
     self.create_widget_on_grid(tk.Label, (1,0), container=item_frame, text=item_name) # name of item
-    self.create_widget_on_grid(tk.Label, (2,0), container=item_frame, text=f"({str(stack_size)})") # stack size
+    unpack_optional(self.create_widget_on_grid(tk.Label, (2,0), container=item_frame, text=f"[{item.item_type}]", return_widget=True)).configure(font=self.itallics_font) # item type
+    self.create_widget_on_grid(tk.Label, (3,0), container=item_frame, text=f"({str(stack_size)})") # stack size
 
     return item_frame
   

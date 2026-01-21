@@ -1,5 +1,6 @@
 import tkinter as tk
 import custom_tkinter as ctk
+from tkinter import font
 
 from tools.typing_tools import *
 from tools.tkinter_tools import *
@@ -38,6 +39,8 @@ class AbstractScreen(BaseFrame):
 
     self.return_command: Callable[[ScreenName], None] = kwargs["return_command"]
     self.quit_command: ButtonCommand = kwargs["quit_command"]
+
+    self.itallics_font = font.Font(root=root, family=Constants.DEFAULT_FONT, size=Constants.DEFAULT_FONT_SIZE, slant=font.ITALIC)
 
     self.create(**kwargs)
 

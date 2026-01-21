@@ -7,3 +7,5 @@
  * Added poetry dependency handling
  * Removed config file 
  * Removed miscellaneous unnecessary files
+ * Added labels to distinguish weapons and equipables
+ * Fixed effect messages not being added

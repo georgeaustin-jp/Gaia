@@ -348,7 +348,8 @@ class CombatManager:
 
   def end_enemies_turn(self) -> None:
     self.execute_all_actions()
-    self.effect_manager.inflict_active_effects_to_all_fighting_entities()
+    effect_inflict_messages: list[str] = self.effect_manager.inflict_active_effects_to_all_fighting_entities()
+    self.add_info_list(effect_inflict_messages)
     self.remove_dead_fighting_enemies()
     self.combat_screen.display_enemy_info_on_grid()
     self.combat_screen.update_health_label()
