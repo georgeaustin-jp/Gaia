@@ -478,7 +478,7 @@ class GameData:
     formatted_data: dict[str, Any] = self.format_data_to_dictionary(table_name, raw_data)
     return self.database.insert(table_name, formatted_data, identifier)
   
-  def insert_into_storage[StoredType: Stored](self, storage_name: StorageAttrName, identifier: int, data: StoredType) -> None:
+  def insert_into_storage[StoredType: Stored](self, storage_name: StorageAttrName, identifier: int, data: StoredType) -> None: # type: ignore
     """Inserts a record into the storage attribute in `self` whose name matches the one given."""
     storage: dict[int, StoredType] = getattr(self, storage_name)
     if identifier in storage: raise IndexError(f"Tried to insert {data=} with {identifier=} into {storage_name=} when the index is already being used {storage[identifier]=}.")
