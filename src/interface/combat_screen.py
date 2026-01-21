@@ -340,7 +340,7 @@ class CombatScreen(AbstractScreen):
     self.displayed_damage_resistance.set(display)
 
   def update_damage_resistance_label(self) -> None:
-    character_damage_resistance: float= self.game_data.get_active_character().damage_resistance
+    character_damage_resistance: float = self.game_data.get_active_character().damage_resistance
     self.set_damage_resistance_label(character_damage_resistance)
 
   def wait_until_confirmed(self) -> None:

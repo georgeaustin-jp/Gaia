@@ -157,7 +157,7 @@ class StorageScreen(AbstractScreen):
     if item.item_type in [ItemType.WEAPON, ItemType.EQUIPABLE] and is_character_inventory:
       initially_toggled = ToggleState.bool_to_state(is_equipped)
       equip_button: ToggleableButton = unpack_optional(self.create_toggleable_button((0,0), container=item_frame, text="Equip", initially_toggled=initially_toggled, return_button=True)) # button for equipping / unequipping items
-      equip_button.command = self.equip_button_command_generator(equip_button, abstract_storage_item_id, switch_button)
+      equip_button.command = self.equip_button_command_generator(equip_button, abstract_storage_item_id, switch_button) # disables swap button when the item is equipped
       switch_button.is_enabled = not initially_toggled
     ## other
     self.create_widget_on_grid(tk.Label, (1,0), container=item_frame, text=item_name) # name of item
@@ -174,7 +174,7 @@ class StorageScreen(AbstractScreen):
     """
     valid_attribute_names: list[ItemFrameCollectionName] = [ItemFrameCollectionName.INVENTORY, ItemFrameCollectionName.STORAGE]
     if not attribute_name in valid_attribute_names:
-      raise NameError(f"arg \'attribute_name\'=`{attribute_name}` doesn't match with any of \'valid_attribute_names\'=`{valid_attribute_names}`")
+      raise NameError(f"Argument {attribute_name=} doesn't match with any {valid_attribute_names=}.")
     item_frames: list[tk.Frame] = self[attribute_name]
     for frame in item_frames:
       frame.destroy()
@@ -220,7 +220,7 @@ class StorageScreen(AbstractScreen):
     is_storage_at_home: Optional[bool] = self.game_data.is_storage_at_home()
     if is_storage_at_home == None: return
     storage_id: Optional[int] = self.game_data.active_storage_id
-    if storage_id == None: raise ValueError(f"\'storage_id\' cannot be \'None\' when \'is_storage_at_home\'=`{is_storage_at_home}`")
+    if storage_id == None: raise ValueError(f"{storage_id=} cannot be `None` when {is_storage_at_home=}.")
 
     if is_storage_at_home:
       self.storage_indicator.set("At home")
