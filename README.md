@@ -7,8 +7,10 @@
 #### Contents:
  * [Description](#description)
  * [Installation guide](#installation-guide)
+   * [Running](#running)
  * [How to play](#how-to-play)
  * [Reporting bugs](#reporting-bugs)
+ * [Dependencies](#dependencies)
 
 ## Description
 
@@ -26,10 +28,12 @@ PS C:\...\Gaia-0.1.2-alpha\Gaia-0.1.2-alpha>
 
 where the `...` is the path to the place where you have saved the project.
 
-Then, to begin playing the game, enter the following text into the command line:
+### Running
+
+To begin playing the game, enter the following text into the command line:
 
 ```shell
-python src/main.py
+poetry run python src/main.py
 ```
 
 ## How to play
@@ -57,3 +61,8 @@ When adding information about the error, please try and add:
  * Any error messages in the terminal
 
 Include screenshots if possible. Also, try to add the version of the game which you were running. This is not necessary if you have a full screenshot of the game window, as the version of the game will be displayed in the window title.
+
+## Dependencies
+
+python >=3.11, !=3.14.1
+poetry >=2.3.1
