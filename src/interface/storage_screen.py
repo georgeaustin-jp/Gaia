@@ -1,5 +1,5 @@
 import tkinter as tk
-import customtkinter as ctk
+import custom_tkinter as ctk
 
 from tools.typing_tools import *
 from tools.constants import *
