@@ -3,6 +3,7 @@
 /output.*
 /*_count_data.*
 /collection_to_text_config.*
+/collection_to_text.py
 /file_structure.*
 /data/
 # in source

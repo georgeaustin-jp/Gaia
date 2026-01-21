@@ -4,3 +4,6 @@
 
  * Re-formatted some exceptions
  * Removed redundant dependencies
+ * Added poetry dependency handling
+ * Removed config file 
+ * Removed miscellaneous unnecessary files

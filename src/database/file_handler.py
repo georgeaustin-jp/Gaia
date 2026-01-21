@@ -58,5 +58,6 @@ class FileHandler:
   # config methods
 
   def get_config_data(self) -> ConfigData:
-    config_raw_data: dict[str, Any] = self.load_file("config.toml", False)
-    return ConfigData(version=config_raw_data["version"])
+    pyproject_raw_data: dict[str, Any] = self.load_file("pyproject.toml", False)
+    project_raw_data: dict[str, Any] = pyproject_raw_data["project"]
+    return ConfigData(version=project_raw_data["version"])
