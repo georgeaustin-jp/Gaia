@@ -9,3 +9,4 @@
  * Removed miscellaneous unnecessary files
  * Added labels to distinguish weapons and equipables
  * Fixed effect messages not being added
+ * Fixed the ability to add invalid worlds and characters
