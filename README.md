@@ -10,8 +10,19 @@ Gaia is a turn-based combat game, taking inspiration from Terraria, Pokémon and
 
 ## Installation guide
 
-Download and unzip the latest release from the **Releases** section. In the terminal, change the directory to `Gaia` and execute the following command to begin the game:
+Download and uncompress the latest release from the **Releases** section.
+
+If you are on windows, enter the new folder, select the folder inside and right-click; it should have the same name as the folder you are currently in. Under the menu shown by the right-click, select the option to `open in terminal`. A powershell window with the following text should appear:
+
+```shell
+PS C:\...\Gaia-0.1.2-alpha\Gaia-0.1.2-alpha>
 ```
+
+where the `...` is the path to the place where you have saved the project.
+
+Then, to begin playing the game, enter the following text into the command line:
+
+```shell
 python src/main.py
 ```
 
@@ -27,3 +38,7 @@ For each round of combat, you can select 2 actions out of the following:
 Once you have selected your actions, the enemies will select theirs. The actions of both sides will then be executed in sequence.
 
 You win once all your enemies have been killed. If you are killed, then you die and return home.
+
+## Reporting bugs
+
+If you encounter any errors in the program, please switch to the **Issues** tab of this repository.
