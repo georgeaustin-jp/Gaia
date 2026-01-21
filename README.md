@@ -4,6 +4,12 @@
 
 *See `patch_notes.md` for additional information about this version*
 
+#### Contents:
+ * [Description](#description)
+ * [Installation guide](#installation-guide)
+ * [How to play](#how-to-play)
+ * [Reporting bugs](#reporting-bugs)
+
 ## Description
 
 Gaia is a turn-based combat game, taking inspiration from Terraria, Pokémon and a large variety of other games. It is designed to run well on almost any computer, no matter how low-power it may be.
