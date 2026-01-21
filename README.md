@@ -41,4 +41,13 @@ You win once all your enemies have been killed. If you are killed, then you die 
 
 ## Reporting bugs
 
-If you encounter any errors in the program, please switch to the **Issues** tab of this repository.
+If you encounter any errors in the program, please switch to the **Issues** tab of this repository. Click the `Create new issue` button, after which you will be greeted with the following screen:
+
+<img width="1312" height="882" alt="image" src="https://github.com/user-attachments/assets/8d65dfc9-a69d-4f60-8e57-cf19277f6bcc" />
+
+When adding information about the error, please try and add:
+ * Description about the error that happened
+ * What you were doing before the error occured
+ * Any error messages in the terminal
+
+Include screenshots if possible. Also, try to add the version of the game which you were running. This is not necessary if you have a full screenshot of the game window, as the version of the game will be displayed in the window title.
