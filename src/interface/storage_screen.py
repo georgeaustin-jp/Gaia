@@ -10,7 +10,6 @@ from game_data import GameData
 from interface.abstract_screen import AbstractScreen
 
 from stored.items.item import Item
-from stored.items.storage import Storage
 from stored.items.inventory_item import InventoryItem
 from stored.items.storage_item import StorageItem
 from stored.items.abstract_storage_item import AbstractStorageItem
@@ -214,6 +213,10 @@ class StorageScreen(AbstractScreen):
 
   def load(self, **kwargs) -> None:
     super().load(**kwargs)
+    try:
+      self.is_inventory: bool = kwargs["is_inventory"]
+    except:
+      self.is_inventory = False
     self.clear_item_frames(ItemFrameCollectionName.INVENTORY)
     self.clear_item_frames(ItemFrameCollectionName.STORAGE)
 
@@ -229,7 +232,11 @@ class StorageScreen(AbstractScreen):
       self.storage_indicator.set("Away")
       self.return_to_screen = ScreenName.EXPLORATION
     self.load_inventory(**kwargs)
-    self.load_storage(storage_id, **kwargs)
+    if not self.is_inventory:
+      self.load_storage(storage_id, **kwargs)
+      self.confirm_button.config(state=tk.NORMAL)
+    else:
+      self.confirm_button.config(state=tk.DISABLED)
 
     self.destroy_return()
     self.return_button = self.create_return(**kwargs)
@@ -263,6 +270,6 @@ class StorageScreen(AbstractScreen):
 
     super().create(title="Storage interface", **kwargs)
 
-    self.create_confirm(lambda: self.move_items_if_valid(), position=(0,4), text="Confirm swap", placement_options={"columnspan": 2})
+    self.confirm_button: tk.Button = unpack_optional(self.create_confirm(lambda: self.move_items_if_valid(), position=(0,4), text="Confirm swap", return_button=True, placement_options={"columnspan": 2}))
     
     #self.create_quit(**kwargs)

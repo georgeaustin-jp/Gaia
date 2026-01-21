@@ -1,5 +1,5 @@
 import tkinter as tk
-import customtkinter as ctk
+import custom_tkinter as ctk
 
 from tools.typing_tools import *
 from tools.tkinter_tools import *
@@ -76,9 +76,9 @@ class AbstractScreen(BaseFrame):
     configure_grid(self.dynamic_button_frame, dimensions=(1, len(button_inputs)))
 
   ## special widgets
-  def create_confirm(self, command: ButtonCommand, position: Optional[Position] = None, text: str = "Confirm", placement_options: dict[str, Any] = {}, container: Optional[tk.Frame] = None, **kwargs) -> None:
+  def create_confirm(self, command: ButtonCommand, position: Optional[Position] = None, text: str = "Confirm", return_button: bool = False, placement_options: dict[str, Any] = {}, container: Optional[tk.Frame] = None, **kwargs) -> Optional[tk.Button]:
     """Creates a button for confirming some action. Very similar in operation to `self.create_button`."""
-    self.create_button(position=position, text=text, command=lambda: command(), container=container, placement_options=placement_options, **kwargs)
+    return self.create_button(position=position, text=text, command=lambda: command(), container=container, return_button=return_button,placement_options=placement_options, **kwargs)
 
   def create_header_widget[WidgetType: tk.Widget](self, widget_type: Type[WidgetType], position: Position, return_widget: bool = False, placement_options: Optional[dict[str, Any]] = None, **kwargs) -> Optional[WidgetType]:
     return self.create_widget_on_grid(widget_type, position, container=self.header, return_widget=return_widget, placement_options=placement_options, **kwargs)

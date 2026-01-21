@@ -4,9 +4,6 @@ from tools.decision_tools import *
 from stored.entities.fighting_entity import *
 from database.condition import Condition
 
-from data_structures.queue import Queue
-
-#"CharacterID", "UserID", "Name", "Health", "MaxHealth",
 class Character(FightingEntity):
   def __init__(self, user_id: int, name: str, health: float, max_health: float, loaded: bool = True) -> None:
     """

@@ -1,7 +1,7 @@
+import random
+
 from tools.typing_tools import *
 from tools.constants import Constants
-
-import random
 
 # decorators
 

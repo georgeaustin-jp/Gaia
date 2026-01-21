@@ -2,8 +2,6 @@ from tools.typing_tools import *
 from tools.decision_tools import *
 from tools.constants import *
 
-from data_structures.action_type import ActionType
-
 from stored.entities.fighting_entity import *
 from stored.abilities.abstract_ability import AbstractAbility
 

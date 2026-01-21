@@ -16,6 +16,8 @@ class ExplorationScreen(AbstractScreen):
     self.enter_structure_button: tk.Button
     self.continue_exploration_button: tk.Button
 
+    self.open_inventory: ButtonCommand = kwargs["open_inventory"]
+
     super().__init__(root, parent, game_data, **kwargs)
 
   def is_nothing_happening(self) -> bool:
@@ -92,6 +94,8 @@ class ExplorationScreen(AbstractScreen):
     super().load(**kwargs)
 
   def create(self, enter_structure: ButtonCommand, begin_combat: ButtonCommand, **kwargs):
+    self.create_button(text="Open inventory", command=lambda: self.open_inventory())
+
     self.continue_exploration_button = unpack_optional(self.create_widget(tk.Button, text="Continue exploration", command=lambda: self.continue_exploration(), return_widget=True))
 
     self.create_message()

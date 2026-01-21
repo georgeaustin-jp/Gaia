@@ -1,7 +1,6 @@
 from tools.typing_tools import *
 
 from stored.stored import *
-from database.condition import Condition
 
 class Enemy(Stored):
   def __init__(self, name: str, max_health: float, attack_damage: float, intelligence: float, is_boss: bool, loaded: bool = True) -> None:

@@ -55,10 +55,10 @@ def check_health_overflow(player: dict, enemy: dict) -> tuple[dict, dict]:
 # Returns (fighting, winner)
 def check_health_underflow(player: dict, enemy: dict) -> tuple[bool, str]:
   if player["health"] <= 0:
-    return [False, "enemy"]
+    return (False, "enemy")
   if enemy["health"] <= 0:
-    return [False, "player"]
-  return [True, ""]
+    return (False, "player")
+  return (True, "")
 
 def display_stats(player: dict, enemy: dict) -> None:
   display_player_stats(player)

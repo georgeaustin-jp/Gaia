@@ -34,6 +34,7 @@ class App:
       "end_combat": self.end_combat,
       "enter_structure": self.enter_structure, 
       "leave_structure": self.leave_structure,
+      "open_inventory": self.open_inventory,
     }
 
     self.interface = Interface(self.game_data, **interface_init_options)
@@ -116,6 +117,9 @@ class App:
   
   def open_storage(self) -> None:
     self.show_screen(ScreenName.STORAGE)
+
+  def open_inventory(self) -> None:
+    self.show_screen(ScreenName.STORAGE, is_inventory=True)
 
   def go_exploring(self) -> None:
     self.game_data.active_storage_id = self.game_data.away_storage

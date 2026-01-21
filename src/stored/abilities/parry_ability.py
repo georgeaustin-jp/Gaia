@@ -4,7 +4,6 @@ from tools.typing_tools import *
 
 from database.condition import Condition
 from stored.abilities.abstract_ability import *
-
 from ability_action import *
 
 class ParryAbility(AbstractAbility):

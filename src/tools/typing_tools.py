@@ -1,9 +1,5 @@
-import tkinter as tk
-
 from collections.abc import Callable
-from types import FunctionType
-from typing import Any, Concatenate, Dict, Generic, Iterable, Self, Sized, Literal, Optional, Type, TypeVar, Union, cast
-from multipledispatch import dispatch
+from typing import Any, Concatenate, Self, Sized, Literal, Optional, Type, Union, cast
 from enum import Enum, Flag, IntEnum, StrEnum, unique
 from dataclasses import dataclass, field
 from functools import reduce
@@ -47,5 +43,3 @@ def unpack_optional_bool(option: Optional[bool], default: bool) -> bool:
 def unpack_optional_string(option: Optional[str], default: str = "") -> str:
   if option == None: return default
   return option
-
-# custom generic typ
