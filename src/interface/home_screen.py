@@ -16,7 +16,9 @@ class HomeScreen(AbstractScreen):
 
   def create(self, **kwargs) -> None:
     super().create(title="Home screen", dimensions=(1,3), **kwargs)
-    self.create_character_name_label()
+    state_name_label_placement_options: dict[str, Any] = {"fill": tk.X}
+    self.create_character_name_label(placement_options=state_name_label_placement_options)
+    self.create_world_name_label(placement_options=state_name_label_placement_options)
     
     open_storage: Callable[[], None] = kwargs["open_storage"]
     self.create_widget(tk.Button, text="Open storage", command=lambda: open_storage())

@@ -128,7 +128,7 @@ class AbstractScreen(BaseFrame):
   def set_character_name_label(self, name: str) -> None:
     self.set_special_label("character_name", f"Character: {name}")
 
-  def create_world_name_label(self, position: Optional[Position], container: Optional[tk.Frame] = None, placement_options: dict[str, Any] = {}, **kwargs) -> None:
+  def create_world_name_label(self, position: Optional[Position] = None, container: Optional[tk.Frame] = None, placement_options: dict[str, Any] = {}, **kwargs) -> None:
     self.create_special_label("world_name", position, container, placement_options=placement_options, **kwargs)
   
   def set_world_name_label(self, name: str) -> None:

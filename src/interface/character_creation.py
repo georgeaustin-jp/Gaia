@@ -17,10 +17,9 @@ class CharacterCreation(Creation):
   def create_character(self) -> None:
     new_character_name: str = self.entered_name.get()
     existing_character_names: list[str] = [character.name for character in self.game_data.characters.values()]
-    if new_character_name in existing_character_names:
-      self.fail_creation(f"Character with name `{new_character_name}` already exists.")
-    else:
-      self.confirm_creation(new_character_name)
+    name_invalidity_message: Optional[str] = self.get_name_invalidity_message(new_character_name, existing_character_names)
+    if name_invalidity_message == None: return self.confirm_creation(new_character_name)
+    self.fail_creation(name_invalidity_message)
 
   def load(self, **kwargs) -> None:
     super().load(**kwargs)

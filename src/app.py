@@ -53,7 +53,7 @@ class App:
 
   def select_character(self, character_id: int) -> None:
     self.game_data.active_character_id = character_id
-    character_name: str = self.game_data.get_character_name()
+    character_name: str = self.game_data.get_active_character_name()
     self.interface.update_character_name(character_name)
     self.show_screen(ScreenName.WORLD_SELECTION)
 
@@ -92,7 +92,8 @@ class App:
     away_storages: dict[int, Storage] = self.game_data.select_from_storage(self.game_data.storages, find_world_storages(StorageType.CHEST))
     if len(away_storages) != 1: raise Exception(f"{away_storages=} should have 1 element; {len(away_storages)} were found.")
     self.game_data.away_storage = list(away_storages.keys())[0]
-
+    world_name: str = self.game_data.get_active_world_name()
+    self.interface.update_world_name(world_name)
     self.go_home()
 
   def go_home(self, screen_name: ScreenName = ScreenName.HOME, **kwargs) -> None:

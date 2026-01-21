@@ -24,16 +24,9 @@ class WorldCreation(Creation):
     """
     new_world_name: str = self.world_name.get()
     existing_world_names: list[str] = list(map(lambda world: world.name, list(self.game_data.worlds.values())))
-    fail_message: Optional[str] = None # if is `None`, then the world creation has not failed and thus can succeed. Otherwise, it fails and an appropriate message is passed as an argument to the 'self.fail_creation' function.
-    if new_world_name in existing_world_names:
-      fail_message = "World name already exists"
-    elif new_world_name == "":
-      fail_message = "World name cannot be empty"
-    
-    if fail_message == None:
-      self.confirm_creation(new_world_name)
-    else:
-      self.fail_creation(fail_message)
+    name_invalidity_message: Optional[str] = self.get_name_invalidity_message(new_world_name, existing_world_names)
+    if name_invalidity_message == None: return self.confirm_creation(new_world_name)
+    self.fail_creation(name_invalidity_message)
 
   def load(self, **kwargs) -> None:
     super().load(**kwargs)

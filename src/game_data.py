@@ -636,8 +636,19 @@ class GameData:
     active_character: Character = self.characters[self.active_character_id]
     return active_character
   
-  def get_character_name(self) -> str:
+  def get_active_character_name(self) -> str:
    return self.get_active_character().name
+  
+  # world methods
+
+  def get_active_world(self) -> World:
+    if self.active_world_id == None:
+      raise AttributeError(f"Trying to access `active_world_id` when no active world has been selected ({self.active_world_id=}).")
+    active_world: World = self.worlds[self.active_world_id]
+    return active_world
+  
+  def get_active_world_name(self) -> str:
+    return self.get_active_world().name
   
   # enemy and fighting_enemy methods
   

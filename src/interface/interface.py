@@ -60,9 +60,13 @@ class Interface(tk.Tk):
     screen.load(**kwargs)
     screen.tkraise()
 
-  def update_character_name(self, character_name) -> None:
+  def update_character_name(self, character_name: str) -> None:
     for screen in self.screens.values():
       screen.set_character_name_label(character_name)
+
+  def update_world_name(self, world_name: str) -> None:
+    for screen in self.screens.values():
+      screen.set_world_name_label(world_name)
 
   def get_combat_screen(self) -> CombatScreen:
     return cast(CombatScreen, self.screens[ScreenName.COMBAT])

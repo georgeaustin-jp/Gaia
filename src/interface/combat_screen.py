@@ -1,7 +1,4 @@
 import tkinter as tk
-from functools import reduce
-
-from tools.logging_tools import *
 
 from tools.typing_tools import *
 from tools.dictionary_tools import filter_dictionary
