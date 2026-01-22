@@ -20,7 +20,7 @@ Gaia is a turn-based combat game, taking inspiration from Terraria, Pokémon and
 
 Download and uncompress the latest release from the **Releases** section.
 
-If you are on windows, enter the new folder, select the folder inside and right-click; it should have the same name as the folder you are currently in. Under the menu shown by the right-click, select the option to `open in terminal`. A powershell window with the following text should appear:
+If you are on windows or mac, enter the new folder, select the folder inside and right-click; it should have the same name as the folder you are currently in. Under the menu shown by the right-click, select the option to `open in terminal`. A powershell window with the following text should appear:
 
 ```shell
 PS C:\...\Gaia-0.1.2-alpha\Gaia-0.1.2-alpha>
