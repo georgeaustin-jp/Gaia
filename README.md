@@ -40,6 +40,7 @@ poetry >=2.3.1
 To begin playing the game, enter the following text into the command line:
 
 ```shell
+poetry install
 poetry run python src/main.py
 ```
 
