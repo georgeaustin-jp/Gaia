@@ -3,8 +3,6 @@ from tools.typing_tools import *
 from tools.custom_exceptions import *
 from tools.positional_tools import length_to_point
 
-from tools.logging_tools import *
-
 import game_data as gd
 
 from interface.combat_screen import CombatScreen
@@ -378,6 +376,7 @@ class CombatManager:
     if fighting_enemy_id == None: raise ValueError(f"Cannot remove fighting enemy at {position=} when no fighting enemy exists there.")
     self.game_data.fighting_enemy_graph.clear_fighting_enemy_id(position)
     del self.game_data.fighting_enemies[fighting_enemy_id]
+    del self.effect_manager.fighting_enemy_effects[fighting_enemy_id]
 
   def remove_dead_fighting_enemies(self) -> None:
     for i in range(len(self.game_data.fighting_enemy_graph)):
@@ -416,20 +415,14 @@ class CombatManager:
         target_type = EmptyType(target_position)
 
     (action_information, applied_effects) = next_action(sender, target) # action function is executed here
-    logging.debug(f"{action_information=}, {applied_effects=}")
 
     if target_type != None and applied_effects != None: # applying effects to enemies and character, if there are any
-      logging.info(f"APPLYING EFFECTS: {target_type=}, {target=}")
-      logging.debug(f"{type(target_type) == CharacterType=}, {type(target_type) == EnemyType=}, {target != None=}")
       if type(target_type) == CharacterType:
-        logging.info(f"TO CHARACTER")
         action_information += self.effect_manager.apply_ability_action_queue_to_active_character(applied_effects)
       elif type(target_type) == EnemyType and target != None:
-        logging.info(f"TO ENEMY")
         enemy_target_type = cast(EnemyType, target_type)
         enemy_id: int = enemy_target_type.identifier
         action_information += self.effect_manager.apply_ability_action_queue_to_fighting_enemy_with_identifier(enemy_id, applied_effects)
-        logging.debug(f"{action_information=}")
 
     action_type: ActionType = next_action.action_type
     if type(action_type) == Parry: # applying parry ability

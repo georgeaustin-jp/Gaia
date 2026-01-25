@@ -3,8 +3,6 @@ from tools.ability_names import AbilityTypeName
 from tools.constants import ItemType
 from tools.dictionary_tools import filter_dictionary
 
-from tools.logging_tools import *
-
 from game_data import GameData
 
 from stored.entities.character import Character

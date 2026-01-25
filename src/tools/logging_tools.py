@@ -19,18 +19,19 @@ logging.basicConfig(
 ## for functions
 def log_all[ReturnType](func: Callable[..., ReturnType]) -> Callable[..., ReturnType]:
   def wrapper(*args, **kwargs) -> ReturnType:
+    level: int = 2
     func_name: str = func.__qualname__
-    log_return_func: Callable[..., ReturnType] = log_return(func)
+    log_return_func: Callable[..., ReturnType] = log_return(func, level)
     log_return_func.__qualname__ = func_name
-    log_all_func: Callable[..., ReturnType] = log_args(log_return_func)
+    log_all_func: Callable[..., ReturnType] = log_args(log_return_func, level)
     return log_all_func(*args, **kwargs)
   return wrapper
 
-def log_args[ReturnType](func: Callable[..., ReturnType]) -> Callable[..., ReturnType]:
+def log_args[ReturnType](func: Callable[..., ReturnType], level: int = 0) -> Callable[..., ReturnType]:
   def wrapper(*args, **kwargs) -> ReturnType:
     log_message: str = f"""`{log_args.__name__}` CALLED:
 \t{Constants.DARK_BAR} FUNC `{func.__qualname__}`"""
-    log_message += f"\n\t{Constants.DARK_BAR} {get_caller_message()}"
+    log_message += f"\n\t{Constants.DARK_BAR} {get_caller_message(level)}"
     log_message += f"\n\t{Constants.DARK_BAR} WITH `{len(args)}` ARGS:"
     for i in range(len(args)):
       log_message += f"\n\t  > args[{i}] == `{args[i]}`"
@@ -38,12 +39,12 @@ def log_args[ReturnType](func: Callable[..., ReturnType]) -> Callable[..., Retur
     return func(*args, **kwargs)
   return wrapper
 
-def log_return[ReturnType](func: Callable[..., ReturnType]) -> Callable[..., ReturnType]:
+def log_return[ReturnType](func: Callable[..., ReturnType], level: int = 0) -> Callable[..., ReturnType]:
   def wrapper(*args, **kwargs) -> ReturnType:
     return_value: ReturnType = func(*args, **kwargs)
     log_message: str = f"""`{log_return.__name__}` CALLED:
 \t{Constants.DARK_BAR} FUNC `{func.__qualname__}`"""
-    log_message += f"\n\t{Constants.DARK_BAR} {get_caller_message()}"
+    log_message += f"\n\t{Constants.DARK_BAR} {get_caller_message(level)}"
     log_message += f"\n\t  > `{return_value=}`, `{type(return_value)=}`"
     logging.info(log_message)
     return return_value
@@ -101,13 +102,15 @@ def get_call_stack_as_str() -> str:
     call_stack_message += f"\n\t{Constants.DARK_BAR} {Constants.DARK_BAR}"
   return call_stack_message
 
-def get_caller_message() -> str:
+def get_caller_message(level: int = 0) -> str:
+  actual_level: int = level+2
   current_frame = inspect.currentframe()
   caller_frame = inspect.getouterframes(current_frame, 2)
-  caller_name: str = caller_frame[2].function
-  file_path: list[str] = caller_frame[2].filename.split('\\')
+  caller_frame_at_level = caller_frame[actual_level]
+  caller_name: str = caller_frame_at_level.function
+  file_path: list[str] = caller_frame_at_level.filename.split('\\')
   file_name: str = f"{file_path[-2]}/{file_path[-1]}"
-  line_number: int = caller_frame[2].lineno
+  line_number: int = caller_frame_at_level.lineno
   return f"CALLED BY `{caller_name}` (FILE `{file_name}`, LINE `{line_number}`)"
 
 # classes

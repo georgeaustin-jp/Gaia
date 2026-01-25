@@ -35,9 +35,9 @@ class ParryAction(AbilityAction):
   def get_ability_type_name(self) -> AbilityTypeName: return AbilityTypeName.PARRY
 
   @staticmethod
-  def get_reflected_damage(damage: float, reflection_proportion: float) -> float:
+  def get_reflected_damage(damage: float, damage_threshold: float, reflection_proportion: float) -> float:
     if reflection_proportion > 1: raise ValueError(f"{reflection_proportion=} cannot be less than `1`.")
-    return damage * (1-reflection_proportion)
+    return min(damage, damage_threshold) * reflection_proportion
 
   @staticmethod
   def parry_damage(damage: float, damage_threshold: float, reflection_proportion: float) -> tuple[float, float]:
@@ -45,13 +45,9 @@ class ParryAction(AbilityAction):
     :return: A pair of floats. The first is the amount of damage inflicted to the target. The second is the amount of damage reflected back to the attacker.
     :rtype: tuple[float, float]
     """
-    target_damage: float
-    if damage <= damage_threshold:
-      target_damage = 0
-    else:
-      target_damage = damage - damage_threshold
+    target_damage: float = max(damage - damage_threshold, 0)
     
-    reflected_damage = ParryAction.get_reflected_damage(damage, reflection_proportion)
+    reflected_damage = ParryAction.get_reflected_damage(damage, damage_threshold, reflection_proportion)
 
     return (target_damage, reflected_damage)
 

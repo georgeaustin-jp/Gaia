@@ -35,8 +35,6 @@ class CombatAction(Loggable):
   def __repr__(self) -> str:
     return f"ACTION {self.action_type}\n  [ {self.sender_type} -> {self.target_type} ]"
 
-  @log_loggable_return
-  @log_loggable_args
   def __call__(self, sender: FightingEntity, target: Optional[FightingEntity]) -> tuple[list[Optional[str]], Optional[Queue[AbilityAction]]]:
     type_of_action: Type[ActionType] = type(self.action_type)
     if type_of_action == Attack: return self.attack_fighting_entity(sender, target)
@@ -84,8 +82,8 @@ class CombatAction(Loggable):
       if parry_damage_threshold == None or parry_reflection_proportion == None:
         raise ValueError(f"One of {parry_damage_threshold=} and/or {parry_reflection_proportion=} is `None`; both should be defined.")
       (damage, reflected_damage) = ParryAction.parry_damage(damage, parry_damage_threshold, parry_reflection_proportion)
-      messages.append(sender.take_damage(reflected_damage))
-    messages.append(target.take_damage(damage))
+      messages.append(f"{sender.name.upper()}: {sender.take_damage(reflected_damage)}")
+    messages.append(f"{target.name.upper()}: {target.take_damage(damage)}")
     return (messages, applied_effects)
 
   def heal_fighting_entity(self, sender: FightingEntity, target: Optional[FightingEntity]) -> Optional[str]:

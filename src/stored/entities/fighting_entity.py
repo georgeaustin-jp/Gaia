@@ -148,7 +148,7 @@ class FightingEntity(Stored):
       modified_damage_amount = self.apply_damage_resistance(damage_amount)
     if modified_damage_amount < 0: raise ValueError(f"{modified_damage_amount=} less than zero.")
     self.change_health(-1*modified_damage_amount)
-    return f"Received {modified_damage_amount:.{Constants.DEFAULT_ROUNDING_ACCURACY}f}DMG"
+    return f" Received {modified_damage_amount:.{Constants.DEFAULT_ROUNDING_ACCURACY}f}DMG"
 
   def heal(self, heal_amount: float) -> Optional[str]:
     if heal_amount < 0:
@@ -251,6 +251,7 @@ class FightingEntity(Stored):
     self.parry_reflection_proportion = reflection_proportion
     return f"Parry engaged"
 
+  @prepend_message_info("name", add_colon_at_end=True, capitalise=True)
   def unengage_parry(self) -> str:
     self.is_parrying = False
     self.parry_damage_threshold = None
