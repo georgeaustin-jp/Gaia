@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import font
+import colorama as cr
 
 from tools.typing_tools import *
 
@@ -27,6 +28,7 @@ class ScreenName(StrEnum):
 
 @dataclass
 class Constants:
+  IS_DEV_MODE: bool = False
   # constants related to the flow of combat:
   MIN_REMAINING_ACTIONS: int = 0
   MAX_REMAINING_PLAYER_ACTIONS: int = 2
@@ -35,16 +37,14 @@ class Constants:
   # constants related to the fighting part of combat:
   MAX_EQUIPPED_WEAPONS: int = 3
   MAX_EQUIPPED_EQUIPABLES: int = 4
-  HEALTH_POTION_AMOUNT: float = 25
+  HEALTH_POTION_AMOUNT: float = 20
   GRID_WIDTH: int = 3
   GRID_HEIGHT: int = 3
   MIN_ENEMIES: int = 1
   MAX_ENEMIES: int = 5
-  BOSS_ENCOUNTER_PROBABILITY: float = 0.06
+  BOSS_ENCOUNTER_PROBABILITY: float = 0.08
   IGNITE_DURATION: int = 3
   IGNITE_DAMAGE: float = 3
-  PIERCE_OFFENSIVENESS: float = 0.5
-  IGNITE_OFFENSIVENESS: float = 0.5
   # constants related to the GUI and screens:
   START_SCREEN: ScreenName = ScreenName.CHARACTER_SELECTION
   ON_COLOUR: str = "chartreuse2"
@@ -63,12 +63,23 @@ class Constants:
   DEFAULT_FONT: str = "Segoe UI"
   DEFAULT_FONT_SIZE: int = 9
   # constants related to exploration
-  COMBAT_ENCOUNTER_PROBABILITY: float = 0 # TODO 0.6
-  STRUCTURE_ENCOUNTER_PROBABILITY: float = 1 # TODO 0.55
+  COMBAT_ENCOUNTER_PROBABILITY: float = 0.6
+  STRUCTURE_ENCOUNTER_PROBABILITY: float = 0.55
   MIN_STRUCTURE_ITEM_COUNT: int = 1
   MAX_STRUCTURE_ITEM_COUNT: int = 2
   # misc
   DEFAULT_ROUNDING_ACCURACY: int = 2
+  DARK_BAR: str = f"{cr.Fore.LIGHTBLACK_EX}|{cr.Fore.RESET}"
+
+@dataclass
+class DecisionMakingConstants:
+  PIERCE_OFFENSIVENESS: float = 0.5
+  IGNITE_OFFENSIVENESS: float = 0.5
+  # weighting of calculated aggressiveness values
+  HEALTH_WEIGHT: float = 2
+  IGNITED_WEIGHT: float = 0.5
+  DAMAGE_RESISTANCE_WEIGHT: float = 1
+  PARRY_WEIGHT: float = 1
 
 @dataclass
 class DefaultTkInitOptions():

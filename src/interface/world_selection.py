@@ -2,6 +2,7 @@ import tkinter as tk
 
 from tools.typing_tools import *
 from tools.constants import ScreenName
+from tools.logging_tools import *
 
 from interface.selection import Selection
 from game_data import GameData
@@ -9,8 +10,8 @@ from game_data import GameData
 from stored.world import World
 
 class WorldSelection(Selection):
-  def __init__(self, root, parent: tk.Frame, game_data: GameData, **kwargs) -> None:
-    super().__init__(root, parent, game_data, **kwargs)
+  def __init__(self, root, parent: tk.Frame, game_data: GameData, is_logging_enabled: bool = False, include_call_stack: bool = False, **kwargs) -> None:
+    super().__init__(root, parent, game_data, is_logging_enabled=is_logging_enabled, include_call_stack=include_call_stack, **kwargs)
     self.select_world: Callable[[int], Any] = kwargs["select_world"]
     self.begin_world_creation: ButtonCommand = kwargs["begin_world_creation"]
     self.scrollable_world_frame_parent: tk.Frame
@@ -30,7 +31,7 @@ class WorldSelection(Selection):
 
   def load(self, **kwargs) -> None:
     super().load(**kwargs)
-    worlds: dict[int, World] = self.game_data.worlds
+    worlds: dict[int, World] = self.game_data.worlds.get()
     button_inputs: list[DynamicButtonInput] = self.get_all_world_dynamic_button_inputs(worlds)
     self.create_buttons_dynamically(button_inputs, command=lambda identifier: self.select_world(identifier), container=self.scrollable_world_frame_parent)
 

@@ -1,9 +1,10 @@
 from tools.typing_tools import *
 from tools.constants import TableName
+from tools.logging_tools import *
 
 from database.condition import Condition
 
-class Stored:
+class Stored(Loggable):
   """
   Abstract class for all objects which represent something stored in the database.
   
@@ -13,7 +14,8 @@ class Stored:
   * `instantiate(data: list[Any], loaded: bool = True) -> object` *(static method)* - calls an instantiation function defined outside of the function itself, providing a secondary constructor when being created using the raw data of the object. 
   * `identical_condition(_stored_row: list[Any]) -> Condition` *(static method)* - creates a `Condition` which defines what makes two objects identical.
   """
-  def __init__(self, loaded: bool = True) -> None:
+  def __init__(self, loaded: bool = True, is_logging_enabled: bool = False, label: Optional[str] = None) -> None:
+    super().__init__(is_logging_enabled, label)
     self.loaded = loaded
 
   @staticmethod

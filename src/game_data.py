@@ -5,6 +5,8 @@ from tools.generation_tools import *
 from tools.ability_names import *
 from tools.logging_tools import *
 
+from data_storage_var import DataStorageVar
+
 from database.database import Database
 from database.condition import Condition, everything, matching_identifiers
 from database.database_main_data import DatabaseMainData
@@ -36,45 +38,46 @@ from data_structures.queue import Queue
 
 from ability_action import *
 
-class GameData:
-  def __init__(self, is_dev_mode_enabled: bool = False) -> None:
+class GameData(Loggable):
+  def __init__(self, is_dev_mode_enabled: bool = False, is_logging_enabled: bool = False, include_call_stack: bool = False) -> None:
+    super().__init__(is_logging_enabled=is_logging_enabled, label=GameData.__name__, include_call_stack=include_call_stack)
     self.save_on_delete: bool = True # determines whether the current state of the database will be saved once it is deleted
     self.is_dev_mode_enabled: bool = is_dev_mode_enabled
     
     self.database = Database("game_data")
 
-    self.users: dict[int, User] = {}
+    self.users: DataStorageVar[User] = DataStorageVar[User](User, label=StorageAttrName.USERS)
     self.active_user_id: Optional[int] = 0 # defaults as 0
 
-    self.characters: dict[int, Character] = {}
+    self.characters: DataStorageVar[Character] = DataStorageVar[Character](Character, label=StorageAttrName.CHARACTERS)
     self.active_character_id = None
 
-    self.worlds: dict[int, World] = {}
+    self.worlds: DataStorageVar[World] = DataStorageVar[World](World, label=StorageAttrName.WORLDS)
     self.active_world_id: Optional[int] = None
 
-    self.items: dict[int, Item] = {}
-    self.inventory_items: dict[int, InventoryItem] = {}
+    self.items: DataStorageVar[Item] = DataStorageVar[Item](Item, label=StorageAttrName.ITEMS)
+    self.inventory_items: DataStorageVar[InventoryItem] = DataStorageVar[InventoryItem](InventoryItem, label=StorageAttrName.INVENTORY_ITEMS)
 
-    self.storages: dict[int, Storage] = {}
-    self.storage_items: dict[int, StorageItem] = {}
+    self.storages: DataStorageVar[Storage] = DataStorageVar[Storage](Storage, label=StorageAttrName.STORAGES)
+    self.storage_items: DataStorageVar[StorageItem] = DataStorageVar[StorageItem](StorageItem, label=StorageAttrName.STORAGE_ITEMS)
     self.active_storage_id: Optional[int] = None
     self.home_storage: Optional[int] = None
     self.away_storage: Optional[int] = None
 
-    self.weapons: dict[int, Weapon] = {}
-    self.equipables: dict[int, Equipable] = {}
+    self.weapons: DataStorageVar[Weapon] = DataStorageVar[Weapon](Weapon, label=StorageAttrName.WEAPONS)
+    self.equipables: DataStorageVar[Equipable] = DataStorageVar[Equipable](Equipable, label=StorageAttrName.EQUIPABLES)
     self.equipped_weapon_identifiers: list[int] = []
 
-    self.enemies: dict[int, Enemy] = {}
-    self.fighting_enemies: dict[int, FightingEnemy] = {}
+    self.enemies: DataStorageVar[Enemy] = DataStorageVar[Enemy](Enemy, label=StorageAttrName.ENEMIES)
+    self.fighting_enemies: DataStorageVar[FightingEnemy] = DataStorageVar[FightingEnemy](FightingEnemy, label=StorageAttrName.FIGHTING_ENEMIES)
     self.fighting_enemy_graph = FightingEnemyGraph()
-    self.enemy_abilities: dict[int, EnemyAbility] = {}
+    self.enemy_abilities: DataStorageVar[EnemyAbility] = DataStorageVar[EnemyAbility](EnemyAbility, label=StorageAttrName.ENEMY_ABILITIES)
 
-    self.abilities: dict[int, Ability] = {}
-    self.parry_abilities: dict[int, ParryAbility] = {}
-    self.statistic_abilities: dict[int, StatisticAbility] = {}
+    self.abilities: DataStorageVar[Ability] = DataStorageVar[Ability](Ability, label=StorageAttrName.ABILITIES)
+    self.parry_abilities: DataStorageVar[ParryAbility] = DataStorageVar[ParryAbility](ParryAbility, label=StorageAttrName.PARRY_ABILITIES)
+    self.statistic_abilities: DataStorageVar[StatisticAbility] = DataStorageVar[StatisticAbility](StatisticAbility, label=StorageAttrName.STATISTIC_ABILITIES)
 
-    self.item_abilities: dict[int, ItemAbility] = {}
+    self.item_abilities: DataStorageVar[ItemAbility] = DataStorageVar[ItemAbility](ItemAbility, label=StorageAttrName.ITEM_ABILITIES)
 
     # Each entry contains target type as the key with a tuple as the value
     # The first element is the variable name to which the `Stored` type should be stored in within the `GameData` object
@@ -125,6 +128,9 @@ class GameData:
 
     self.is_boss_encounter: bool = False
 
+    self.previous_screen_name: ScreenName = Constants.START_SCREEN
+    self.active_screen_name: ScreenName = Constants.START_SCREEN
+
   # built-in methods
 
   def __del__(self) -> None:
@@ -133,7 +139,7 @@ class GameData:
       self.finish_structure_encounter()
       self.save()
 
-  def __getitem__(self, storage_name: StorageAttrName) -> Any:
+  def __getitem__(self, storage_name: StorageAttrName) -> DataStorageVar:
     return getattr(self, str(storage_name))
   
   # getter and setter methods
@@ -197,8 +203,8 @@ class GameData:
 
   def load_default_data(self) -> None:
     """Loads data into `self` after a new database has been initialised."""
-    self.users = {0: User("User", loaded=False)}
-    self.items = {
+    self.users.set({0: User("User", loaded=False)})
+    self.items.set({
       # 12 weapons (2 starter)
       ## starters
       0: Item(ItemType.WEAPON, "Tin Dagger", loaded=False),
@@ -233,61 +239,61 @@ class GameData:
       20: Item(ItemType.EQUIPABLE, "Traveller's Breastplate", loaded=False),
       21: Item(ItemType.EQUIPABLE, "Traveller's Leggings", loaded=False),
       22: Item(ItemType.EQUIPABLE, "Traveller's Boots", loaded=False),
-    }
-    self.weapons = {
+    })
+    self.weapons.set({
       0: Weapon(0, 7, loaded=False), # Tin Dagger
       1: Weapon(1, 4, loaded=False), # Mahogany Staff
-      2: Weapon(2, 22, loaded=False), # Glass Dagger
-      3: Weapon(3, 18, loaded=False), # Surtur's Brimstone Dagger
+      2: Weapon(2, 19, loaded=False), # Glass Dagger
+      3: Weapon(3, 15, loaded=False), # Surtur's Brimstone Dagger
       4: Weapon(4, 13, loaded=False), # Spear-Staff
       5: Weapon(5, 6, loaded=False), # Runic Sceptre
-      6: Weapon(6, 19, loaded=False), # Excalibur
-      7: Weapon(7, 15, loaded=False), # Crimson Broadsword
+      6: Weapon(6, 16, loaded=False), # Excalibur
+      7: Weapon(7, 14, loaded=False), # Crimson Broadsword
       8: Weapon(8, 13, loaded=False), # Sabre of the World Tree
       9: Weapon(9, 10, loaded=False), # The Mace
       10: Weapon(10, 8, loaded=False), # Gauntlets of Muspelheim
-      11: Weapon(11, 16, loaded=False), # Pickaxe-Axe
-    }
-    self.equipables = {
-      0: Equipable(12, loaded=False),
-      1: Equipable(13, loaded=False),
-      2: Equipable(14, loaded=False),
-      3: Equipable(15, loaded=False),
-      4: Equipable(16, loaded=False),
-      5: Equipable(17, loaded=False),
-      6: Equipable(18, loaded=False),
-      7: Equipable(19, loaded=False),
-      8: Equipable(20, loaded=False),
-      9: Equipable(21, loaded=False),
-      10: Equipable(22, loaded=False),
-    }
-    self.enemies = {
+      11: Weapon(11, 14, loaded=False), # Pickaxe-Axe
+    })
+    self.equipables.set({
+      0: Equipable(12, loaded=False), # Leather Boots
+      1: Equipable(13, loaded=False), # Tunic
+      2: Equipable(14, loaded=False), # Hardened Gloves
+      3: Equipable(15, loaded=False), # Runes of Protection
+      4: Equipable(16, loaded=False), # Damaged Shield
+      5: Equipable(17, loaded=False), # Resistance Charm
+      6: Equipable(18, loaded=False), # Mask
+      7: Equipable(19, loaded=False), # Traveller's Helmate
+      8: Equipable(20, loaded=False), # Traveller's Breastplate
+      9: Equipable(21, loaded=False), # Traveller's Leggings
+      10: Equipable(22, loaded=False), # Traveller's Boots
+    })
+    self.enemies.set({
       # 15 regular enemies
       ## skeleton
       0: Enemy("Skeleton", 18, 6, 20, is_boss=False, loaded=False),
-      1: Enemy("Brimstone Skeleton", 15, 5, 17, is_boss=False, loaded=False),
-      2: Enemy("Skeleton Archer", 17, 5, 23, is_boss=False, loaded=False),
-      3: Enemy("Armoured Skeleton", 26, 5, 22, is_boss=False, loaded=False),
+      1: Enemy("Brimstone Skeleton", 16, 5, 17, is_boss=False, loaded=False),
+      2: Enemy("Skeleton Archer", 18, 5, 23, is_boss=False, loaded=False),
+      3: Enemy("Armoured Skeleton", 27, 5, 22, is_boss=False, loaded=False),
       ## spiders
       4: Enemy("Hunting Spider", 8, 3, 10, is_boss=False, loaded=False),
-      5: Enemy("Large Hunting Spider", 13, 5, 12, is_boss=False, loaded=False),
-      6: Enemy("Vampiric Hunting Spider", 12, 5, 16, is_boss=False, loaded=False),
+      5: Enemy("Large Hunting Spider", 15, 5, 12, is_boss=False, loaded=False),
+      6: Enemy("Vampiric Hunting Spider", 14, 5, 16, is_boss=False, loaded=False),
       ## possesed objects
       7: Enemy("Possesed Armour", 38, 8, 24, is_boss=False, loaded=False),
-      8: Enemy("Posessed Blades", 23, 10, 19, is_boss=False, loaded=False),
-      9: Enemy("Posessed Flaming Skull", 8, 5, 28, is_boss=False, loaded=False),
+      8: Enemy("Posessed Blades", 24, 10, 19, is_boss=False, loaded=False),
+      9: Enemy("Posessed Flaming Skull", 9, 5, 28, is_boss=False, loaded=False),
       ## misc
-      10: Enemy("Mimic", 19, 15, 35, is_boss=False, loaded=False),
-      11: Enemy("Chaos Spawn", 17, 10, 50, is_boss=False, loaded=False),
+      10: Enemy("Mimic", 20, 15, 35, is_boss=False, loaded=False),
+      11: Enemy("Chaos Spawn", 18, 10, 50, is_boss=False, loaded=False),
       12: Enemy("Resurrected Knight", 26, 12, 40, is_boss=False, loaded=False),
       13: Enemy("Rabid Boar", 12, 4, 8, is_boss=False, loaded=False),
       14: Enemy("Shep", 5, 1, 1, is_boss=False, loaded=False),
       # 3 bosses
-      15: Enemy("Elite Skeleton Warrior", 125, 26, 90, is_boss=True, loaded=False),
-      16: Enemy("Giant Hunting Spider", 160, 21, 80, is_boss=True, loaded=False),
-      17: Enemy("Seeker of Chaos", 100, 35, 120, is_boss=True, loaded=False),
-    }
-    self.enemy_abilities = {
+      15: Enemy("Elite Skeleton Warrior", 130, 26, 100, is_boss=True, loaded=False),
+      16: Enemy("Giant Hunting Spider", 165, 21, 90, is_boss=True, loaded=False),
+      17: Enemy("Seeker of Chaos", 115, 35, 150, is_boss=True, loaded=False),
+    })
+    self.enemy_abilities.set({
       # ignition
       0: EnemyAbility(1, 0, is_used_in_attack=True, loaded=False),
       1: EnemyAbility(9, 0, is_used_in_attack=True, loaded=False),
@@ -315,19 +321,19 @@ class GameData:
       20: EnemyAbility(15, 4, is_used_in_attack=False, loaded=False),
       21: EnemyAbility(16, 5, is_used_in_attack=False, loaded=False),
       22: EnemyAbility(17, 6, is_used_in_attack=False, loaded=False),
-    }
-    self.abilities = {
+    })
+    self.abilities.set({
       # general abilities
       0: Ability("Sets fire to the target, dealing 3 damage-per-turn for 3 turns", AbilityTypeName.IGNITE, loaded=False),
       1: Ability("Damage received is not reduced by resistances", AbilityTypeName.PIERCE, loaded=False),
-      2: Ability("Cursed", AbilityTypeName.WEAKEN, loaded=False),
+      2: Ability("Cursed (15% VULN)", AbilityTypeName.WEAKEN, loaded=False),
       # enemy abilities
       ## weakening
-      3: Ability("Weakened immune system", AbilityTypeName.WEAKEN, loaded=False),
+      3: Ability("Weakened immune system (10% VULN)", AbilityTypeName.WEAKEN, loaded=False),
       ## healing
-      4: Ability("Small heal", AbilityTypeName.HEAL, loaded=False),
-      5: Ability("Moderate heal", AbilityTypeName.HEAL, loaded=False),
-      6: Ability("Significant heal", AbilityTypeName.HEAL, loaded=False),
+      4: Ability("Small heal (5HP)", AbilityTypeName.HEAL, loaded=False),
+      5: Ability("Moderate heal (10HP)", AbilityTypeName.HEAL, loaded=False),
+      6: Ability("Significant heal (15HP)", AbilityTypeName.HEAL, loaded=False),
       # item abilities
       ## weapons
       ### parrying
@@ -340,12 +346,13 @@ class GameData:
       13: Ability("", AbilityTypeName.PARRY, loaded=False), # The Mace
       14: Ability("", AbilityTypeName.PARRY, loaded=False), # Gauntlets of Muspelheim
       15: Ability("", AbilityTypeName.PARRY, loaded=False), # Pickaxe-Axe
+      19: Ability("", AbilityTypeName.PARRY, loaded=False), # Tin Dagger
       ## equipables
-      16: Ability("Low resistance", AbilityTypeName.DEFEND, loaded=False),
-      17: Ability("Medium resistance", AbilityTypeName.DEFEND, loaded=False),
-      18: Ability("High resistance", AbilityTypeName.DEFEND, loaded=False),
-    }
-    self.statistic_abilities = {
+      16: Ability("Low resistance (1%)", AbilityTypeName.DEFEND, loaded=False),
+      17: Ability("Medium resistance (2.5%)", AbilityTypeName.DEFEND, loaded=False),
+      18: Ability("High resistance (5%)", AbilityTypeName.DEFEND, loaded=False),
+    })
+    self.statistic_abilities.set({
       # healing
       0: StatisticAbility(4, AbilityTypeName.HEAL, 5, 1, loaded=False),
       1: StatisticAbility(5, AbilityTypeName.HEAL, 10, 1, loaded=False),
@@ -357,19 +364,20 @@ class GameData:
       5: StatisticAbility(16, AbilityTypeName.DEFEND, 0.01, None, loaded=False),
       6: StatisticAbility(17, AbilityTypeName.DEFEND, 0.025, None, loaded=False),
       7: StatisticAbility(18, AbilityTypeName.DEFEND, 0.05, None, loaded=False),
-    }
-    self.parry_abilities = {
-      0: ParryAbility(7, 10, 0.25, loaded=False),
-      1: ParryAbility(8, 5, 0.8, loaded=False),
-      2: ParryAbility(9, 12, 0.6, loaded=False),
-      3: ParryAbility(10, 13, 0.15, loaded=False),
-      4: ParryAbility(11, 11, 0.4, loaded=False),
-      5: ParryAbility(12, 9, 0.9, loaded=False),
-      6: ParryAbility(13, 14, 0.3, loaded=False),
-      7: ParryAbility(14, 16, 0.3, loaded=False),
-      8: ParryAbility(15, 10, 0.55, loaded=False),
-    }
-    self.item_abilities = {
+    })
+    self.parry_abilities.set({
+      0: ParryAbility(7, 8, 0.25, loaded=False), # Mahogany Staff
+      1: ParryAbility(8, 4, 0.8, loaded=False), # Surtur's Brimstone Dagger
+      2: ParryAbility(9, 10, 0.35, loaded=False), # Spear-Staff
+      3: ParryAbility(10, 12, 0.45, loaded=False), # Runic Sceptre
+      4: ParryAbility(11, 8, 0.3, loaded=False), # Crimson Broadsword
+      5: ParryAbility(12, 7, 0.9, loaded=False), # Sabre of the World Tree
+      6: ParryAbility(13, 11, 0.3, loaded=False), # The Mace
+      7: ParryAbility(14, 11, 0.25, loaded=False), # Gauntlets of Muspelheim
+      8: ParryAbility(15, 8, 0.55, loaded=False), # Pickaxe-Axe
+      9: ParryAbility(19, 2, 0.5, loaded=False), # Tin Dagger
+    })
+    self.item_abilities.set({
       # ignition
       0: ItemAbility(3, 0, loaded=False),
       1: ItemAbility(10, 0, loaded=False),
@@ -395,16 +403,17 @@ class GameData:
       18: ItemAbility(21, 18, loaded=False),
       19: ItemAbility(22, 18, loaded=False),
       # parrying
-      20: ItemAbility(1, 7, loaded=False),
-      21: ItemAbility(3, 8, loaded=False),
-      22: ItemAbility(4, 9, loaded=False),
-      23: ItemAbility(5, 10, loaded=False),
-      24: ItemAbility(7, 11, loaded=False),
-      25: ItemAbility(8, 12, loaded=False),
-      26: ItemAbility(9, 13, loaded=False),
-      27: ItemAbility(10, 14, loaded=False),
-      28: ItemAbility(11, 15, loaded=False),
-    }
+      20: ItemAbility(1, 7, loaded=False), # Mahogany Staff
+      21: ItemAbility(3, 8, loaded=False), # Surtur's Brimstone Dagger
+      22: ItemAbility(4, 9, loaded=False), # Spear-Staff
+      23: ItemAbility(5, 10, loaded=False), # Runic Sceptre
+      24: ItemAbility(7, 11, loaded=False), # Crimson Broadsword
+      25: ItemAbility(8, 12, loaded=False), # Sabre of the World Tree
+      26: ItemAbility(9, 13, loaded=False), # The Mace
+      27: ItemAbility(10, 14, loaded=False), # Gauntlets of Muspelheim
+      28: ItemAbility(11, 15, loaded=False), # Pickaxe-Axe
+      29: ItemAbility(0, 19, loaded=False), # Tin Dagger
+    })
 
   def create_tables(self, existing_table_names: list[str]) -> None:
     """Initialises all given tables in memory."""
@@ -417,7 +426,7 @@ class GameData:
   
   def select_all_from_table(self, table_name: TableName) -> dict[int, list[Any]]:
     return self.select_from_table(table_name, ["*"], everything())
-  
+
   def load_stored_from_database[StoredType: Stored](self, stored_type: Type[StoredType]) -> dict[int, StoredType]:
     entities: dict[int, StoredType] = {} # type `StoredType` is a generic which can take any type, as long as it is a subtype of `Stored`
     table_name: TableName = stored_type.get_table_name()
@@ -446,7 +455,7 @@ class GameData:
     for (target, storage_options) in self.save_load_targets.items():
       (storage_name, is_in_database) = self.get_save_load_storage_options(storage_options)
       if not is_in_database: continue # skips if the target won't be saved to / loaded from the database
-      setattr(self, storage_name, self.load_stored_from_database(target))
+      self[storage_name].set(self.load_stored_from_database(target))
 
   def format_data_to_dictionary(self, table_name: TableName, raw_data: list) -> dict[str, Any]:
     formatted_data: dict[str, Any] = {}
@@ -483,10 +492,10 @@ class GameData:
   
   def insert_into_storage[StoredType: Stored](self, storage_name: StorageAttrName, identifier: int, data: StoredType) -> None: # type: ignore
     """Inserts a record into the storage attribute in `self` whose name matches the one given."""
-    storage: dict[int, StoredType] = getattr(self, storage_name)
-    if identifier in storage: raise IndexError(f"Tried to insert {data=} with {identifier=} into {storage_name=} when the index is already being used {storage[identifier]=}.")
-    storage[identifier] = data
-    setattr(self, storage_name, storage)
+    storage_data: dict[int, StoredType] = cast(dict[int, StoredType], self[storage_name].data)
+    if identifier in storage_data: raise IndexError(f"Tried to insert {data=} with {identifier=} into {storage_name=} when the index is already being used ({storage_data[identifier]=}).")
+    storage_data[identifier] = data
+    self[storage_name].set(storage_data)
   
   def is_stored_unique_in_table(self, table_name: TableName, identical_condition: Condition) -> bool:
     identifier_column: str = table_name + "ID"
@@ -541,14 +550,14 @@ class GameData:
     :param storage_name: Name of the variable being saved to memory.
     :type storage_name: StorageAttrName
     """
-    storage: dict[int, StoredType] = getattr(self, storage_name)
+    storage: dict[int, StoredType] = self[storage_name].get()
     for (identifier, stored) in storage.items():
       table_name: TableName = stored_type.get_table_name()
       raw_data: list = stored.get_raw_data()
-      if stored.loaded:
+      if stored.loaded or self.database.is_identifier_in_table(identifier, table_name):
         self.update_database_record(table_name, identifier, raw_data)
       else:
-        self.insert_into_database(table_name, raw_data)
+        self.insert_into_database(table_name, raw_data, identifier)
 
   def save(self) -> None:
     """Saves all targeted data stored in memory (in `self`) to the database."""
@@ -561,9 +570,9 @@ class GameData:
   def delete_stored[StoredType: Stored](self, stored_type: Type[StoredType], identifier: int, storage_name: StorageAttrName) -> None:
     """Deletes a specific value from both the appropriate storage attribute in `self` and the subsequent table in `Database`."""
     # deleting from 'self'
-    updated_storage: dict[int, StoredType] = getattr(self, storage_name)
+    updated_storage: dict[int, StoredType] = self[storage_name].get()
     del updated_storage[identifier]
-    setattr(self, storage_name, updated_storage)
+    self[storage_name].set(updated_storage)
     # deleting from 'Database'
     table_name: TableName = stored_type.get_table_name()
     condition: Condition = matching_identifiers(identifier)
@@ -584,7 +593,7 @@ class GameData:
     weapon_item_abilities_ability_identifiers: list[int] = []
     for item_ability in list(weapon_item_abilities.values()):
       weapon_item_abilities_ability_identifiers.append(item_ability.ability_id)
-    return filter_dictionary(self.abilities, lambda identifier, _: identifier in weapon_item_abilities_ability_identifiers)
+    return filter_dictionary(self.abilities.data, lambda identifier, _: identifier in weapon_item_abilities_ability_identifiers)
   
   def get_weapon_parry(self, weapon: Weapon) -> Optional[ParryAbility]:
     weapon_abilities: dict[int, Ability] = self.get_weapon_abilities(weapon)
@@ -597,21 +606,50 @@ class GameData:
     if len(parries_list) > 1: raise LookupError(f"Multiple parry abilities found for {weapon=} ({parries_dict=}).")
     return parries_list[0]
   
-  def get_equipped_weapon_identifiers(self) -> list[int]:
-    is_equipped_weapon: Callable[[int, InventoryItem], float] = lambda _, inv_item: self.items[inv_item.item_id].item_type == ItemType.WEAPON and inv_item.equipped
-    equipped_inventory_weapons: dict[int, InventoryItem] = filter_dictionary(self.inventory_items, is_equipped_weapon)
+  def get_equipped_character_weapon_identifiers(self) -> list[int]:
+    """
+    :return: Returns a list of `WeaponID`. Returns `[]` if no character has been selected.
+    :rtype: list[int]
+    """
+    active_character_id: Optional[int] = self.active_character_id 
+    if active_character_id == None: return []
+
+    is_character_equipped_inventory_weapon: Callable[[int, InventoryItem], float] = lambda _, inv_item: self.items[inv_item.item_id].item_type == ItemType.WEAPON and inv_item.equipped and inv_item.character_id == active_character_id
+
+    equipped_inventory_weapons: dict[int, InventoryItem] = filter_dictionary(self.inventory_items, is_character_equipped_inventory_weapon)
     equipped_weapon_identifiers: list[int] = []
     for equipped_inventory_weapon in equipped_inventory_weapons.values():
       item_id: int = equipped_inventory_weapon.item_id
       is_selected_weapon: Callable[[int, Weapon], bool] = lambda _, weapon: weapon.item_id == item_id
       weapon_item: dict[int, Weapon] = filter_dictionary(self.weapons, is_selected_weapon)
-      if len(weapon_item) > 1: raise BufferError(f"Multiple values found for {weapon_item=} with {item_id}.")
+      if len(weapon_item) > 1: raise BufferError(f"Multiple values found for {weapon_item=} with {item_id=}.")
       weapon_id: int = list(weapon_item.keys())[0]
       equipped_weapon_identifiers.append(weapon_id)
     return equipped_weapon_identifiers
   
+  def get_equipped_character_equipables_identifiers(self) -> list[int]:
+    """
+    :return: Returns a list of `WeaponID`. Returns `[]` if no character has been selected.
+    :rtype: list[int]
+    """
+    active_character_id: Optional[int] = self.active_character_id 
+    if active_character_id == None: return []
+
+    is_character_equipped_inventory_equipable: Callable[[int, InventoryItem], float] = lambda _, inv_item: self.items[inv_item.item_id].item_type == ItemType.EQUIPABLE and inv_item.equipped and inv_item.character_id == active_character_id
+
+    equipped_inventory_equipables: dict[int, InventoryItem] = filter_dictionary(self.inventory_items, is_character_equipped_inventory_equipable)
+    equipped_equipable_identifiers: list[int] = []
+    for equipped_inventory_equipable in equipped_inventory_equipables.values():
+      item_id: int = equipped_inventory_equipable.item_id
+      is_selected_weapon: Callable[[int, Equipable], bool] = lambda _, equipable: equipable.item_id == item_id
+      equipable_item: dict[int, Weapon] = filter_dictionary(self.equipables, is_selected_weapon)
+      if len(equipable_item) > 1: raise BufferError(f"Multiple values found for {equipable_item=} with {item_id=}.")
+      equipable_id: int = list(equipable_item.keys())[0]
+      equipped_equipable_identifiers.append(equipable_id)
+    return equipped_equipable_identifiers
+  
   def load_equipped_weapon_identifiers(self) -> None:
-    self.equipped_weapon_identifiers = self.get_equipped_weapon_identifiers()
+    self.equipped_weapon_identifiers = self.get_equipped_character_weapon_identifiers()
 
   def get_equipped_weapon_names(self) -> list[str]:
     return [self.items[self.weapons[i].item_id].name for i in self.equipped_weapon_identifiers]
@@ -721,9 +759,13 @@ class GameData:
   
   def get_enemy_ability_for_heal(self, enemy_id: int) -> Optional[tuple[int, Ability]]:
     """Gets the enemy's healing ability."""
-    heal_abilities_dict: dict[int, StatisticAbility] = filter_dictionary(self.statistic_abilities, lambda _, statistic_ability: statistic_ability.ability_type == AbilityTypeName.HEAL)
-    heal_ability_identifiers: list[int] = list(heal_abilities_dict.keys())
-    enemy_heal_abilities_dict: dict[int, EnemyAbility] = filter_dictionary(self.enemy_abilities, lambda _, enemy_ability: enemy_ability.enemy_id == enemy_id and enemy_ability.ability_id in heal_ability_identifiers and not enemy_ability.is_used_in_attack)
+    is_heal_ability: Callable[[int, StatisticAbility], bool] = lambda _, statistic_ability: statistic_ability.ability_type == AbilityTypeName.HEAL
+    heal_statistic_abilities: dict[int, StatisticAbility] = filter_dictionary(self.statistic_abilities, is_heal_ability)
+    heal_ability_identifiers: list[int] = []
+    for (_, heal_statistic_ability) in heal_statistic_abilities.items():
+      heal_ability_identifiers.append(heal_statistic_ability.ability_id)
+    is_enemy_heal_ability: Callable[[int, EnemyAbility], bool] = lambda _, enemy_ability: enemy_ability.enemy_id == enemy_id and enemy_ability.ability_id in heal_ability_identifiers and not enemy_ability.is_used_in_attack
+    enemy_heal_abilities_dict: dict[int, EnemyAbility] = filter_dictionary(self.enemy_abilities, is_enemy_heal_ability)
 
     if len(enemy_heal_abilities_dict) == 0: return None
     if len(enemy_heal_abilities_dict) > 1: raise BufferError(f"{enemy_heal_abilities_dict=}; expected a dictionary of length `1`.")
@@ -925,4 +967,9 @@ class GameData:
     for fighting_enemy in fighting_enemies:
       fighting_enemy_health: float = fighting_enemy.health
       if fighting_enemy_health > 0: return False
+    return True
+  
+  def is_fighting_enemy_dead(self, identifier: int) -> bool:
+    fighting_enemy: FightingEnemy = self.fighting_enemies[identifier]
+    if fighting_enemy.health > 0: return False
     return True

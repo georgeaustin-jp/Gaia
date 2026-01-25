@@ -22,16 +22,13 @@ class Queue[QueueType](Sized, Loggable):
   def empty(self) -> bool:
     return len(self) == 0
 
-  @log_loggable_return
   def get(self) -> QueueType:
     if self.empty(): raise QueueError(f"Tried to pop value from empty queue.")
     return self.__queue.pop(0)
   
-  @log_loggable_return
   def peek(self) -> Optional[QueueType]:
     if self.empty(): return None
     return self.__queue[0]
 
-  @log_loggable_args
   def put(self, value: QueueType) -> None:
     return self.__queue.append(value)

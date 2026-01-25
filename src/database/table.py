@@ -1,13 +1,16 @@
 from tools.typing_tools import *
 from tools.dictionary_tools import *
+from tools.logging_tools import *
 
 from database.condition import Condition, get_condition_inverse
 
 from tools.custom_exceptions import InsertAtExistingIdentifierError
 
-class Table:
-  def __init__(self, name: str, column_names: list[str]) -> None:
+class Table(Loggable):
+  def __init__(self, name: str, column_names: list[str], is_logging_enabled: bool = False, tag: Optional[str] = None, include_call_stack: bool = False) -> None:
     self.name: str = name
+    if tag == None: tag = self.name
+    super().__init__(is_logging_enabled, tag, include_call_stack)
     self.column_names: list[str] = column_names
     self.rows: dict[int, list[Any]] = {}
 
@@ -26,6 +29,18 @@ class Table:
         formatted_table += "],"
     formatted_table += "\n}"
     return formatted_table
+  
+  def __getitem__(self, identifier: int) -> list[Any]:
+    return self.rows[identifier]
+  
+  def __setitem__(self, identifier: int, value: list[Any]) -> None:
+    self.rows[identifier] = value
+  
+  def __contains__(self, value: Union[int, list[Any]]) -> bool:
+    return value in self.rows
+  
+  def has_key(self, key: int) -> bool:
+    return key in self.rows
 
   # basic getter and setter methods
 
@@ -61,7 +76,6 @@ class Table:
     return file
 
   # SELECT columns FROM rows WHERE condition ORDER BY order
-  # Wildcard 
   def select(self, columns: list[str], condition: Condition) -> dict[int, list[Any]]:
     non_identifier_column_names: list[str] = self.get_non_identifier_column_names()
     if columns[0] == "*":
@@ -71,7 +85,7 @@ class Table:
       if column_name in columns:
         selected_column_indexes.append(i)
 
-    selected_rows: dict[Any, Any] = filter_dictionary(self.rows, condition)
+    selected_rows: dict[int, Any] = filter_dictionary(self.rows, condition)
     for (identifier, row) in selected_rows.items():
       filtered_row = []
       for i in selected_column_indexes:
@@ -96,7 +110,7 @@ class Table:
         fields_to_update[i] = column_value
       updated_rows[identifier] = fields_to_update
     for identifier in updated_rows:
-      self.rows[identifier] = updated_rows[identifier]
+      self[identifier] = updated_rows[identifier]
 
   def delete_from(self, condition: Condition) -> None:
     """Deletes all values from the table where the condition statement evaluates to `True`."""
@@ -120,7 +134,7 @@ class Table:
     """Inserts a new record at a given identifier. Raises an error if the identifier has already been assigned."""
     existing_identifiers: list[int] = list(self.rows.keys())
     if identifier in existing_identifiers: raise InsertAtExistingIdentifierError(identifier, self.name)
-    self.rows[identifier] = self.format_raw_row(raw_row)
+    self[identifier] = self.format_raw_row(raw_row)
 
   #insert
   def insert(self, raw_row: dict[str, Any]) -> int:
@@ -146,7 +160,7 @@ class Table:
       raise Exception(f"Column `{name}` already exists.")
     self.column_names.append(name)
     for identifier in self.rows.keys():
-      self.rows[identifier].append(None)
+      self[identifier].append(None)
 
   #drop_column
   def drop_column(self, name: str) -> None:
@@ -168,7 +182,7 @@ class Table:
       for (i, field) in enumerate(row):
         if i != dropped_index:
           new_row.append(field)
-      self.rows[identifier] = new_row
+      self[identifier] = new_row
 
   #rename_column
   def rename_column(self, name: str, new_name: str) -> None:

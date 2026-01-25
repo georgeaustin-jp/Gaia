@@ -31,7 +31,7 @@ class CharacterSelection(Selection):
   
   def load(self, **kwargs) -> None:
     super().load(**kwargs)
-    characters: dict[int, Character] = self.game_data.characters
+    characters: dict[int, Character] = self.game_data.characters.get()
     button_inputs: list[DynamicButtonInput] = self.get_all_characters_dynamic_button_inputs(characters)
     self.create_buttons_dynamically(button_inputs, command=lambda identifier: self.select_character(identifier), container=self.scrollable_character_frame_parent, placement_options={"sticky": "ew"})
 

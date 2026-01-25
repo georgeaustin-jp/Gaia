@@ -51,7 +51,7 @@ class ParryAction(AbilityAction):
     else:
       target_damage = damage - damage_threshold
     
-    reflected_damage: float = ParryAction.get_reflected_damage(damage, reflection_proportion)
+    reflected_damage = ParryAction.get_reflected_damage(damage, reflection_proportion)
 
     return (target_damage, reflected_damage)
 

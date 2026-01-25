@@ -1,4 +1,5 @@
 from tools.typing_tools import *
+from tools.logging_tools import *
 
 from ability_action import AbilityAction
 from data_structures.action_type import *
@@ -12,7 +13,7 @@ def only_for_attacks[ReturnType](func: Callable[..., ReturnType]) -> Callable[..
     return func(self, *args, **kwargs)
   return wrapper
 
-class CombatAction():
+class CombatAction(Loggable):
   """
   Represents a single action taken in combat. All methods handle attacks on individual entities.
 
@@ -23,7 +24,8 @@ class CombatAction():
   :param action_type: What action is being carried out.
   :type action_type: ActionType
   """
-  def __init__(self, sender_type: EntityType, target_type: Optional[EntityType], action_type: ActionType) -> None:
+  def __init__(self, sender_type: EntityType, target_type: Optional[EntityType], action_type: ActionType, is_logging_enabled: bool = False, tag: Optional[str] = None, include_call_stack: bool = False) -> None:
+    super().__init__(is_logging_enabled, tag, include_call_stack)
     self.sender_type: EntityType = sender_type
     self.target_type: Optional[EntityType] = target_type
     self.action_type: ActionType = action_type
@@ -33,11 +35,13 @@ class CombatAction():
   def __repr__(self) -> str:
     return f"ACTION {self.action_type}\n  [ {self.sender_type} -> {self.target_type} ]"
 
-  def __call__(self, sender: FightingEntity, target: Optional[FightingEntity]) -> str:
+  @log_loggable_return
+  @log_loggable_args
+  def __call__(self, sender: FightingEntity, target: Optional[FightingEntity]) -> tuple[list[Optional[str]], Optional[Queue[AbilityAction]]]:
     type_of_action: Type[ActionType] = type(self.action_type)
     if type_of_action == Attack: return self.attack_fighting_entity(sender, target)
-    elif type_of_action == Parry: return f"{sender.name} parried" # parrying is handled in `CombatManager`
-    elif type_of_action == Heal: return self.heal_fighting_entity(sender, target)
+    elif type_of_action == Parry: return ([f"{sender.name.upper()} parried"], None) # parrying is handled in `CombatManager`
+    elif type_of_action == Heal: return ([self.heal_fighting_entity(sender, target)], None)
     else:
       raise TypeError(f"Action type `{type_of_action}` does not match with any known action types (\'Attack\', \'Parry\', \'Heal\')")
     
@@ -64,26 +68,27 @@ class CombatAction():
 
   # action methods
 
-  def apply_abilities(self) -> None: raise NotImplementedError()
-
-  def attack_fighting_entity(self, sender: FightingEntity, target: Optional[FightingEntity]) -> str:
+  def attack_fighting_entity(self, sender: FightingEntity, target: Optional[FightingEntity]) -> tuple[list[Optional[str]], Optional[Queue[AbilityAction]]]:
+    applied_effects: Optional[Queue[AbilityAction]] = None
     if type(self.action_type) != Attack:
       raise TypeError(f"Expected type `Attack` for `type(self.action_type)`; got `{type(self.action_type)=}` instead.")
     if target == None:
-      return f"{sender.name.upper()} attacked nothing."
+      return ([f"{sender.name.upper()} attacked nothing."], None)
     damage: float = self.action_type.quantity
-    message: str = f"{sender.name.upper()} attacked {target.name.upper()} ({damage}DMG)"
+    applied_effects = self.action_type.effects
+    if applied_effects.empty(): applied_effects = None
+    messages: list[Optional[str]] = [f"{sender.name.upper()} attacked {target.name.upper()} ({damage}DMG)"]
     if target.is_parrying:
       parry_damage_threshold: Optional[float] = target.parry_damage_threshold
       parry_reflection_proportion: Optional[float] = target.parry_reflection_proportion
       if parry_damage_threshold == None or parry_reflection_proportion == None:
         raise ValueError(f"One of {parry_damage_threshold=} and/or {parry_reflection_proportion=} is `None`; both should be defined.")
       (damage, reflected_damage) = ParryAction.parry_damage(damage, parry_damage_threshold, parry_reflection_proportion)
-      sender.take_damage(reflected_damage)
-    target.take_damage(damage)
-    return message
+      messages.append(sender.take_damage(reflected_damage))
+    messages.append(target.take_damage(damage))
+    return (messages, applied_effects)
 
-  def heal_fighting_entity(self, sender: FightingEntity, target: Optional[FightingEntity]) -> str:
+  def heal_fighting_entity(self, sender: FightingEntity, target: Optional[FightingEntity]) -> Optional[str]:
     if type(self.action_type) != Heal:
       raise TypeError(f"Expected type `Heal` for `type(self.action_type)`; got `{type(self.action_type)=}` instead.")
     healing: float = self.action_type.quantity

@@ -9,9 +9,6 @@ class AbstractStorageItem(Stored):
     self.item_id = item_id
     self.stack_size = stack_size
 
-  @staticmethod
-  def get_table_name() -> TableName: return TableName.NONE
-
   def get_raw_data(self) -> list[Any]:
     return [self.item_id, self.stack_size]
 

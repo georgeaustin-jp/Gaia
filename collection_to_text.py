@@ -7,7 +7,6 @@ from typing import Any
 from sys import argv
 from os import listdir
 from os.path import isfile, join, isdir
-from regex import match
 from functools import reduce
 import toml
 import re

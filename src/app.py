@@ -1,6 +1,8 @@
 from tools.typing_tools import *
 from tools.constants import *
 
+from tools.logging_tools import *
+
 from database.condition import Condition
 
 from interface.interface import Interface
@@ -15,7 +17,7 @@ from stored.items.storage import Storage
 from stored.items.inventory_item import InventoryItem
 
 class App:
-  def __init__(self, is_dev_mode_enabled: bool = False) -> None:
+  def __init__(self, is_dev_mode_enabled: bool = Constants.IS_DEV_MODE) -> None:
     self.game_data = GameData(is_dev_mode_enabled)
     self.game_data.load_game_data()
 
@@ -54,6 +56,7 @@ class App:
   def select_character(self, character_id: int) -> None:
     self.game_data.active_character_id = character_id
     character_name: str = self.game_data.get_active_character_name()
+    self.game_data.equipped_weapon_identifiers = []
     self.interface.update_character_name(character_name)
     self.show_screen(ScreenName.WORLD_SELECTION)
 
@@ -101,7 +104,7 @@ class App:
     self.show_screen(screen_name)
 
   def begin_world_creation(self, _kwargs: dict[str, Any] = {}) -> None:
-    self.show_screen(ScreenName.WORLD_CREATION, world=self.game_data.worlds)
+    self.show_screen(ScreenName.WORLD_CREATION)
 
   def create_world(self, world_name: str) -> None:
     active_user_id: int = unpack_optional(self.game_data.active_user_id)
@@ -126,13 +129,23 @@ class App:
     self.game_data.active_storage_id = self.game_data.away_storage
     self.show_screen(ScreenName.EXPLORATION)
 
+  def set_exploration_screen_message(self, message: str) -> None:
+    self.interface.screens[ScreenName.EXPLORATION].message.set(message)
+
   def begin_combat(self) -> None:
-    equipped_weapon_ids: list[int] = self.game_data.get_equipped_weapon_identifiers()
+    equipped_weapon_ids: list[int] = self.game_data.get_equipped_character_weapon_identifiers()
     weapons_length: int = len(equipped_weapon_ids)
     if weapons_length > Constants.MAX_EQUIPPED_WEAPONS:
-      self.interface.screens[ScreenName.EXPLORATION].message.set(f"Number of equipped weapons ({weapons_length}) exceeds the maximum number you're able to bring ({Constants.MAX_EQUIPPED_WEAPONS}).")
+      self.set_exploration_screen_message(f"Number of equipped weapons ({weapons_length}) exceeds the maximum number you're able to bring ({Constants.MAX_EQUIPPED_WEAPONS}).")
       return None
-    #self.add_info(f"Number of equipped weapons ({weapons_length}) exceeds the maximum number you're able to bring ({Constants.MAX_EQUIPPED_WEAPONS}).")
+    elif weapons_length == 0:
+      self.set_exploration_screen_message(f"No weapons equipped.")
+      return None
+    
+    eqipables_length: int = len(self.game_data.get_equipped_character_equipables_identifiers())
+    if eqipables_length > Constants.MAX_EQUIPPED_EQUIPABLES:
+      self.set_exploration_screen_message(f"Number of equipped equipables ({eqipables_length}) exceeds the maximum number you're able to bring ({Constants.MAX_EQUIPPED_EQUIPABLES}).")
+      
     self.game_data.generate_fighting_enemies()
     self.show_screen(ScreenName.COMBAT)
     self.combat_manager.begin_combat()

@@ -10,7 +10,7 @@ class FightingEnemyGraph(Sized):
   """
   def __init__(self) -> None:
     self.dimensions: Position = (Constants.GRID_WIDTH, Constants.GRID_HEIGHT)
-    self.__graph: nx.Graph[Position] = nx.grid_graph(dim=self.dimensions) # TODO: put stuff about Graphs in my documentation
+    self.__graph: nx.Graph[Position] = nx.grid_graph(dim=self.dimensions)
     self.init_storage()
     self.add_edges()
 

@@ -43,6 +43,9 @@ class ExplorationScreen(AbstractScreen):
     elif self.is_entering_structure: # if the character has just finished looting a structure
       self.reset_gui()
       self.is_entering_structure = False
+    
+    if self.game_data.previous_screen_name == ScreenName.STORAGE:
+      self.message.set("-")
 
   def continue_exploration(self) -> None:
     self.is_entering_combat = is_combat_encounter()
@@ -74,7 +77,7 @@ class ExplorationScreen(AbstractScreen):
     self.enter_structure_button["state"] = tk.DISABLED
 
   def nothing_found(self) -> None:
-    self.message.set("Nothing happened")
+    self.message.set("Nothing happened (press again)")
     self.make_combat_unavailable()
     self.make_structure_entry_unavailable()
 
@@ -112,4 +115,6 @@ class ExplorationScreen(AbstractScreen):
     self.create_return(ScreenName.HOME, return_command=return_command)
     self.create_quit()
     
-    if self.game_data.is_dev_mode_enabled: self.create_widget(tk.Button, text="DEV_MODE: Enter combat", command=lambda: begin_combat())
+    if self.game_data.is_dev_mode_enabled:
+      self.create_widget(tk.Button, text="DEV_MODE: Enter combat", command=lambda: begin_combat())
+      self.create_widget(tk.Button, text="DEV_MODE: Enter structure", command=lambda: enter_structure())

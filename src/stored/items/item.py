@@ -9,6 +9,8 @@ class Item(Stored):
     self.item_type = item_type
     self.name = name
 
+  # stored methods
+
   @staticmethod
   def get_table_name() -> TableName: return TableName.ITEM
 

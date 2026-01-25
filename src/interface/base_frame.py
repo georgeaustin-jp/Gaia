@@ -5,14 +5,16 @@ from tools.typing_tools import *
 from tools.dictionary_tools import add_if_vacant
 from tools.tkinter_tools import *
 from tools.constants import DefaultTkInitOptions, ToggleState
+from tools.logging_tools import *
 
 from custom_tkinter.toggleable_button import ToggleableButton
 
-class BaseFrame(tk.Frame):
-  def __init__(self, root, parent: tk.Misc, dimensions: Position = (1,1), **kwargs) -> None:
+class BaseFrame(tk.Frame, Loggable):
+  def __init__(self, root, parent: tk.Misc, dimensions: Position = (1,1), is_logging_enabled: bool = False, label: Optional[str] = None, include_call_stack: bool = False, **kwargs) -> None:
     self.root = root
     self.parent = parent
-    super().__init__(master=self.parent)
+    tk.Frame.__init__(self, master=self.parent, **kwargs)
+    Loggable.__init__(self, is_logging_enabled=is_logging_enabled, label=label, include_call_stack=include_call_stack)
 
     self.default_frame = self
     self.dimensions = dimensions

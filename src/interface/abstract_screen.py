@@ -14,8 +14,8 @@ from interface.base_frame import BaseFrame
 from custom_tkinter.dynamic_button import DynamicButton
 
 class AbstractScreen(BaseFrame):
-  def __init__(self, root, parent: tk.Frame, game_data: GameData, **kwargs) -> None:
-    super().__init__(root, parent)
+  def __init__(self, root, parent: tk.Frame, game_data: GameData, is_logging_enabled: bool = False, include_call_stack: bool = False, **kwargs) -> None:
+    super().__init__(root, parent, is_logging_enabled=is_logging_enabled, label=self.__class__.__name__, include_call_stack=include_call_stack)
     self.game_data = game_data
 
     self.header = unpack_optional(self.create_frame_on_root((0,0), True, dimensions=(1,1)))

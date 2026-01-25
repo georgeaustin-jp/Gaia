@@ -69,18 +69,31 @@ class CombatScreen(AbstractScreen):
     self.is_confirm_pressed = tk.BooleanVar(value=False)
     self.return_button: tk.Button
 
-    self.parry_used: bool = False
+    self.__parry_used: bool = False
 
     self.end_combat_command: Callable[[ScreenName], None] = kwargs["end_combat"]
 
     super().__init__(root, parent, game_data, **kwargs)
+
+  # getter and setter methods
+
+  @property
+  def is_parry_used(self) -> bool:
+    return self.__parry_used
+  
+  @is_parry_used.setter
+  def is_parry_used(self, is_parry_used: bool) -> None:
+    """Sets the state of the parry button for all weapon interfaces."""
+    self.__parry_used = is_parry_used
+    for weapon_interface in self.weapon_interfaces:
+      weapon_interface.is_parry_used = is_parry_used
 
   # weapon label operations
   
   def init_weapon_interfaces(self, weapon_grid: tk.Frame, placement_options: dict[str, Any] = {}, **kwargs) -> None:
     weapon_interfaces: list[WeaponInterface] = []
     for i in range(Constants.MAX_EQUIPPED_WEAPONS):
-      weapon_interface = create_weapon_interface(self.root, parent=weapon_grid, position=(i,0), placement_options=placement_options,**kwargs)
+      weapon_interface = create_weapon_interface(self.root, parent=weapon_grid, position=(i,0), placement_options=placement_options, label=f"{i}", **kwargs)
       weapon_interfaces.append(weapon_interface)
     self.weapon_interfaces = weapon_interfaces
   
@@ -95,14 +108,9 @@ class CombatScreen(AbstractScreen):
       weapon_interface.load()
       return None
     weapon_identifier: int = self.game_data.equipped_weapon_identifiers[index]
-    logging.debug(f"{weapon_identifier=}")
     equipped_weapon_names: list[str] = self.game_data.get_equipped_weapon_names()
     weapon_name: Optional[str] = equipped_weapon_names[index]
-    logging.debug(f"BEFORE: {index=}, {weapon_interface=}, {weapon_name=}")
-    logging.debug(f"{equipped_weapon_names=}")
     weapon: Weapon = self.game_data.weapons[weapon_identifier]
-    logging.debug(f"{self.game_data.weapons=}")
-    logging.debug(f"{weapon=}")
     attack_damage: float = weapon.damage
     # getting parry data
     weapon_parry: Optional[ParryAbility] = self.game_data.get_weapon_parry(weapon)
@@ -112,7 +120,6 @@ class CombatScreen(AbstractScreen):
       parry_damage_threshold = weapon_parry.damage_threshold
       parry_reflection_proportion = weapon_parry.reflection_proportion
     weapon_interface.load(weapon_name, attack_damage, parry_damage_threshold, parry_reflection_proportion)
-    logging.debug(f"AFTER: {weapon_interface=}")
 
   def load_weapon_interfaces(self) -> None:
     for i in range(Constants.MAX_EQUIPPED_WEAPONS):
@@ -156,9 +163,11 @@ class CombatScreen(AbstractScreen):
   def get_inventory_item_equipable_ability_descriptors(self, inventory_item_id: int) -> list[str]:
     inventory_item: InventoryItem = self.game_data.inventory_items[inventory_item_id]
     if not inventory_item.equipped: raise ValueError(f"Expected `{inventory_item.equipped=}` for `{inventory_item}` (`{inventory_item_id=}`) to be `True`; got `{inventory_item.equipped}` instead.")
+
     item_id: int = inventory_item.item_id
     selected_item_abilities_dict: dict[int, ItemAbility] = filter_dictionary(self.game_data.item_abilities, lambda _, item_ability: item_ability.item_id == item_id)
     selected_item_abilities: list[ItemAbility] = list(selected_item_abilities_dict.values())
+
     ability_texts: list[str] = []
     for item_ability in selected_item_abilities:
       ability_id: int = item_ability.ability_id
@@ -196,10 +205,7 @@ class CombatScreen(AbstractScreen):
 
   # user buttons
   def set_user_buttons_attributes(self, attribute: str, value: Any, include_attack: bool = True, include_parry: bool = True, include_confirm: bool = True) -> None:
-    if include_attack or include_parry: # skips the attack buttons if neither `include_attack` nor `include_parry` is active
-      for i in range(len(self.weapon_interfaces)):
-        if include_attack: self.set_attack_button_attribute(i, attribute, value)
-        if include_parry: self.set_parry_button_attribute(i, attribute, value)
+    self.set_all_weapon_interfaces_button_attributes(attribute, value, include_attack, include_parry)
     
     (enemy_interface_widgets_width, enemy_interface_widgets_height) = self.enemy_interface_widgets.dimensions
     for x in range(enemy_interface_widgets_width):
@@ -213,17 +219,28 @@ class CombatScreen(AbstractScreen):
 
     if include_confirm: self.confirmation_button[attribute] = value
 
+  def set_all_weapon_interfaces_button_attributes(self, attribute: str, value: Any, include_attack: bool = True, include_parry: bool = True) -> None:
+    if not (include_attack or include_parry): return None # skips the weapon interfaces if neither `include_attack` nor `include_parry` is active
+    for i in range(len(self.weapon_interfaces)):
+      self.set_weapon_interface_button_attribute_at(i, attribute, value, include_attack, include_parry)
+
+  def set_weapon_interface_button_attribute_at(self, i: int, attribute: str, value: Any, include_attack: bool = True, include_parry: bool = True) -> None:
+    """Assumes at least one of `include_attack` or `include_parry` is `True`."""
+    if include_attack:
+      self.set_attack_button_attribute(i, attribute, value)
+    if include_parry:
+      self.set_parry_button_attribute(i, attribute, value)
+
   def set_user_buttons_toggled(self, is_toggled: ToggleState, include_attack: bool = True, include_parry: bool = True) -> None:
     self.set_user_buttons_attributes("is_toggled", is_toggled, include_attack, include_parry, include_confirm=False)
 
-  def reset_toggleable_user_buttons_state(self) -> None:
+  def reset_toggleable_user_buttons_toggled(self) -> None:
     self.set_user_buttons_toggled(ToggleState.OFF)
 
   def set_user_buttons_state(self, state: str, include_attack: bool = True, include_parry: bool = True, include_confirm: bool = True) -> None:
-    """Sets whether the user buttons are enabled or not."""
     self.set_user_buttons_attributes("state", state, include_attack, include_parry, include_confirm)
 
-  def enable_user_buttons(self, include_attack: bool = True, include_parry: bool = True, include_confirm: bool = True) -> None:
+  def enable_user_buttons(self, include_attack: bool = True, include_parry: bool = False, include_confirm: bool = True) -> None:
     self.set_user_buttons_state(tk.NORMAL, include_attack, include_parry, include_confirm)
 
   def disable_user_buttons(self, include_attack: bool = True, include_parry: bool = True, include_confirm: bool = True) -> None:
@@ -237,9 +254,13 @@ class CombatScreen(AbstractScreen):
     selected_button[attribute] = value
 
   def set_attack_button_attribute(self, weapon_index: int, attribute: str, value: Any) -> None:
+    weapon_interface: WeaponInterface = self.weapon_interfaces[weapon_index]
+    if attribute == "state" and value == tk.NORMAL and not weapon_interface.has_attack: return None
     self.set_weapon_button_attribute(weapon_index, WeaponUIComponentName.ATTACK, attribute, value)
 
   def set_parry_button_attribute(self, weapon_index: int, attribute: str, value: Any) -> None:
+    weapon_interface: WeaponInterface = self.weapon_interfaces[weapon_index]
+    if attribute == "state" and value == tk.NORMAL and not weapon_interface.has_parry: return None
     self.set_weapon_button_attribute(weapon_index, WeaponUIComponentName.PARRY, attribute, value)
 
   def enable_attack_button(self, weapon_index: int) -> None:
@@ -248,23 +269,8 @@ class CombatScreen(AbstractScreen):
   def disable_attack_button(self, weapon_index: int) -> None:
     self.set_attack_button_attribute(weapon_index, "state", tk.DISABLED)
 
-  def enable_parry_button(self, weapon_index: int) -> None:
-    self.set_parry_button_attribute(weapon_index, "state", tk.NORMAL)
-
   def disable_parry_button(self, weapon_index: int) -> None:
     self.set_parry_button_attribute(weapon_index, "state", tk.DISABLED)
-
-  def update_weapon_states(self) -> None:
-    """Operates under the assumption that all weapon buttons are initially enabled."""
-    for i in range(Constants.MAX_EQUIPPED_WEAPONS):
-      try:
-        weapon_id: Optional[int] = self.game_data.equipped_weapon_identifiers[i]
-      except:
-        weapon_id = None
-      selected_weapon_interface: WeaponInterface = self.weapon_interfaces[i]
-      weapon_used: bool = cast(bool, selected_weapon_interface.is_weapon_used)
-      if weapon_used or weapon_id == None:self.disable_attack_button(i)
-      if self.parry_used or weapon_used or weapon_id == None: self.disable_parry_button(i)
 
   def reset_weapon_states(self) -> None:
     for i in range(Constants.MAX_EQUIPPED_WEAPONS):
@@ -273,10 +279,8 @@ class CombatScreen(AbstractScreen):
       except:
         weapon_id = None
       if weapon_id != None:
-        self.enable_attack_button(i)
-        self.enable_parry_button(i)
         self.weapon_interfaces[i].is_weapon_used = False
-    self.parry_used = False
+    self.is_parry_used = False
 
   def find_active_weapon_index(self) -> Optional[int]:
     for i in range(Constants.MAX_EQUIPPED_WEAPONS):
@@ -290,7 +294,7 @@ class CombatScreen(AbstractScreen):
   def set_health_label(self, health: float) -> None:
     if health < 0:
       raise ValueError(f"Cannot set `displayed_health` to be less than zero ({health=} < 0)")
-    display: str = f"{health:.2f}HP"
+    display: str = f"{health:.{Constants.DEFAULT_ROUNDING_ACCURACY}f}HP"
     self.displayed_health.set(display)
 
   def update_health_label(self) -> None:
@@ -298,7 +302,7 @@ class CombatScreen(AbstractScreen):
     self.set_health_label(character_health)
 
   def set_damage_resistance_label(self, damage_resistance: float) -> None:
-    display: str = f"{damage_resistance*100:.2f}%"
+    display: str = f"{damage_resistance*100:.{Constants.DEFAULT_ROUNDING_ACCURACY}f}%"
     self.displayed_damage_resistance.set(display)
 
   def update_damage_resistance_label(self) -> None:
@@ -321,7 +325,7 @@ class CombatScreen(AbstractScreen):
     elif type(action_type) in [Attack, Parry]: 
       weapon_index: Optional[int] = self.find_active_weapon_index()
       if weapon_index == None: raise NoWeaponSelectedError()
-      self.weapon_interfaces[weapon_index].is_weapon_used = True # TODO: update the `update` and `reset` methods
+      self.weapon_interfaces[weapon_index].is_weapon_used = True
     return CombatAction(CharacterType(), target_type, action_type)
   
   def get_targeted_tile_type(self) -> Optional[EntityType]:
@@ -362,10 +366,28 @@ class CombatScreen(AbstractScreen):
   def is_no_weapon_buttons_toggled(self) -> bool:
     return self.is_no_attack_buttons_toggled() and self.is_no_parry_buttons_toggled()
   
+  def is_one_attack_button_toggled(self) -> ComparisonFlag:
+    count: int = 0
+    for weapon_interface in self.weapon_interfaces:
+      if weapon_interface.is_attack_toggled:
+        count += 1
+      if count > 1: return ComparisonFlag.GREATER
+    if count == 0: return ComparisonFlag.LESS
+    return ComparisonFlag.EQUAL
+  
   def is_no_attack_buttons_toggled(self) -> bool:
     for weapon_interface in self.weapon_interfaces:
       if weapon_interface.is_attack_toggled: return False
     return True
+  
+  def is_one_parry_button_toggled(self) -> ComparisonFlag:
+    count: int = 0
+    for weapon_interface in self.weapon_interfaces:
+      if weapon_interface.is_parry_toggled:
+        count += 1
+      if count > 1: return ComparisonFlag.GREATER
+    if count == 0: return ComparisonFlag.LESS
+    return ComparisonFlag.EQUAL
   
   def is_no_parry_buttons_toggled(self) -> bool:
     for weapon_interface in self.weapon_interfaces:
@@ -379,14 +401,22 @@ class CombatScreen(AbstractScreen):
     action: ActionType
     using_health_potion: bool = self.is_health_potion_button_toggled()
     using_weapons: bool = not self.is_no_weapon_buttons_toggled()
-    is_attacking: bool = not self.is_no_attack_buttons_toggled()
-    is_parrying: bool = not self.is_no_parry_buttons_toggled()
+    
+    using_one_attack: ComparisonFlag = self.is_one_attack_button_toggled()
+    if using_one_attack == ComparisonFlag.GREATER:
+      raise TooManyAttackButtonsSelectedError()
+    is_attacking: bool = using_one_attack == ComparisonFlag.EQUAL
+    
+    using_one_parry: ComparisonFlag = self.is_one_parry_button_toggled()
+    if using_one_parry == ComparisonFlag.GREATER:
+      raise TooManyParryButtonsSelectedError()
+    is_parrying: bool = using_one_parry == ComparisonFlag.EQUAL
 
     targeting_one_enemy_comparison: ComparisonFlag = self.is_one_enemy_button_toggled()
     if targeting_one_enemy_comparison == ComparisonFlag.GREATER: raise TooManyEnemiesSelectedError() # only 0 or 1 enemies can be selected
     targeting_no_enemies: bool = targeting_one_enemy_comparison == ComparisonFlag.LESS # to check if targeting 1 enemy, use `not targeting_no_enemies`, as 2 or more enemies cannot be selected
 
-    if not using_health_potion and not using_weapons and targeting_no_enemies: # character can never select no buttons for an action
+    if not (using_health_potion or using_weapons) and targeting_no_enemies and not using_weapons: # character can never select no buttons for an action
       raise NoButtonsSelectedError() 
     elif using_health_potion and targeting_no_enemies and not using_weapons: # handles using the health potion
       action = Heal(Constants.HEALTH_POTION_AMOUNT)
@@ -397,7 +427,7 @@ class CombatScreen(AbstractScreen):
       if parry_data == None: raise NoParryError(parry_data)
       (damage_threshold, reflection_proportion) = parry_data
       action = Parry(damage_threshold, reflection_proportion)
-      self.parry_used = True
+      self.is_parry_used = True
     elif not targeting_no_enemies and not is_attacking: # handles the case where an enemy is selected, but the character has no attack selected
       raise NoAttackSelectedForEnemyError()
     elif targeting_no_enemies: # all actions after this point require one enemy to be selected
@@ -486,7 +516,7 @@ class CombatScreen(AbstractScreen):
 
         button_display = f"{fighting_enemy_name}"
         if fighting_enemy_heath != None and fighting_enemy_max_heath != None:
-          button_display += f"\n{fighting_enemy_heath}/{fighting_enemy_max_heath}HP"
+          button_display += f"\n{fighting_enemy_heath:.{Constants.DEFAULT_ROUNDING_ACCURACY}f}/{fighting_enemy_max_heath:.{Constants.DEFAULT_ROUNDING_ACCURACY}f}HP"
 
         damage_str = format(fighting_enemy.attack_damage)
 

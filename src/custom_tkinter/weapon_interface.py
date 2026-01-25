@@ -12,8 +12,8 @@ from interface.base_frame import BaseFrame
 
 class WeaponInterface(BaseFrame):
   """User interface with one weapon. Used in `CombatScreen`."""
-  def __init__(self, root: tk.Misc, parent: tk.Frame, weapon_name: Optional[str] = None, attack_damage: Optional[float] = None, parry_damage_threshold: Optional[float] = None, parry_reflection_proportion: Optional[float] = None, dimensions: Position = Constants.WEAPON_INTERFACE_DIMENSIONS, **kwargs) -> None:
-    super().__init__(root=root, parent=parent)
+  def __init__(self, root: tk.Misc, parent: tk.Frame, weapon_name: Optional[str] = None, attack_damage: Optional[float] = None, parry_damage_threshold: Optional[float] = None, parry_reflection_proportion: Optional[float] = None, dimensions: Position = Constants.WEAPON_INTERFACE_DIMENSIONS, is_logging_enabled: bool = False, label: Optional[str] = None, **kwargs) -> None:
+    super().__init__(root=root, parent=parent, is_logging_enabled=is_logging_enabled, label=label)
     
     self.__weapon_name_label: tk.Label
     self.__attack_button: ToggleableButton
@@ -34,6 +34,8 @@ class WeaponInterface(BaseFrame):
     self.__parry_reflection_proportion: Optional[float]
 
     self.__is_weapon_used: bool = False
+
+    self.__is_parry_used: bool = False
 
     self.dimensions = dimensions
     
@@ -89,6 +91,25 @@ class WeaponInterface(BaseFrame):
     self.__parry_button.is_toggled = is_parry_toggled
 
   @property
+  def is_parry_used(self) -> bool:
+    return self.__is_parry_used
+  
+  @is_parry_used.setter
+  def is_parry_used(self, is_parry_used: bool) -> None:
+    """Also affects the state of the parry button."""
+    self.__is_parry_used = is_parry_used
+    if self.has_parry:
+      self.parry_button_state = tk.DISABLED if is_parry_used else tk.NORMAL
+
+  @property
+  def has_attack(self) -> bool:
+    return self.attack_damage != None
+
+  @property
+  def has_parry(self) -> bool:
+    return self.parry_damage_threshold != None and self.parry_reflection_proportion != None
+
+  @property
   def weapon_name(self) -> str:
     return self.__weapon_name
   
@@ -105,6 +126,24 @@ class WeaponInterface(BaseFrame):
   def weapon_name_text(self, weapon_name: Optional[str]) -> None:
     weapon_name = unpack_optional_string(weapon_name, default="")
     self.__weapon_name_text.set(weapon_name)
+
+  ## buttons
+  
+  @property
+  def attack_button_state(self) -> str:
+    return self.__attack_button["state"]
+  
+  @attack_button_state.setter
+  def attack_button_state(self, state: str) -> None:
+    self.__attack_button["state"] = state
+
+  @property
+  def parry_button_state(self) -> str:
+    return self.__parry_button["state"]
+  
+  @parry_button_state.setter
+  def parry_button_state(self, state: str) -> None:
+    self.__parry_button["state"] = state
 
   ## button text
   @property
@@ -226,10 +265,29 @@ class WeaponInterface(BaseFrame):
     self.set_parry_button_attribute(attribute, value)
 
   def set_buttons_state(self, state: str) -> None:
-    self.set_buttons_attribute("state", state)
+    if self.has_attack: self.attack_button_state = state
+    if self.has_parry: self.parry_button_state = state
 
   def reset_buttons_toggle(self) -> None:
     self.set_buttons_attribute("is_toggled", ToggleState.OFF)
+
+  def update_attack_button_state(self) -> None:
+    if not self.has_attack or self.is_weapon_used:
+      state = tk.DISABLED
+    else:
+      state = tk.NORMAL
+    self.set_attack_button_attribute("state", state)
+
+  def update_parry_button_state(self) -> None:
+    if not self.has_parry or self.is_weapon_used or self.is_parry_used:
+      state = tk.DISABLED
+    else:
+      state = tk.NORMAL
+    self.set_parry_button_attribute("state", state)
+
+  def update_button_states(self) -> None:
+    self.update_attack_button_state()
+    self.update_parry_button_state()
   
   # creating and loading self
 
@@ -239,6 +297,8 @@ class WeaponInterface(BaseFrame):
     self.attack_damage = attack_damage
     self.parry_damage_threshold = parry_damage_threshold
     self.parry_reflection_proportion = parry_reflection_proportion
+
+    self.update_button_states()
 
   def create(self, weapon_name: Optional[str] = None, attack_damage: Optional[float] = None, parry_damage_threshold: Optional[float] = None, parry_reflection_proportion: Optional[float] = None, **kwargs) -> None:
     self.create_weapon_name_label()
@@ -254,8 +314,9 @@ class WeaponInterface(BaseFrame):
 
     self.load(weapon_name, attack_damage, parry_damage_threshold, parry_reflection_proportion, **kwargs)
 
-def create_weapon_interface(root: tk.Misc, parent: tk.Frame, position: Position, weapon_name: Optional[str] = None, attack_damage: Optional[float] = None, parry_damage_threshold: Optional[float] = None, parry_reflection_proportion: Optional[float] = None, placement_options: dict[str, Any] = {}, **kwargs) -> WeaponInterface:
-  weapon_interface = WeaponInterface(root, parent, weapon_name, attack_damage, parry_damage_threshold, parry_reflection_proportion, **kwargs)
+# builder function
+def create_weapon_interface(root: tk.Misc, parent: tk.Frame, position: Position, weapon_name: Optional[str] = None, attack_damage: Optional[float] = None, parry_damage_threshold: Optional[float] = None, parry_reflection_proportion: Optional[float] = None, is_logging_enabled: bool = False, label: Optional[str] = None, placement_options: dict[str, Any] = {}, **kwargs) -> WeaponInterface:
+  weapon_interface = WeaponInterface(root, parent, weapon_name, attack_damage, parry_damage_threshold, parry_reflection_proportion, is_logging_enabled=is_logging_enabled, label=label, **kwargs)
   (column,row) = position
   placement_options = add_if_vacant(placement_options, DefaultTkInitOptions().GRID)
   weapon_interface.grid(column=column, row=row, **placement_options)

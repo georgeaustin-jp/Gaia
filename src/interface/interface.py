@@ -21,6 +21,9 @@ class Interface(tk.Tk):
     super().__init__()
     
     self.START_SCREEN: ScreenName = start_screen
+    self.active_screen: ScreenName = self.START_SCREEN
+
+    self.game_data: GameData = game_data
 
     default_font = font.nametofont("TkDefaultFont")
     default_font.configure(family=Constants.DEFAULT_FONT, size=Constants.DEFAULT_FONT_SIZE)
@@ -56,6 +59,8 @@ class Interface(tk.Tk):
       self.screens[screen_name] = Screen(self, container, game_data, **kwargs)
 
   def show_screen(self, screen_name: ScreenName, **kwargs) -> None:
+    self.game_data.previous_screen_name = self.game_data.active_screen_name
+    self.game_data.active_screen_name = screen_name
     screen = self.screens[screen_name]
     screen.load(**kwargs)
     screen.tkraise()

@@ -43,7 +43,7 @@ class Character(FightingEntity):
   
   # decision-making methods for enemies
 
-  def calculate_aggressiveness_info(self, remaining_ignition_duration: Optional[int], is_target_parrying: bool) -> tuple[float, int]:
+  def calculate_aggressiveness_info(self, remaining_ignition_duration: Optional[int], is_target_parrying: bool) -> tuple[float, float]:
     return super().calculate_aggressiveness_info(remaining_ignition_duration, is_target_parrying)
 
 def instantiate_character(character_data: list[Any], loaded: bool = True) -> Character:

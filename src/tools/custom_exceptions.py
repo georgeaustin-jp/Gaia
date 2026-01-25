@@ -44,11 +44,6 @@ class TooManyButtonsSelectedError(AbstractError):
     self.message = message
     super().__init__(self.message, *args)
 
-class NoCharacterSelectedError(NoButtonsSelectedError):
-  def __init__(self, message: str = "No buttons selected", *args: object) -> None:
-    self.message = message
-    super().__init__(self.message, *args)
-
 class NoEnemiesSelectedError(NoButtonsSelectedError):
   def __init__(self, message: str = "No enemies selected", *args: object) -> None:
     self.message = message
@@ -75,6 +70,14 @@ class TooManyWeaponButtonsSelectedError(TooManyButtonsSelectedError):
     if weapon_number == None: self.message = f"Too many weapon buttons selected"
     else: self.message = f"Too many weapon buttons selected (second weapon selection detected at weapon number `{weapon_number}`)"
     super().__init__(self.message, *args)
+
+class TooManyAttackButtonsSelectedError(TooManyButtonsSelectedError):
+  def __init__(self, message: str = "Too many attack buttons selected", *args: object) -> None:
+    super().__init__(message, *args)
+
+class TooManyParryButtonsSelectedError(TooManyButtonsSelectedError):
+  def __init__(self, message: str = "Too many parry buttons selected", *args: object) -> None:
+    super().__init__(message, *args)
 
 class UnknownActionError(AbstractError):
   def __init__(self, message: str = "Unknown action", *args: object) -> None:
@@ -131,3 +134,7 @@ class PathError(AbstractError):
 class AbstractMethodCallError(AbstractError):
   def __init__(self, class_name: str, method_name: str, *args: object) -> None:
     super().__init__(f"Tried to call abstract method `{method_name}` in class `{class_name}`.", *args)
+
+class NoCharacterSelectedError(AbstractError):
+  def __init__(self, message: str = "No buttons selected", *args: object) -> None:
+    super().__init__(message, *args)

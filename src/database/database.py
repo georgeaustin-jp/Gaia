@@ -100,6 +100,9 @@ class Database:
     main_data: DatabaseMainData = self.load_main_data()
     if main_data.version != self.config_data.version: return True
     return False
+  
+  def is_identifier_in_table(self, identifier: int, table_name: str) -> bool:
+    return self.find_table(table_name).has_key(identifier)
 
   # SQL queries
 

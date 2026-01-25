@@ -7,9 +7,6 @@ class AbstractItem(Stored):
   def __init__(self, loaded: bool = True) -> None:
     super().__init__(loaded)
 
-  @staticmethod
-  def get_table_name() -> TableName: return TableName.NONE
-
   def get_raw_data(self) -> list[Any]: return []
 
   @staticmethod

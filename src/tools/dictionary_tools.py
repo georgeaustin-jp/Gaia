@@ -1,5 +1,7 @@
 from tools.typing_tools import *
 
+from tools.logging_tools import *
+
 def filter_dictionary[K, V](dictionary: dict[K, V], condition: Callable[[K, V], bool]) -> dict[K, V]:
   return {key: val for key, val in dictionary.items() if condition(key,val)}
 

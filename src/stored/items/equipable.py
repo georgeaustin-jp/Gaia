@@ -8,6 +8,8 @@ class Equipable(AbstractItem):
     super().__init__(loaded)
     self.item_id = item_id
 
+  # stored methods
+
   @staticmethod
   def get_table_name() -> TableName: return TableName.EQUIPABLE
 
@@ -19,8 +21,8 @@ class Equipable(AbstractItem):
     return instantiate_equipable(equipable_data, loaded)
   
   @staticmethod
-  def identical_condition(_stored_row: list[Any]) -> Condition:
-    return lambda _, row: False
+  def identical_condition(equipable_row: list[Any]) -> Condition:
+    return lambda _, row: row[0] == equipable_row[0]
 
 def instantiate_equipable(equipable_data: list[Any], loaded: bool = True) -> Equipable:
   item_id: int = equipable_data[0]

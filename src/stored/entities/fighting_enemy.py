@@ -17,21 +17,20 @@ def validate_action_name[FightingEnemyType: FightingEnemy, ReturnType](func: Cal
 
 class FightingEnemy(FightingEntity):
   def __init__(self, enemy_id: int, name: str, health: float, max_health: float, attack_damage: float, intelligence: float, loaded: bool = True) -> None:
-    super().__init__(name, health, max_health, loaded)
+    super().__init__(name, health, max_health, loaded, is_logging_enabled=True)
     self.enemy_id: int = enemy_id
     self.attack_damage: float = attack_damage
+    # decision-making attributes
+    ## scalar values
     self.intelligence: float = intelligence
     self.decision_error_bound: float = get_decision_error_bound(self.intelligence)
-
+    ## tables
     self.__action_offensiveness_table: dict[ActionName, float] = {
       ActionName.ATTACK: 0.0,
       ActionName.HEAL: 0.0,
     }.copy()
     self.ability_id_table: dict[ActionName, Optional[Union[int, list[int]]]] = {}.copy()
-
     self.VALID_ACTION_NAMES: list[ActionName] = [ActionName.ATTACK, ActionName.HEAL].copy()
-
-    self.aggressiveness: float
 
   # built-in methods
 
@@ -80,7 +79,7 @@ class FightingEnemy(FightingEntity):
   def clip_aggressiveness(self, aggressiveness: float) -> float:
     return clip(aggressiveness, -self.decision_error_bound, self.decision_error_bound)
 
-  def calculate_aggressiveness(self, remaining_ignition_duration: Optional[int], is_target_parrying: bool, negative_character_total: float, character_n: int) -> float:
+  def calculate_aggressiveness(self, remaining_ignition_duration: Optional[int], is_target_parrying: bool, negative_character_total: float, character_n: float) -> float:
     (total, n) = self.calculate_aggressiveness_info(remaining_ignition_duration, is_target_parrying)
     total += negative_character_total
     n += character_n

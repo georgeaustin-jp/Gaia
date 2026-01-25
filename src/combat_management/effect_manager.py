@@ -3,6 +3,8 @@ from tools.ability_names import AbilityTypeName
 from tools.constants import ItemType
 from tools.dictionary_tools import filter_dictionary
 
+from tools.logging_tools import *
+
 from game_data import GameData
 
 from stored.entities.character import Character
@@ -19,6 +21,8 @@ from stored.abilities.parry_ability import ParryAbility
 from stored.abilities.statistic_ability import StatisticAbility
 
 from ability_action import *
+
+from data_structures.queue import Queue
 
 from combat_management.active_effect import ActiveEffect
 
@@ -124,52 +128,78 @@ class EffectManager:
     return new_effect
 
   ## character
-  def apply_ability_action_to_active_character(self, ability_action: AbilityAction) -> str:
+  #def apply_effect_to_active_character(self, effect: Effect)
+
+  def apply_ability_action_to_active_character(self, ability_action: AbilityAction) -> Optional[str]:
     """
     :returns: Message to be added to the info box by `CombatManager`.
     :rtype: str
     """
     character: Character = self.get_active_character()
-    message: str = character.apply_ability(ability_action)
+    message: Optional[str] = character.apply_ability(ability_action)
     new_effect: ActiveEffect = self.ability_action_to_active_effect(ability_action)
     self.character_effects.append(new_effect)
     return message
 
-  def apply_ability_action_list_to_active_character(self, ability_actions: list[AbilityAction]) -> list[str]:
-    messages: list[str] = []
+  def apply_ability_action_list_to_active_character(self, ability_actions: list[AbilityAction]) -> list[Optional[str]]:
+    messages: list[Optional[str]] = []
     for ability_action in ability_actions:
-      next_message: str = self.apply_ability_action_to_active_character(ability_action)
+      next_message: Optional[str] = self.apply_ability_action_to_active_character(ability_action)
       messages.append(next_message)
     return messages
 
-  def apply_equipped_equipables_effects(self) -> list[str]:
-    messages: list[str] = []
+  def apply_ability_action_queue_to_active_character(self, ability_actions: Queue[AbilityAction]) -> list[Optional[str]]:
+    messages: list[Optional[str]] = []
+    while not ability_actions.empty():
+      ability_action: AbilityAction = ability_actions.get()
+      next_message: Optional[str] = self.apply_ability_action_to_active_character(ability_action)
+      messages.append(next_message)
+    return messages
+
+  def apply_equipped_equipables_effects(self) -> list[Optional[str]]:
+    messages: list[Optional[str]] = []
     character_inventory_items: dict[int, InventoryItem] = self.game_data.get_character_inventory_items()
     for (inventory_item_id, inventory_item) in character_inventory_items.items():
       (item_type, item_ability_actions) = self.get_inventory_item_abilities(inventory_item_id)
       if item_type != ItemType.EQUIPABLE: continue # must be an equipable
       if not inventory_item.equipped: continue # must be equipped
-      item_messages: list[str] = self.apply_ability_action_list_to_active_character(item_ability_actions)
+      item_messages: list[Optional[str]] = self.apply_ability_action_list_to_active_character(item_ability_actions)
       messages += item_messages
     return messages
 
   ## fighting enemies
-  def apply_effect_to_fighting_enemy_with_identifier(self, fighting_enemy_id: int, ability_action: AbilityAction) -> str:
+  def apply_ability_action_to_fighting_enemy_with_identifier(self, fighting_enemy_id: int, ability_action: AbilityAction) -> Optional[str]:
     fighting_enemy: FightingEnemy = self.get_fighting_enemy(fighting_enemy_id)
-    message: str = fighting_enemy.apply_ability(ability_action)
+    message: Optional[str] = fighting_enemy.apply_ability(ability_action)
     new_effect: ActiveEffect = self.ability_action_to_active_effect(ability_action)
     self.fighting_enemy_effects[fighting_enemy_id].append(new_effect)
     return message
+  
+  def apply_ability_action_list_to_fighting_enemy_with_identifier(self, fighting_enemy_id: int, ability_actions: list[AbilityAction]) -> list[Optional[str]]:
+    messages: list[Optional[str]] = []
+    for ability_action in ability_actions:
+      next_message: Optional[str] = self.apply_ability_action_to_fighting_enemy_with_identifier(fighting_enemy_id, ability_action)
+      messages.append(next_message)
+    return messages
+  
+  def apply_ability_action_queue_to_fighting_enemy_with_identifier(self, fighting_enemy_id: int, ability_actions: Queue[AbilityAction]) -> list[Optional[str]]:
+    messages: list[Optional[str]] = []
+    while not ability_actions.empty():
+      ability_action: AbilityAction = ability_actions.get()
+      next_message: Optional[str] = self.apply_ability_action_to_fighting_enemy_with_identifier(fighting_enemy_id, ability_action)
+      messages.append(next_message)
+    return messages
 
   # applying and decrementing effects in the course of combat
 
-  def inflict_active_effects_to_all_fighting_entities(self) -> list[str]:
-    messages: list[str] = []
+  def inflict_active_effects_to_all_fighting_entities(self) -> list[Optional[str]]:
+    """Also decrements all effects."""
+    messages: list[Optional[str]] = []
     character: Character = self.get_active_character()
-    character.inflict_active_effects()
+    messages.append(character.inflict_active_effects())
     self.decrement_character_effects_durations()
     for fighting_enemy in list(self.game_data.fighting_enemies.values()):
-      message: str = fighting_enemy.inflict_active_effects()
+      message: Optional[str] = fighting_enemy.inflict_active_effects()
       messages.append(message)
     self.decrement_all_fighting_enemy_effects_durations()
     return messages
@@ -193,18 +223,18 @@ class EffectManager:
 
   # removing effects
   ## character
-  def remove_effect_from_active_character(self, ability_action: AbilityAction) -> str:
+  def remove_effect_from_active_character(self, ability_action: AbilityAction) -> Optional[str]:
     """Doesn't remove the effect from `self.character_effects`."""
     character: Character = self.get_active_character()
     return character.remove_ability(ability_action)
 
-  def remove_finished_effects_from_active_character(self) -> list[str]:
-    messages: list[str] = []
+  def remove_finished_effects_from_active_character(self) -> list[Optional[str]]:
+    messages: list[Optional[str]] = []
     for (i, active_effect) in enumerate(self.character_effects):
       if active_effect.is_no_turns_remaining():
         self.character_effects.pop(i)
         ability_action: AbilityAction = active_effect.effect_ability
-        message: str = self.remove_effect_from_active_character(ability_action)
+        message: Optional[str] = self.remove_effect_from_active_character(ability_action)
         messages.append(message)
     return messages
 
@@ -215,25 +245,27 @@ class EffectManager:
       self.remove_effect_from_active_character(ability_action)
 
   ## fighting enemies
-  def remove_effect_from_fighting_enemy_with_identifier(self, fighting_enemy_id: int, ability_action: AbilityAction) -> str:
+  def remove_effect_from_fighting_enemy_with_identifier(self, fighting_enemy_id: int, ability_action: AbilityAction) -> Optional[str]:
     """Doesn't remove the effect from `self.fighting_enemy_effects`."""
     fighting_enemy: FightingEnemy = self.get_fighting_enemy(fighting_enemy_id)
     return fighting_enemy.remove_ability(ability_action)
 
-  def remove_finished_effects_from_fighting_enemy_with_identifier(self, fighting_enemy_id: int) -> list[str]:
-    messages: list[str] = []
+  def remove_finished_effects_from_fighting_enemy_with_identifier(self, fighting_enemy_id: int) -> list[Optional[str]]:
+    messages: list[Optional[str]] = []
     specific_fighting_enemy_effects: list[ActiveEffect] = self.fighting_enemy_effects[fighting_enemy_id]
     for (i, active_effect) in enumerate(specific_fighting_enemy_effects):
       if active_effect.is_no_turns_remaining():
         self.fighting_enemy_effects[fighting_enemy_id].pop(i)
         ability_action: AbilityAction = active_effect.effect_ability
-        message: str = self.remove_effect_from_fighting_enemy_with_identifier(fighting_enemy_id, ability_action)
+        message: Optional[str] = self.remove_effect_from_fighting_enemy_with_identifier(fighting_enemy_id, ability_action)
         messages.append(message)
     return messages
 
-  def remove_finished_effects_from_all_fighting_enemies(self) -> None:
+  def remove_finished_effects_from_all_fighting_enemies(self) -> list[Optional[str]]:
+    messages: list[Optional[str]] = []
     for fighting_enemy_id in list(self.fighting_enemy_effects.keys()):
-      self.remove_finished_effects_from_fighting_enemy_with_identifier(fighting_enemy_id)
+      messages += self.remove_finished_effects_from_fighting_enemy_with_identifier(fighting_enemy_id)
+    return messages
 
   # getting effects
 

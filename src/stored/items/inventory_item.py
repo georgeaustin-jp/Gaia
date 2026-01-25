@@ -1,11 +1,13 @@
 from tools.typing_tools import *
 
+from tools.logging_tools import *
+
 from database.condition import Condition
 from stored.items.abstract_storage_item import *
 
 class InventoryItem(AbstractStorageItem):
   """
-  Link between \'Character\' and \'Item\' to allow items to be stored in the character's inventory.
+  Link between `Character` and `Item` to allow items to be stored in the character's inventory.
   
   :param character_id: The identifier for the character whose inventory the item is linked to.
   :type character_id: int

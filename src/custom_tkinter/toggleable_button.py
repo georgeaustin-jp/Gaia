@@ -18,27 +18,35 @@ class ToggleableButton(tk.Button):
     if "command" in kwargs.keys(): self.command = kwargs["command"]
     else: self.command = lambda: None
 
+  # built-in methods
+
+  def __getitem__(self, key: str) -> Any:
+    if key == "is_toggled": return self.is_toggled
+    return super().__getitem__(key)
+  
+  def __setitem__(self, key: str, value: Any) -> None:
+    if key == "is_toggled": self.is_toggled = value
+    elif key == "state": self.is_enabled = button_state_to_bool(value)
+    else: return super().__setitem__(key, value)
+
   # getters and setters
+
   @property
   def command(self) -> ButtonCommand:
-    """Getter method for `__command`"""
     return self.__command
   
   @command.setter
   def command(self, command: ButtonCommand) -> None:
-    """Setter method for `__command`"""
     new_command: ButtonCommand = self.toggle(command)
     self.__command = new_command
     self.config(command=lambda: self.__command())
 
   @property
   def is_toggled(self) -> ToggleState:
-    """Getter method for `__is_toggled`"""
     return self.__is_toggled
   
   @is_toggled.setter
   def is_toggled(self, value: ToggleState) -> None:
-    """Setter method for `__is_toggled`"""
     self.__is_toggled = value
     self.display_state()
 
@@ -55,16 +63,6 @@ class ToggleableButton(tk.Button):
     else: self.config(state=tk.DISABLED)
     self.display_state()
 
-  # dict-style methods
-  def __getitem__(self, key: str) -> Any:
-    if key == "is_toggled": return self.is_toggled
-    return super().__getitem__(key)
-  
-  def __setitem__(self, key: str, value: Any) -> None:
-    if key == "is_toggled": self.is_toggled = value
-    elif key == "state": self.is_enabled = button_state_to_bool(value)
-    else: return super().__setitem__(key, value)
-
   # methods for toggling the button 
   def display_toggled(self) -> None:
     self.config(bg=self.on_colour, relief=Constants.ON_RELIEF)
@@ -72,7 +70,7 @@ class ToggleableButton(tk.Button):
   def display_untoggled(self) -> None:
     self.config(bg=self.off_colour, relief=Constants.OFF_RELIEF)
 
-  def display_value(self, value: ToggleState) -> None: # TODO: maybe add an exception raise to the end of this if `value` is neither `ToggleState.ON` or `ToggleState.OFF`?
+  def display_value(self, value: ToggleState) -> None:
     if not self.is_enabled: raise ValueError(f"Trying to call `display_value` when button is not enabled ({self.is_enabled=}).")
     if value == ToggleState.ON: self.display_toggled()
     elif value == ToggleState.OFF: self.display_untoggled()

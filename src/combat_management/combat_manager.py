@@ -3,6 +3,8 @@ from tools.typing_tools import *
 from tools.custom_exceptions import *
 from tools.positional_tools import length_to_point
 
+from tools.logging_tools import *
+
 import game_data as gd
 
 from interface.combat_screen import CombatScreen
@@ -90,19 +92,20 @@ class CombatManager:
 
   # methods for controlling user buttons
 
-  def enable_user_buttons(self, include_confirm: bool = True) -> None:
-    self.combat_screen.enable_user_buttons(include_confirm)
+  def enable_user_buttons(self, include_attack: bool = True, include_parry: bool = True, include_confirm: bool = True) -> None:
+    self.combat_screen.enable_user_buttons(include_attack, include_parry, include_confirm)
 
   def disable_user_buttons(self, include_confirm: bool = True) -> None:
     self.combat_screen.disable_user_buttons(include_confirm)
 
-  def reset_toggleable_user_buttons_state(self) -> None:
-    self.combat_screen.reset_toggleable_user_buttons_state()
+  def reset_toggleable_user_buttons_toggled(self) -> None:
+    self.combat_screen.reset_toggleable_user_buttons_toggled()
 
   # methods for adding information to `self.combat_screen`
 
-  def add_info(self, message: str = "") -> None:
+  def add_info(self, message: Optional[str] = "") -> None:
     """Adds a newline at the end of the message."""
+    if message == None: return
     self.combat_screen.add_info(message)
 
   def add_newline_info(self) -> None:
@@ -136,9 +139,9 @@ class CombatManager:
     else: error_description = f"{error_message} (`{error_type=}`)"
     self.add_error_info("ACTION INPUT", error_description)
 
-  def add_info_list(self, messages: list[str], apply_formatting: bool = True) -> None:
+  def add_info_list(self, messages: list[Optional[str]], apply_formatting: bool = True) -> None:
     for message in messages:
-      if apply_formatting:
+      if apply_formatting and message != None:
         message = f" > {message}"
       self.add_info(message)
 
@@ -149,11 +152,11 @@ class CombatManager:
   def begin_combat(self) -> None:
     self.clear_info()
     self.reset_round_number()
-    self.combat_screen.parry_used = False
+    self.combat_screen.is_parry_used = False
 
     self.game_data.get_active_character().reset_state()
 
-    equipables_messages: list[str] = self.effect_manager.apply_equipped_equipables_effects()
+    equipables_messages: list[Optional[str]] = self.effect_manager.apply_equipped_equipables_effects()
     self.add_info_list(equipables_messages)
 
     self.effect_manager.init_fighting_enemy_effects()
@@ -193,16 +196,15 @@ class CombatManager:
   ## character turn
   def start_character_turn(self) -> None:
     self.is_character_turn = True
-    self.combat_screen.parry_used = False
+    self.combat_screen.is_parry_used = False
     self.reset_remaining_actions()
     self.add_entity_turn_begin_info(character_turn=self.is_character_turn)
 
-    self.effect_manager.decrement_character_effects_durations()
-    self.effect_manager.remove_finished_effects_from_active_character()
+    #self.effect_manager.decrement_character_effects_durations()
+    self.add_info_list(self.effect_manager.remove_finished_effects_from_active_character())
     
-    self.enable_user_buttons(include_confirm=True)
+    self.enable_user_buttons(include_confirm=True, include_attack=True, include_parry=True)
     self.combat_screen.reset_weapon_states()
-    self.combat_screen.update_weapon_states()
     character_actions: list[CombatAction] = self.get_character_actions()
 
     for action in character_actions:
@@ -217,8 +219,7 @@ class CombatManager:
     character_action = self.input_character_action()
 
     if type(character_action) == Parry:
-      self.combat_screen.parry_used = True
-    self.combat_screen.update_weapon_states()
+      self.combat_screen.is_parry_used = True
 
     self.decrement_remaining_actions()
     return [character_action] + self.get_character_actions()
@@ -243,7 +244,7 @@ class CombatManager:
           (error_type, error_message) = error_message_info
           self.add_action_input_error_info(error_type, error_message)
 
-    self.reset_toggleable_user_buttons_state()
+    self.reset_toggleable_user_buttons_toggled()
     return character_action
 
   def end_character_turn(self) -> None:
@@ -254,8 +255,8 @@ class CombatManager:
     self.disable_user_buttons(include_confirm=True)
     self.add_entity_turn_begin_info(character_turn=self.is_character_turn)
 
-    self.effect_manager.decrement_all_fighting_enemy_effects_durations()
-    self.effect_manager.remove_finished_effects_from_all_fighting_enemies()
+    #self.effect_manager.decrement_all_fighting_enemy_effects_durations()
+    self.add_info_list(self.effect_manager.remove_finished_effects_from_all_fighting_enemies())
 
     enemies_actions: list[CombatAction] = self.get_enemies_actions()
 
@@ -283,7 +284,7 @@ class CombatManager:
       enemies_actions.append(enemy_action)
     return enemies_actions
   
-  def get_fighting_enemy_action_at(self, position: Position, remaining_ignition_duration: Optional[int], is_target_parrying: bool, negative_character_total: float, character_n: int) -> Optional[CombatAction]:
+  def get_fighting_enemy_action_at(self, position: Position, remaining_ignition_duration: Optional[int], is_target_parrying: bool, negative_character_total: float, character_n: float) -> Optional[CombatAction]:
     """
     :return: `None` if there is no enemy at the position, `CombatAction` otherwise.
     :rtype: Optional[CombatAction]
@@ -349,7 +350,7 @@ class CombatManager:
 
   def end_enemies_turn(self) -> None:
     self.execute_all_actions()
-    effect_inflict_messages: list[str] = self.effect_manager.inflict_active_effects_to_all_fighting_entities()
+    effect_inflict_messages: list[Optional[str]] = self.effect_manager.inflict_active_effects_to_all_fighting_entities()
     self.add_info_list(effect_inflict_messages)
     self.remove_dead_fighting_enemies()
     self.combat_screen.display_enemy_info_on_grid()
@@ -369,8 +370,8 @@ class CombatManager:
     if character.health <= 0: return True
     return False
   
-  def is_all_enemies_dead(self) -> bool:
-    return self.game_data.is_all_fighting_enemies_dead()
+  def is_all_enemies_dead(self) -> bool: return self.game_data.is_all_fighting_enemies_dead()
+  def is_fighting_enemy_dead(self, identifier: int) -> bool: return self.game_data.is_fighting_enemy_dead(identifier)
   
   def remove_fighting_enemy_at(self, position: Position) -> None:
     fighting_enemy_id: Optional[int] = self.game_data.fighting_enemy_graph[position]
@@ -392,7 +393,7 @@ class CombatManager:
   def get_next_action(self) -> CombatAction:
     return self.actions.get()
 
-  def execute_next_action(self) -> list[str]:
+  def execute_next_action(self) -> list[Optional[str]]:
     """
     Pops the next action from `self.actions` and executes it.
 
@@ -405,22 +406,45 @@ class CombatManager:
     target_type: Optional[EntityType] = next_action.target_type
     target: Optional[FightingEntity] = self.fetch_referenced_entity(target_type)
 
-    action_information: list[str] = [next_action(sender, target)] # action function is executed here
+    if type(sender_type) == EnemyType:
+      enemy_id: int = sender_type.identifier
+      if self.is_fighting_enemy_dead(enemy_id): return []
+    elif type(target_type) == EnemyType:
+      enemy_id: int = target_type.identifier
+      if self.is_fighting_enemy_dead(enemy_id):
+        target_position: Position = target_type.position
+        target_type = EmptyType(target_position)
+
+    (action_information, applied_effects) = next_action(sender, target) # action function is executed here
+    logging.debug(f"{action_information=}, {applied_effects=}")
+
+    if target_type != None and applied_effects != None: # applying effects to enemies and character, if there are any
+      logging.info(f"APPLYING EFFECTS: {target_type=}, {target=}")
+      logging.debug(f"{type(target_type) == CharacterType=}, {type(target_type) == EnemyType=}, {target != None=}")
+      if type(target_type) == CharacterType:
+        logging.info(f"TO CHARACTER")
+        action_information += self.effect_manager.apply_ability_action_queue_to_active_character(applied_effects)
+      elif type(target_type) == EnemyType and target != None:
+        logging.info(f"TO ENEMY")
+        enemy_target_type = cast(EnemyType, target_type)
+        enemy_id: int = enemy_target_type.identifier
+        action_information += self.effect_manager.apply_ability_action_queue_to_fighting_enemy_with_identifier(enemy_id, applied_effects)
+        logging.debug(f"{action_information=}")
 
     action_type: ActionType = next_action.action_type
-    if type(action_type) == Parry:
+    if type(action_type) == Parry: # applying parry ability
       damage_threshold: float = action_type.quantity
       reflection_proportion: float = action_type.reflect_proportion
       parry_action = ParryAction(damage_threshold=damage_threshold, reflection_proportion=reflection_proportion)
       if type(sender) == Character:
         action_information.append(self.effect_manager.apply_ability_action_to_active_character(parry_action))
-      # no branch for enemies as they cannot parry
+      # no parry branch for enemies as they cannot parry
     return action_information
 
   def execute_all_actions(self) -> None:
     """Gets and inflicts all actions in `self.actions`, both to the player and active fighting enemies. Doesn't decrement active effects."""
     while not self.actions.empty():
-      action_information: list[str] = self.execute_next_action()
+      action_information: list[Optional[str]] = self.execute_next_action()
       self.add_info_list(action_information)
 
   def fetch_referenced_entity(self, entity_type: Optional[EntityType]) -> Optional[FightingEntity]:
