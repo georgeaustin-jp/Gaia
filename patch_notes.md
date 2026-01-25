@@ -12,5 +12,6 @@
  * Increased health of most enemies
  * Fixed bug where, upon updating, modified entities would be duplicated in storage
  * Fixed bug where, upon updating, newly-added entities would not be added to the database
- * Fixed bug where effects would not be applied by attacksS
+ * Fixed bug where effects would not be applied by attacks
+ * Added extra required information for running the game
  
