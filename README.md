@@ -7,10 +7,12 @@
 #### Contents:
  * [Description](#description)
  * [Installation guide](#installation-guide)
+   * [Dependencies](#dependencies)
    * [Running](#running)
  * [How to play](#how-to-play)
- * [Reporting bugs](#reporting-bugs)
- * [Dependencies](#dependencies)
+ * [Information for testers](#information-for-testers)
+   * [Response form](#response-form)
+   * [Reporting bugs](#reporting-bugs)
 
 ## Description
 
@@ -27,6 +29,11 @@ PS C:\...\Gaia-0.1.2-alpha\Gaia-0.1.2-alpha>
 ```
 
 where the `...` is the path to the place where you have saved the project.
+
+### Dependencies
+
+python >=3.11, !=3.14.1
+poetry >=2.3.1
 
 ### Running
 
@@ -49,7 +56,17 @@ Once you have selected your actions, the enemies will select theirs. The actions
 
 You win once all your enemies have been killed. If you are killed, then you die and return home.
 
-## Reporting bugs
+## Information for testers
+
+If you are reading this with the intent of testing, I would first like to thank you for your time. Make sure you fill out the Google Form
+
+### Response form
+
+Once you feel like you have played the game enough, please fill out [this Google Form](https://docs.google.com/forms/d/e/1FAIpQLScbxpg9gDIR3d_emqDVAaNEb-gyg2ng785NHnq2XErT7M_3xg/viewform?usp=header). It has a section for general feedback, as well as for any feedback on bugs and errors. I will be more likely to respond about errors if you report it on this repository (see [Reporting bugs](#reporting-bugs)), but having bug reports on the Form will be greatly appreciated regardless.
+
+If you have any issues with using the Google Form, as I have heard others in the past have, feel free to contact me.
+
+### Reporting bugs
 
 If you encounter any errors in the program, please switch to the **Issues** tab of this repository. Click the `Create new issue` button, after which you will be greeted with the following screen:
 
@@ -62,7 +79,4 @@ When adding information about the error, please try and add:
 
 Include screenshots if possible. Also, try to add the version of the game which you were running. This is not necessary if you have a full screenshot of the game window, as the version of the game will be displayed in the window title.
 
-## Dependencies
 
-python >=3.11, !=3.14.1
-poetry >=2.3.1
