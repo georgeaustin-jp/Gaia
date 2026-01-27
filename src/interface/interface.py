@@ -28,7 +28,7 @@ class Interface(tk.Tk):
     default_font = font.nametofont("TkDefaultFont")
     default_font.configure(family=Constants.DEFAULT_FONT, size=Constants.DEFAULT_FONT_SIZE)
 
-    game_title: str = f"Gaia {game_data.VERSION}"
+    game_title: str = f"Gaia v{game_data.VERSION}"
     self.title(game_title)
 
     self.geometry(f"{Constants.MIN_SCREEN_WIDTH}x{Constants.MIN_SCREEN_HEIGHT}")

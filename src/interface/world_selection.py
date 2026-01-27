@@ -2,7 +2,6 @@ import tkinter as tk
 
 from tools.typing_tools import *
 from tools.constants import ScreenName
-from tools.logging_tools import *
 
 from interface.selection import Selection
 from game_data import GameData

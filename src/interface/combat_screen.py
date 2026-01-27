@@ -1,7 +1,5 @@
 import tkinter as tk
 
-from tools.logging_tools import *
-
 from tools.typing_tools import *
 from tools.dictionary_tools import filter_dictionary
 from tools.custom_exceptions import *

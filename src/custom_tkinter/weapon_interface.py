@@ -5,7 +5,7 @@ from tools.tkinter_tools import Position
 from tools.typing_tools import *
 from tools.tkinter_tools import *
 from tools.dictionary_tools import add_if_vacant
-from tools.logging_tools import *
+
 
 from custom_tkinter.toggleable_button import ToggleableButton
 from interface.base_frame import BaseFrame
