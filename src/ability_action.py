@@ -1,7 +1,8 @@
 from tools.typing_tools import *
-from tools.constants import Constants
+from tools.constants import Constants, DecisionMakingConstants
 from tools.ability_names import AbilityTypeName
 from tools.custom_exceptions import AbstractMethodCallError
+from tools.decision_tools import *
 
 @dataclass
 class AbilityAction():
@@ -9,30 +10,45 @@ class AbilityAction():
   
   Subclasses of `ParryAction`, `IgniteAction`, `DefendAction`, `WeakenAction`, `HealAction` and `PierceAction`."""
   initial_duration: Optional[int]
+  is_unique: bool
 
   def get_ability_type_name(self) -> AbilityTypeName: raise AbstractMethodCallError(AbilityAction.__name__, self.get_ability_type_name.__name__)
+
+  def calculate_offensiveness(self) -> float: raise AbstractMethodCallError(AbilityAction.__name__, self.calculate_offensiveness.__name__)
 
 @dataclass
 class IgniteAction(AbilityAction):
   """Ignites the target, dealing a set amount of damage for a set amount of turns."""
+  is_unique: bool = True
   initial_duration: int = Constants.IGNITE_DURATION
 
   def get_ability_type_name(self) -> AbilityTypeName: return AbilityTypeName.IGNITE
 
+  def calculate_offensiveness(self) -> float:
+    return DecisionMakingConstants.IGNITE_OFFENSIVENESS
+
 @dataclass
 class PierceAction(AbilityAction):
   """Pierce attacks will ignore parries."""
+  is_unique: bool = True
   initial_duration: int = 1
 
   def get_ability_type_name(self) -> AbilityTypeName: return AbilityTypeName.PIERCE
+
+  def calculate_offensiveness(self) -> float:
+    return DecisionMakingConstants.PIERCE_OFFENSIVENESS
 
 @dataclass
 class ParryAction(AbilityAction):
   damage_threshold: float = 0
   reflection_proportion: float = 0
   initial_duration: int = 1
+  is_unique: bool = True
 
   def get_ability_type_name(self) -> AbilityTypeName: return AbilityTypeName.PARRY
+
+  def calculate_offensiveness(self) -> float:
+    return calculate_parry_aggressiveness(self.damage_threshold, self.reflection_proportion)
 
   @staticmethod
   def get_reflected_damage(damage: float, damage_threshold: float, reflection_proportion: float) -> float:
@@ -58,6 +74,9 @@ class DefendAction(AbilityAction):
 
   def get_ability_type_name(self) -> AbilityTypeName: return AbilityTypeName.DEFEND
 
+  def calculate_offensiveness(self) -> float:
+    return calculate_damage_resistance_aggressiveness(-1*self.resistance, False)
+
 @dataclass
 class WeakenAction(AbilityAction):
   """Increases damage vulnerability (inverse of `DefendAction`)."""
@@ -65,9 +84,16 @@ class WeakenAction(AbilityAction):
 
   def get_ability_type_name(self) -> AbilityTypeName: return AbilityTypeName.WEAKEN
 
+  def calculate_offensiveness(self) -> float:
+    return calculate_damage_resistance_aggressiveness(self.vulnerability, False)
+
 @dataclass
 class HealAction(AbilityAction):
   initial_duration: Optional[int] = 1
+  is_unique: bool = False
   heal_amount: float = 0
 
   def get_ability_type_name(self) -> AbilityTypeName: return AbilityTypeName.HEAL
+
+  def calculate_offensiveness(self) -> float:
+    return calculate_healing_aggressiveness(self.heal_amount)

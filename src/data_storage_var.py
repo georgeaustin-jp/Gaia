@@ -63,7 +63,6 @@ class DataStorageVar[DataStorageType](dict, Loggable):
 
   def get(self) -> dict[int, DataStorageType]: return cast(dict[int, DataStorageType], self.data)
 
-  @log_loggable_args
   def set(self, data: dict[int, DataStorageType]) -> None:
     if len(data) > 0:
       data_value_type: Type = type(list(data.values())[0])

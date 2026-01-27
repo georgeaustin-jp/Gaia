@@ -179,7 +179,7 @@ class WeaponInterface(BaseFrame):
   def attack_damage(self, damage: Optional[float]) -> None:
     self.__attack_damage = damage
     if damage == None: self.attack_damage_text = "-"
-    else: self.attack_damage_text = f"DMG: {self.attack_damage}"
+    else: self.attack_damage_text = f"DMG: {self.attack_damage:.{Constants.INTERFACE_ROUNDING_ACCURACY}f}"
 
   ## parry information
   ### damage threshold
@@ -199,7 +199,7 @@ class WeaponInterface(BaseFrame):
   def parry_damage_threshold(self, damage_threshold: Optional[float]) -> None:
     self.__parry_damage_threshold = damage_threshold
     if damage_threshold == None: self.parry_damage_threshold_text = "-"
-    else: self.parry_damage_threshold_text = f"MAX: {self.parry_damage_threshold}"
+    else: self.parry_damage_threshold_text = f"MAX: {self.parry_damage_threshold:.{Constants.INTERFACE_ROUNDING_ACCURACY}f}"
 
   ### reflection proportion
   @property
@@ -218,7 +218,7 @@ class WeaponInterface(BaseFrame):
   def parry_reflection_proportion(self, reflection_proportion: Optional[float]) -> None:
     self.__parry_reflection_proportion = reflection_proportion
     if reflection_proportion == None: self.parry_reflection_proportion_text = "-"
-    else: self.parry_reflection_proportion_text = f"RFLCT: {unpack_optional(self.parry_reflection_proportion)*100}%" # `self.parry_reflection_proportion` cannot be `None` if the program reaches this point, so `unpack_optional` will never raise an error
+    else: self.parry_reflection_proportion_text = f"RFLCT: {unpack_optional(self.parry_reflection_proportion)*100:.{Constants.INTERFACE_ROUNDING_ACCURACY}f}%" # `self.parry_reflection_proportion` cannot be `None` if the program reaches this point, so `unpack_optional` will never raise an error
   
   # creating UI elements
 

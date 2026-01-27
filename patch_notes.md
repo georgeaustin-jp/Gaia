@@ -1,17 +1,14 @@
 # Patch notes
 
-*v0.1.4-alpha*
+*v1.0.0*
 
- * Fixed bug where enemies would output blank lines to the console when not inflicting effects
- * Slightly increased boss encounter probability
- * Reduced health potion heal amount (25HP -> 20HP)
- * Reduced parry damage threshold of all weapons
- * Fixed bug where storage variables would unwantedly share state
- * Added parry to Tin dagger
- * Balanced various parries
- * Increased health of most enemies
- * Fixed bug where, upon updating, modified entities would be duplicated in storage
- * Fixed bug where, upon updating, newly-added entities would not be added to the database
- * Fixed bug where effects would not be applied by attacks
- * Added extra required information for running the game
+ * Fixed bug where an error would be thrown to the terminal upon trying to enter combat with more than 4 items
+ * Fixed bug where data stored in memory would be deleted upon saving
+ * Replaced terminal quit error with a quit message
+ * Slightly changed some weapon stats
+ * Made non-health attributes less significant in enemy decision making
+ * Made average of character state attributes less significant in enemy decision making
+ * Altered effects of parries in enemy decision making
+ * Increased damage and health of most enemies
+ * Fixed bug where the incorrect type of effect would try to be removed from an entity when adding an effect to them which they already had been inflicted with
  

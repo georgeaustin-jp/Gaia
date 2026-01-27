@@ -14,8 +14,8 @@ class Stored(Loggable):
   * `instantiate(data: list[Any], loaded: bool = True) -> object` *(static method)* - calls an instantiation function defined outside of the function itself, providing a secondary constructor when being created using the raw data of the object. 
   * `identical_condition(_stored_row: list[Any]) -> Condition` *(static method)* - creates a `Condition` which defines what makes two objects identical.
   """
-  def __init__(self, loaded: bool = True, is_logging_enabled: bool = False, label: Optional[str] = None) -> None:
-    super().__init__(is_logging_enabled, label)
+  def __init__(self, loaded: bool = True, is_logging_enabled: bool = False, label: Optional[str] = None, include_call_stack: bool = False) -> None:
+    super().__init__(is_logging_enabled, label, include_call_stack)
     self.loaded = loaded
 
   @staticmethod

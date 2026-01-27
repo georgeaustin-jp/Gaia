@@ -16,8 +16,8 @@ def validate_action_name[FightingEnemyType: FightingEnemy, ReturnType](func: Cal
   return wrapper
 
 class FightingEnemy(FightingEntity):
-  def __init__(self, enemy_id: int, name: str, health: float, max_health: float, attack_damage: float, intelligence: float, loaded: bool = True) -> None:
-    super().__init__(name, health, max_health, loaded, is_logging_enabled=True)
+  def __init__(self, enemy_id: int, name: str, health: float, max_health: float, attack_damage: float, intelligence: float, loaded: bool = True, is_logging_enabled: bool = True, label: Optional[str] = None, include_call_stack: bool = False) -> None:
+    super().__init__(name, health, max_health, loaded, is_logging_enabled, label, include_call_stack)
     self.enemy_id: int = enemy_id
     self.attack_damage: float = attack_damage
     # decision-making attributes
@@ -35,7 +35,7 @@ class FightingEnemy(FightingEntity):
   # built-in methods
 
   def __repr__(self) -> str:
-    return f"FightingEnemy({self.enemy_id=}, {self.name=}, {self.health=}, {self.max_health=}, {self.attack_damage=}, {self.intelligence=}, {self.__action_offensiveness_table=}, {self.ability_id_table})"
+    return f"FightingEnemy({self.enemy_id=}, {self.name=}, {self.health=}, {self.max_health=}, {self.attack_damage=}, {self.intelligence=}, {self.__action_offensiveness_table=}, {self.ability_id_table=})"
 
   # `Stored` methods
 
@@ -52,8 +52,11 @@ class FightingEnemy(FightingEntity):
   @staticmethod
   def identical_condition(fighting_enemy_row: list[Any]) -> Condition:
     return lambda _, row: False
-  
-  # built-in methods
+
+  # getter and setter methods
+
+  def get_action_names(self) -> list[ActionName]:
+    return list(self.__action_offensiveness_table.keys())
   
   @validate_action_name
   def set_action_offensiveness(self, action_name: ActionName, offensiveness: float) -> None:
@@ -63,14 +66,32 @@ class FightingEnemy(FightingEntity):
 
   def set_action_identifiers(self, attack_ability_ids: Optional[list[int]], heal_ability_id: Optional[int]) -> None:
     self.ability_id_table[ActionName.ATTACK] = attack_ability_ids
+    if heal_ability_id == None:
+      del self.__action_offensiveness_table[ActionName.HEAL]
+      return None
     self.ability_id_table[ActionName.HEAL] = heal_ability_id
 
   ## calculating action values
-  def calculate_action_offensiveness_value(self, ability: AbstractAbility, action_name: ActionName, store_result: bool = True) -> float:
-    offensiveness_value: float = ability.calculate_offensiveness()
-    if store_result:
-      self.set_action_offensiveness(action_name, store_result)
-    return offensiveness_value
+  def calculate_action_offensiveness_value(self, action_name: ActionName, actions: list[AbilityAction], store_result: bool = True) -> Optional[float]:
+    """
+    :param action_name: The name of the action which the offensiveness is being calculated for.
+    :type action_name: ActionName
+    :param actions: The list of abilities associated with this action. Being empty denotes no abilities.
+    :type actions: list[AbilityAction]
+    :param store_result: Whether the result should be stored in `self`. Defaults to `True`.
+    :type store_result: bool
+    """
+    offensiveness_total: float = DecisionMakingConstants.DEFAULT_ATTACK_OFFENSIVENESS if action_name == ActionName.ATTACK else DecisionMakingConstants.DEFAULT_HEAL_OFFENSIVENESS
+    n: float = 1
+    if actions != []: 
+      for ability in actions:
+        offensiveness_total += ability.calculate_offensiveness()
+        n += 1
+    elif action_name == ActionName.HEAL:
+      return None
+    average_offensiveness = offensiveness_total/n
+    if store_result: self.set_action_offensiveness(action_name, average_offensiveness)
+    return average_offensiveness
       
   ## aggressiveness calculations
   def generate_decision_error(self) -> float:
@@ -79,10 +100,10 @@ class FightingEnemy(FightingEntity):
   def clip_aggressiveness(self, aggressiveness: float) -> float:
     return clip(aggressiveness, -self.decision_error_bound, self.decision_error_bound)
 
-  def calculate_aggressiveness(self, remaining_ignition_duration: Optional[int], is_target_parrying: bool, negative_character_total: float, character_n: float) -> float:
-    (total, n) = self.calculate_aggressiveness_info(remaining_ignition_duration, is_target_parrying)
-    total += negative_character_total
-    n += character_n
+  def calculate_aggressiveness(self, remaining_ignition_duration: Optional[int], damage_threshold: Optional[float], reflection_proportion: Optional[float], negative_character_value: float) -> float:
+    (total, n) = self.calculate_aggressiveness_info(remaining_ignition_duration, damage_threshold, reflection_proportion)
+    total += negative_character_value * DecisionMakingConstants.PLAYER_WEIGHT
+    n += DecisionMakingConstants.PLAYER_WEIGHT
     self.aggressiveness = total / n
     decision_error: float = self.generate_decision_error()
     self.aggressiveness = self.clip_aggressiveness(self.aggressiveness + decision_error)

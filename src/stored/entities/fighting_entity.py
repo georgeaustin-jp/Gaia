@@ -1,5 +1,5 @@
 from tools.typing_tools import *
-from tools.custom_exceptions import HealthSetError
+from tools.custom_exceptions import HealthSetError, UnexpectedAbilityActionError
 from tools.decision_tools import *
 from tools.constants import *
 from tools.logging_tools import *
@@ -12,14 +12,14 @@ from ability_action import *
 
 type FormattableFightingEntityCallable[FightingEntityType: FightingEntity] = Callable[Concatenate[FightingEntityType, ...], Optional[str]]
 
-def format_attribute_based_on_type(attribute: Union[str, int, float, None]) -> str:
+def format_attribute_based_on_type(attribute: Union[str, int, float, None], rounding_accuracy: int = Constants.DEFAULT_ROUNDING_ACCURACY) -> str:
   """Eliminates the impact of floating point arithemtic errors on the length of displayed real numbers in the GUI."""
   if attribute == None: 
     return f"None"
   if type(attribute) in [str, int]:
     return f"{attribute}"
   if type(attribute) == float:
-    return f"{attribute:.{Constants.DEFAULT_ROUNDING_ACCURACY}f}"
+    return f"{attribute:.{rounding_accuracy}f}"
   raise TypeError(f"Tried to format {attribute=} with unknown type {type(attribute)}.")
 
 def format_message_info(message: str, descriptor: Optional[str] = None, units: str = "", add_brackets: bool = False, add_colon_at_end: bool = False, add_comma_at_end: bool = False, capitalise: bool = False) -> str:
@@ -36,7 +36,7 @@ def format_message_info(message: str, descriptor: Optional[str] = None, units: s
     message = f"{message.upper()}"
   return message
 
-def prepend_message_info[FightingEntityType: FightingEntity](attribute_tag: Union[str, int], descriptor: Optional[str] = None, units: str = "", add_brackets: bool = False, add_colon_at_end: bool = False, add_comma_at_end: bool = False, capitalise: bool = False) -> Callable[[FormattableFightingEntityCallable[FightingEntityType]], FormattableFightingEntityCallable[FightingEntityType]]:
+def prepend_message_info[FightingEntityType: FightingEntity](attribute_tag: Union[str, int], descriptor: Optional[str] = None, units: str = "", add_brackets: bool = False, add_colon_at_end: bool = False, add_comma_at_end: bool = False, capitalise: bool = False, rounding_accuracy: int = Constants.DEFAULT_ROUNDING_ACCURACY) -> Callable[[FormattableFightingEntityCallable[FightingEntityType]], FormattableFightingEntityCallable[FightingEntityType]]:
   """
   :param attribute_tag: If of type `str`, the name of the attribute in `FightingEntityType` which will be prepended. If of type `int`, it indexes the argument will be used in prepending.
   :type attribute_tag: Union[str, int]
@@ -45,9 +45,9 @@ def prepend_message_info[FightingEntityType: FightingEntity](attribute_tag: Unio
     def wrapper(self: FightingEntityType, *args, **kwargs) -> Optional[str]:
       attribute_str: str
       if type(attribute_tag) == int:
-        attribute_str = format_attribute_based_on_type(args[attribute_tag])
+        attribute_str = format_attribute_based_on_type(args[attribute_tag], rounding_accuracy)
       elif type(attribute_tag) == str:
-        attribute_str = format_attribute_based_on_type(getattr(self, attribute_tag))
+        attribute_str = format_attribute_based_on_type(getattr(self, attribute_tag), rounding_accuracy)
       info: str = format_message_info(attribute_str, descriptor, units, add_brackets, add_colon_at_end, add_comma_at_end, capitalise)
       body: Optional[str] = func(self, *args, **kwargs)
       if body == None: return None
@@ -55,7 +55,7 @@ def prepend_message_info[FightingEntityType: FightingEntity](attribute_tag: Unio
     return wrapper
   return decorator
 
-def append_message_info[FightingEntityType: FightingEntity](attribute_tag: Union[str, int], descriptor: Optional[str] = None, units: str = "", add_brackets: bool = False, add_colon_at_end: bool = False, add_comma_at_end: bool = False, capitalise: bool = False) -> Callable[[FormattableFightingEntityCallable[FightingEntityType]], FormattableFightingEntityCallable[FightingEntityType]]:
+def append_message_info[FightingEntityType: FightingEntity](attribute_tag: Union[str, int], descriptor: Optional[str] = None, units: str = "", add_brackets: bool = False, add_colon_at_end: bool = False, add_comma_at_end: bool = False, capitalise: bool = False, rounding_accuracy: int = Constants.DEFAULT_ROUNDING_ACCURACY) -> Callable[[FormattableFightingEntityCallable[FightingEntityType]], FormattableFightingEntityCallable[FightingEntityType]]:
   """
   :param attribute_tag: If of type `str`, the name of the attribute in `FightingEntityType` which will be prepended. If of type `int`, it indexes the argument will be used in prepending.
   :type attribute_tag: Union[str, int]
@@ -64,9 +64,9 @@ def append_message_info[FightingEntityType: FightingEntity](attribute_tag: Union
     def wrapper(self: FightingEntityType, *args, **kwargs) -> Optional[str]:
       attribute_str: str
       if type(attribute_tag) == int:
-        attribute_str = format_attribute_based_on_type(args[attribute_tag])
+        attribute_str = format_attribute_based_on_type(args[attribute_tag], rounding_accuracy)
       elif type(attribute_tag) == str:
-        attribute_str = format_attribute_based_on_type(getattr(self, attribute_tag))
+        attribute_str = format_attribute_based_on_type(getattr(self, attribute_tag), rounding_accuracy)
       body: Optional[str] = func(self, *args, **kwargs)
       if body == None: return None
       info: str = format_message_info(attribute_str, descriptor, units, add_brackets, add_colon_at_end, add_comma_at_end, capitalise)
@@ -77,10 +77,10 @@ def append_message_info[FightingEntityType: FightingEntity](attribute_tag: Union
 # class
 
 class FightingEntity(Stored):
-  def __init__(self, name: str, health: float, max_health: float, loaded: bool = True, is_logging_enabled: bool = False, label: Optional[str] = None) -> None:
+  def __init__(self, name: str, health: float, max_health: float, loaded: bool = True, is_logging_enabled: bool = False, label: Optional[str] = None, include_call_stack: bool = False) -> None:
     self.name = name
     if label == None: label = self.name
-    super().__init__(loaded, is_logging_enabled, label)
+    super().__init__(loaded, is_logging_enabled, label, include_call_stack)
     self.health = health
     self.max_health = max_health
     # attributes not stored in the database, but which are still important
@@ -167,13 +167,21 @@ class FightingEntity(Stored):
   # ability / modifier methods
 
   @prepend_message_info("name", add_colon_at_end=True, capitalise=True)
-  def apply_ability(self, ability: AbilityAction) -> Optional[str]:
-    if type(ability) == IgniteAction: return self.ignite()
-    elif type(ability) == DefendAction: return self.defend(ability.resistance)
-    elif type(ability) == WeakenAction: return self.weaken(ability.vulnerability)
-    elif type(ability) == PierceAction: return self.pierce()
-    elif type(ability) == ParryAction: return self.engage_parry(ability.damage_threshold, ability.reflection_proportion)
-    raise TypeError(f"Unexpected {ability=} of {type(ability)=}.")
+  def apply_ability_action(self, ability_action: AbilityAction) -> Optional[str]:
+    """
+    :param self: Description
+    :param ability_action: Ability to be applied
+    :type ability_action: AbilityAction
+    :return: Resulting message from 
+    :rtype: str | None
+    """
+    if type(ability_action) == IgniteAction: return self.ignite()
+    elif type(ability_action) == DefendAction: return self.defend(ability_action.resistance)
+    elif type(ability_action) == WeakenAction: return self.weaken(ability_action.vulnerability)
+    elif type(ability_action) == PierceAction: return self.pierce()
+    elif type(ability_action) == ParryAction: return self.engage_parry(ability_action.damage_threshold, ability_action.reflection_proportion)
+    elif type(ability_action) == HealAction: return self.heal(ability_action.heal_amount)
+    raise UnexpectedAbilityActionError(ability_action)
 
   @prepend_message_info("name", add_colon_at_end=True, capitalise=True)
   def inflict_active_effects(self) -> Optional[str]:
@@ -181,13 +189,20 @@ class FightingEntity(Stored):
     return None
 
   @prepend_message_info("name", add_colon_at_end=True, capitalise=True)
-  def remove_ability(self, ability: AbilityAction) -> Optional[str]:
-    if type(ability) == IgniteAction: return self.unignite()
-    elif type(ability) == DefendAction: return self.undefend(ability.resistance)
-    elif type(ability) == WeakenAction: return self.unweaken(ability.vulnerability)
-    elif type(ability) == PierceAction: return self.unpierce()
-    elif type(ability) == ParryAction: return self.unengage_parry()
-    raise TypeError(f"Unexpected {ability=} of {type(ability)=}")
+  def remove_ability_action(self, ability_action: AbilityAction) -> Optional[str]:
+    """
+    :param ability_action: The ability_action being removed. Should already be applied to the entity.
+    :type ability_action: AbilityAction
+    :return: The message which is to be relayed to the user. If `None`, no message is being sent.
+    :rtype: Optional[str]
+    """
+    if type(ability_action) == IgniteAction: return self.unignite()
+    elif type(ability_action) == DefendAction: return self.undefend(ability_action.resistance)
+    elif type(ability_action) == WeakenAction: return self.unweaken(ability_action.vulnerability)
+    elif type(ability_action) == PierceAction: return self.unpierce()
+    elif type(ability_action) == ParryAction: return self.unengage_parry()
+    elif type(ability_action) == HealAction: return None # no need for an "unheal"
+    raise UnexpectedAbilityActionError(ability_action)
 
   ## ignition
   def ignite(self) -> str:
@@ -205,7 +220,6 @@ class FightingEntity(Stored):
   
   ## defending
   @append_message_info(0, "RESIST", add_brackets=True, add_comma_at_end=True)
-  @append_message_info("damage_resistance", "TOTAL", add_brackets=True)
   def defend(self, resistance: float) -> str:
     if resistance < 0: raise ValueError(f"{resistance=} cannot be less than `0`.")
     self.damage_resistance += resistance
@@ -219,13 +233,11 @@ class FightingEntity(Stored):
 
   ## weakening
   @append_message_info(0, descriptor="VULN", add_brackets=True, add_comma_at_end=True)
-  @append_message_info("damage_resistance", descriptor="TOTAL", add_brackets=True)
   def weaken(self, vulnerability: float) -> str:
     if vulnerability < 0: raise ValueError(f"{vulnerability=} cannot be less than `0`.")
     self.damage_resistance -= vulnerability
     return f"Weakened"
 
-  @append_message_info("damage_resistance", descriptor="TOTAL", add_brackets=True)
   def unweaken(self, vulnerability: float) -> str:
     if vulnerability < 0: raise ValueError(f"{vulnerability=} cannot be less than `0`.")
     self.damage_resistance += vulnerability
@@ -241,8 +253,8 @@ class FightingEntity(Stored):
     return f"Pierce ended"
 
   ## parrying
-  @append_message_info("parry_reflection_proportion", descriptor="RFLC", add_brackets=True)
-  @append_message_info("parry_damage_threshold", descriptor="DMG", add_brackets=True, add_comma_at_end=True)
+  @append_message_info(0, descriptor="RFLCT", add_brackets=True)
+  @append_message_info(1, descriptor="DMG", add_brackets=True, add_comma_at_end=True)
   def engage_parry(self, damage_threshold: float, reflection_proportion: float) -> str:
     if damage_threshold <= 0: raise ValueError(f"`{damage_threshold=}` cannot be less than or equal to `0`.")
     if reflection_proportion < 0: raise ValueError(f"`{reflection_proportion=}` cannot be less than `0`.")
@@ -260,7 +272,7 @@ class FightingEntity(Stored):
 
   # decision-making
 
-  def calculate_aggressiveness_info(self, remaining_ignition_duration: Optional[int], is_target_parrying: bool) -> tuple[float, float]:
+  def calculate_aggressiveness_info(self, remaining_ignition_duration: Optional[int], damage_threshold: Optional[float], reflection_proportion: Optional[float]) -> tuple[float, float]:
     """
     :return: A pair of numbers, the first being the total aggressiveness and the second being the total weight of values computed.
     :rtype: tuple[float, float]
@@ -270,11 +282,11 @@ class FightingEntity(Stored):
     total += self.calculate_health_aggressiveness()*DecisionMakingConstants.HEALTH_WEIGHT
     total += self.calculate_ignited_aggressiveness(remaining_ignition_duration)*DecisionMakingConstants.IGNITED_WEIGHT
     total += self.calculate_damage_resistance_aggressiveness()*DecisionMakingConstants.DAMAGE_RESISTANCE_WEIGHT
-    total += self.calculate_target_parry_aggressiveness(is_target_parrying)*DecisionMakingConstants.PARRY_WEIGHT
+    total += self.calculate_parry_aggressiveness(damage_threshold, reflection_proportion)*DecisionMakingConstants.PARRY_WEIGHT
     return (total, n)
 
-  def calculate_aggressiveness(self, remaining_ignition_duration: Optional[int], is_target_parrying: bool) -> float:
-    (total, n) = self.calculate_aggressiveness_info(remaining_ignition_duration, is_target_parrying)
+  def calculate_aggressiveness(self, remaining_ignition_duration: Optional[int], damage_threshold: Optional[float], reflection_proportion: Optional[float]) -> float:
+    (total, n) = self.calculate_aggressiveness_info(remaining_ignition_duration, damage_threshold, reflection_proportion)
     return total/n
 
   def calculate_health_aggressiveness(self) -> float:
@@ -298,8 +310,8 @@ class FightingEntity(Stored):
     """
     return calculate_damage_resistance_aggressiveness(self.damage_resistance, self.is_pierced)
   
-  def calculate_target_parry_aggressiveness(self, is_target_parrying: bool) -> float:
-    return calculate_target_parry_aggressiveness(is_target_parrying)
+  def calculate_parry_aggressiveness(self, damage_threshold: Optional[float], reflection_proportion: Optional[float]) -> float:
+    return calculate_parry_aggressiveness(damage_threshold, reflection_proportion)
   
   def calculate_aggressiveness_squared_deviation(self, offensiveness: float) -> float:
     return pow(self.aggressiveness - offensiveness, 2)

@@ -1,4 +1,4 @@
-from math import exp2
+from math import exp2, sqrt
 
 from tools.typing_tools import *
 
@@ -35,7 +35,7 @@ class ParryAbility(AbstractAbility):
   # offensiveness and decision-making methods
 
   def calculate_offensiveness(self) -> float:
-    return self.reflection_proportion * (1 - exp2(-1*self.damage_threshold))
+    return calculate_parry_aggressiveness(self.damage_threshold, self.reflection_proportion)
 
   def get_ability_action(self) -> AbilityAction:
     return ParryAction(damage_threshold=self.damage_threshold, reflection_proportion=self.reflection_proportion)

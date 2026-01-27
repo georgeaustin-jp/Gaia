@@ -1,6 +1,6 @@
 [project]
 name = "gaia"
-version = "0.1.4-alpha"
+version = "1.0.0"
 description = ""
 authors = [
     {name = "georgeaustin-jp",email = "george.austin@challoners.org"}

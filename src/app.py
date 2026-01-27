@@ -1,5 +1,10 @@
+import colorama as cr
+
 from tools.typing_tools import *
 from tools.constants import *
+from tools.custom_exceptions import QuitInterrupt
+
+from tools.logging_tools import *
 
 from database.condition import Condition
 
@@ -140,13 +145,16 @@ class App:
       self.set_exploration_screen_message(f"No weapons equipped.")
       return None
     
-    eqipables_length: int = len(self.game_data.get_equipped_character_equipables_identifiers())
-    if eqipables_length > Constants.MAX_EQUIPPED_EQUIPABLES:
-      self.set_exploration_screen_message(f"Number of equipped equipables ({eqipables_length}) exceeds the maximum number you're able to bring ({Constants.MAX_EQUIPPED_EQUIPABLES}).")
+    equipables_length: int = len(self.game_data.get_equipped_character_equipables_identifiers())
+    if equipables_length > Constants.MAX_EQUIPPED_EQUIPABLES:
+      self.set_exploration_screen_message(f"Number of equipped equipables ({equipables_length}) exceeds the maximum number you're able to bring ({Constants.MAX_EQUIPPED_EQUIPABLES}).")
+      return None
       
     self.game_data.generate_fighting_enemies()
     self.show_screen(ScreenName.COMBAT)
-    self.combat_manager.begin_combat()
+    try:
+      self.combat_manager.begin_combat()
+    except QuitInterrupt: pass # quit command will already be called by the button being pressed
 
   def end_combat(self, screen_name: ScreenName) -> None:
     self.game_data.finish_combat_encounter()
@@ -162,13 +170,12 @@ class App:
 
   def save(self) -> None:
     self.game_data.save()
-    del self.game_data
 
   def run(self) -> None:
     options: dict[str, Any] = {"characters": self.game_data.characters}
     self.interface.run(**options)
 
-  def quit_command(self, successfully: bool = True) -> None:
+  def quit_command(self, code: int = 0) -> None:
     self.save()
-    if successfully: quit()
-    quit(1)
+    print(f"Quitting... {cr.Fore.LIGHTBLACK_EX}({code=}){cr.Fore.RESET}")
+    quit(code)

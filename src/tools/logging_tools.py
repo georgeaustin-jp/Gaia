@@ -1,7 +1,6 @@
 import logging
 import colorama as cr
 import traceback
-import re
 import inspect
 
 from tools.typing_tools import *
@@ -10,7 +9,7 @@ from tools.constants import Constants
 cr.init(autoreset=True)
 
 logging.basicConfig(
-  level=logging.CRITICAL,
+  level=Constants.LOGGING_LEVEL,
   format=f"{cr.Fore.CYAN}%(levelname)s[%(name)s]{cr.Fore.WHITE} AT {cr.Fore.LIGHTMAGENTA_EX}\'%(filename)s\'{cr.Fore.WHITE} IN {cr.Fore.BLUE}\'%(funcName)s\'{cr.Fore.WHITE} {cr.Fore.LIGHTBLACK_EX}(line %(lineno)s):{cr.Style.RESET_ALL}\n >>> %(message)s",
 )
 
@@ -82,10 +81,6 @@ def log_loggable_return[LoggableType: Loggable, ReturnType](func: Callable[..., 
 
 # functions
 
-def is_logging_path(path: str) -> bool:
-  #if re.fullmatch(r".*logging_tools\.py.*", path): return True
-  return False
-
 def get_call_stack() -> list[str]:
   return traceback.format_stack()
 
@@ -95,7 +90,6 @@ def get_call_stack_as_str() -> str:
   for line in call_stack:
     split_line: list[str] = line.splitlines()
     path: str = split_line[0].strip()
-    if is_logging_path(path): continue
     called_line: str = split_line[1].strip()
     call_stack_message += f"\n\t{Constants.DARK_BAR} {Constants.DARK_BAR} {path}"
     call_stack_message += f"\n\t{Constants.DARK_BAR} {Constants.DARK_BAR} {Constants.DARK_BAR} {called_line}"

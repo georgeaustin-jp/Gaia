@@ -162,7 +162,10 @@ class CombatManager:
     self.combat_screen.update_health_label()
     self.combat_screen.update_damage_resistance_label()
 
-    character_won: bool = self.play_round() # recursive function
+    try:
+      character_won: bool = self.play_round() # recursive function
+    except QuitInterrupt as e:
+      raise e
 
     self.combat_screen.enable_return(character_won)
     self.effect_manager.remove_all_effects_from_active_character()
@@ -180,7 +183,11 @@ class CombatManager:
   
     self.add_round_start_info(self.round_number)
 
-    self.start_character_turn()
+    try:
+      self.start_character_turn()
+    except QuitInterrupt as e:
+      raise e
+  
     self.end_character_turn()
 
     self.start_enemies_turn()
@@ -203,7 +210,11 @@ class CombatManager:
     
     self.enable_user_buttons(include_confirm=True, include_attack=True, include_parry=True)
     self.combat_screen.reset_weapon_states()
-    character_actions: list[CombatAction] = self.get_character_actions()
+
+    try:
+      character_actions: list[CombatAction] = self.get_character_actions()
+    except QuitInterrupt as e:
+      raise e
 
     for action in character_actions:
       self.actions.put(action)
@@ -214,7 +225,10 @@ class CombatManager:
     if self.remaining_actions == 0: return [] # base case
     self.add_remaining_actions_info()
 
-    character_action = self.input_character_action()
+    try:
+      character_action = self.input_character_action()
+    except QuitInterrupt as e:
+      raise e
 
     if type(character_action) == Parry:
       self.combat_screen.is_parry_used = True
@@ -229,12 +243,12 @@ class CombatManager:
       error_message_info: Optional[ErrorMessageInfo] = None
       try:
         character_action: CombatAction = self.combat_screen.get_character_action()
-      except QuitInterrupt as error:
-        raise error
-      except UnknownActionError as error:
-        raise error # this should never occur. If it does, then the program should properly raise the error
-      except AbstractError as error:
-        error_message_info = error.info()
+      except QuitInterrupt as e:
+        raise e
+      except UnknownActionError as e:
+        raise e # this should never occur. If it does, then the program should properly raise the error
+      except AbstractError as e:
+        error_message_info = e.info()
       finally:
         if error_message_info == None:
           successful_input = True
@@ -264,9 +278,10 @@ class CombatManager:
   def get_enemies_actions(self) -> list[CombatAction]:
     character: Character = self.game_data.get_active_character()
     character_remaining_ignition_duration: Optional[int] = self.effect_manager.get_entity_remaining_ignition_duration()
-    is_character_parrying: bool = character.is_parrying
-    (positive_character_total, character_n) = character.calculate_aggressiveness_info(character_remaining_ignition_duration, is_character_parrying)
-    negative_character_total: float = -1*positive_character_total
+    character_parry_damage_threshold: Optional[float] = character.parry_damage_threshold
+    character_parry_reflection_proportion: Optional[float] = character.parry_reflection_proportion
+    (positive_character_total, character_n) = character.calculate_aggressiveness_info(character_remaining_ignition_duration)
+    negative_character_value: float = -1*(positive_character_total/character_n)
 
     dimensions: Position = self.game_data.fighting_enemy_graph.dimensions
 
@@ -277,12 +292,12 @@ class CombatManager:
       if fighting_enemy_id == None: continue
       remaining_ignition_duration: Optional[int] = self.effect_manager.get_entity_remaining_ignition_duration(fighting_enemy_id)
 
-      enemy_action: Optional[CombatAction] = self.get_fighting_enemy_action_at(position, remaining_ignition_duration, is_character_parrying, negative_character_total, character_n)
+      enemy_action: Optional[CombatAction] = self.get_fighting_enemy_action_at(position, remaining_ignition_duration, character_parry_damage_threshold, character_parry_reflection_proportion, negative_character_value)
       if enemy_action == None: continue
       enemies_actions.append(enemy_action)
     return enemies_actions
   
-  def get_fighting_enemy_action_at(self, position: Position, remaining_ignition_duration: Optional[int], is_target_parrying: bool, negative_character_total: float, character_n: float) -> Optional[CombatAction]:
+  def get_fighting_enemy_action_at(self, position: Position, remaining_ignition_duration: Optional[int], damage_threshold: Optional[float], reflection_proportion: Optional[float], negative_character_value: float) -> Optional[CombatAction]:
     """
     :return: `None` if there is no enemy at the position, `CombatAction` otherwise.
     :rtype: Optional[CombatAction]
@@ -291,7 +306,7 @@ class CombatManager:
     if fighting_enemy_id == None: return None
     fighting_enemy: FightingEnemy = self.game_data.fighting_enemies[fighting_enemy_id]
 
-    fighting_enemy.calculate_aggressiveness(remaining_ignition_duration, is_target_parrying, negative_character_total, character_n)
+    fighting_enemy.calculate_aggressiveness(remaining_ignition_duration, damage_threshold, reflection_proportion, negative_character_value)
     enemy_action_name: ActionName = fighting_enemy.choose_action_name()
 
     sender = EnemyType(fighting_enemy_id, position)

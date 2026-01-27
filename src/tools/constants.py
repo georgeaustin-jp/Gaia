@@ -1,6 +1,6 @@
 import tkinter as tk
-from tkinter import font
 import colorama as cr
+import logging
 
 from tools.typing_tools import *
 
@@ -29,6 +29,7 @@ class ScreenName(StrEnum):
 @dataclass
 class Constants:
   IS_DEV_MODE: bool = False
+  LOGGING_LEVEL: int = logging.DEBUG
   # constants related to the flow of combat:
   MIN_REMAINING_ACTIONS: int = 0
   MAX_REMAINING_PLAYER_ACTIONS: int = 2
@@ -55,8 +56,8 @@ class Constants:
   DISABLED_RELIEF: Literal['flat'] = tk.FLAT
   ENEMY_ATTACK_LABEL_COLOUR: str = "#FF5C5C"
   ENEMY_HEAL_LABEL_COLOUR: str = "#8FFF87"
-  MIN_SCREEN_WIDTH: int = 825
-  MIN_SCREEN_HEIGHT: int = 500
+  MIN_SCREEN_WIDTH: int = 950
+  MIN_SCREEN_HEIGHT: int = 550
   MAX_SCREEN_WIDTH: int = 1150
   MAX_SCREEN_HEIGHT: int = 700
   WEAPON_INTERFACE_DIMENSIONS: Position = (4,3)
@@ -69,17 +70,21 @@ class Constants:
   MAX_STRUCTURE_ITEM_COUNT: int = 2
   # misc
   DEFAULT_ROUNDING_ACCURACY: int = 2
+  INTERFACE_ROUNDING_ACCURACY: int = 1
   DARK_BAR: str = f"{cr.Fore.LIGHTBLACK_EX}|{cr.Fore.RESET}"
 
 @dataclass
 class DecisionMakingConstants:
   PIERCE_OFFENSIVENESS: float = 0.5
   IGNITE_OFFENSIVENESS: float = 0.5
+  DEFAULT_ATTACK_OFFENSIVENESS: float = 0.5
+  DEFAULT_HEAL_OFFENSIVENESS: float = -0.5
   # weighting of calculated aggressiveness values
-  HEALTH_WEIGHT: float = 2
+  HEALTH_WEIGHT: float = 15
   IGNITED_WEIGHT: float = 0.5
   DAMAGE_RESISTANCE_WEIGHT: float = 1
-  PARRY_WEIGHT: float = 1
+  PARRY_WEIGHT: float = 2
+  PLAYER_WEIGHT: float = 1
 
 @dataclass
 class DefaultTkInitOptions():

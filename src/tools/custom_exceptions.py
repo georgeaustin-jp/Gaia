@@ -1,4 +1,5 @@
 from tools.typing_tools import *
+import colorama as cr
 
 type ErrorMessageInfo = tuple[str, Optional[str]]
 
@@ -16,7 +17,7 @@ class QuitInterrupt(InterruptedError):
 class AbstractError(Exception):
   """Base class for all custom errors."""
   def __init__(self, message: Optional[str] = None, *args: object) -> None:
-    self.message = message
+    self.message = f"{cr.Fore.RED}{message}{cr.Fore.RESET}"
     if self.message != None:
       super().__init__(self.message, *args)
     else:
@@ -114,6 +115,10 @@ class InvalidTurnsError(AbstractError):
 class NoParryError(AbstractError):
   def __init__(self, parry_data: Optional[tuple[float, float]], *args: object) -> None:
     super().__init__(f"Tried to parry when {parry_data=}.", *args)
+
+class UnexpectedAbilityActionError(AbstractError):
+  def __init__(self, ability_action: object, *args: object) -> None:
+    super().__init__(f"Unexpected {ability_action=} of {type(ability_action)=}.", *args)
 
 # other
 

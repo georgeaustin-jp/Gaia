@@ -294,7 +294,7 @@ class CombatScreen(AbstractScreen):
   def set_health_label(self, health: float) -> None:
     if health < 0:
       raise ValueError(f"Cannot set `displayed_health` to be less than zero ({health=} < 0)")
-    display: str = f"{health:.{Constants.DEFAULT_ROUNDING_ACCURACY}f}HP"
+    display: str = f"{health:.{Constants.INTERFACE_ROUNDING_ACCURACY}f}HP"
     self.displayed_health.set(display)
 
   def update_health_label(self) -> None:
@@ -302,7 +302,7 @@ class CombatScreen(AbstractScreen):
     self.set_health_label(character_health)
 
   def set_damage_resistance_label(self, damage_resistance: float) -> None:
-    display: str = f"{damage_resistance*100:.{Constants.DEFAULT_ROUNDING_ACCURACY}f}%"
+    display: str = f"{damage_resistance*100:.{Constants.INTERFACE_ROUNDING_ACCURACY}f}%"
     self.displayed_damage_resistance.set(display)
 
   def update_damage_resistance_label(self) -> None:
@@ -516,11 +516,11 @@ class CombatScreen(AbstractScreen):
 
         button_display = f"{fighting_enemy_name}"
         if fighting_enemy_heath != None and fighting_enemy_max_heath != None:
-          button_display += f"\n{fighting_enemy_heath:.{Constants.DEFAULT_ROUNDING_ACCURACY}f}/{fighting_enemy_max_heath:.{Constants.DEFAULT_ROUNDING_ACCURACY}f}HP"
+          button_display += f"\n{fighting_enemy_heath:.{Constants.INTERFACE_ROUNDING_ACCURACY}f}/{fighting_enemy_max_heath:.{Constants.INTERFACE_ROUNDING_ACCURACY}f}HP"
 
         damage_str = format(fighting_enemy.attack_damage)
 
-        heal_ability_id = cast(int, fighting_enemy.ability_id_table[ActionName.HEAL])
+        heal_ability_id = cast(Optional[int], fighting_enemy.ability_id_table.get(ActionName.HEAL))
 
       if heal_ability_id != None:
         heal_ability: Ability = self.game_data.abilities[heal_ability_id]
@@ -558,7 +558,7 @@ class CombatScreen(AbstractScreen):
   # loading and creating
     
   def load(self, **kwargs) -> None:
-    self.game_data.load_equipped_weapon_identifiers()
+    self.game_data.load_active_character_equipped_weapon_identifiers()
     self.load_weapon_interfaces()
     self.load_equipped_inventory_equipable_identifiers()
     self.load_equipable_label_texts()

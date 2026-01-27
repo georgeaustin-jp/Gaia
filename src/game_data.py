@@ -121,7 +121,7 @@ class GameData(Loggable):
       TableName.EQUIPABLE: ["EquipableID", "ItemID"], # Y
       TableName.ABILITY: ["AbilityID", "Text", "Type"], # Y
       TableName.PARRY_ABILITY: ["ParryAbilityID", "AbilityID", "DamageThreshold", "ReflectionProportion"], # Y
-      TableName.STATISTIC_ABILITY: ["StatisticAbilityID", "AbilityID", "AbilityType", "Amount", "InitialDuration"], # Y
+      TableName.STATISTIC_ABILITY: ["StatisticAbilityID", "AbilityID", "AbilityType", "Amount", "InitialDuration", "IsUnique"], # Y
       TableName.ENEMY: ["EnemyID", "Name", "MaxHealth", "AttackDamage", "Intelligence", "IsBoss"], # Y
       TableName.ENEMY_ABILITY: ["EnemyAbilityID", "EnemyID", "AbilityID", "IsUsedInAttack"], # Y
     }
@@ -270,28 +270,28 @@ class GameData(Loggable):
     self.enemies.set({
       # 15 regular enemies
       ## skeleton
-      0: Enemy("Skeleton", 18, 6, 20, is_boss=False, loaded=False),
-      1: Enemy("Brimstone Skeleton", 16, 5, 17, is_boss=False, loaded=False),
-      2: Enemy("Skeleton Archer", 18, 5, 23, is_boss=False, loaded=False),
-      3: Enemy("Armoured Skeleton", 27, 5, 22, is_boss=False, loaded=False),
+      0: Enemy("Skeleton", 18, 7, 20, is_boss=False, loaded=False),
+      1: Enemy("Brimstone Skeleton", 16, 6, 17, is_boss=False, loaded=False),
+      2: Enemy("Skeleton Archer", 18, 7, 23, is_boss=False, loaded=False),
+      3: Enemy("Armoured Skeleton", 27, 6, 22, is_boss=False, loaded=False),
       ## spiders
-      4: Enemy("Hunting Spider", 8, 3, 10, is_boss=False, loaded=False),
-      5: Enemy("Large Hunting Spider", 15, 5, 12, is_boss=False, loaded=False),
-      6: Enemy("Vampiric Hunting Spider", 14, 5, 16, is_boss=False, loaded=False),
+      4: Enemy("Hunting Spider", 8, 5, 10, is_boss=False, loaded=False),
+      5: Enemy("Large Hunting Spider", 15, 6, 12, is_boss=False, loaded=False),
+      6: Enemy("Vampiric Hunting Spider", 14, 6, 16, is_boss=False, loaded=False),
       ## possesed objects
-      7: Enemy("Possesed Armour", 38, 8, 24, is_boss=False, loaded=False),
-      8: Enemy("Posessed Blades", 24, 10, 19, is_boss=False, loaded=False),
-      9: Enemy("Posessed Flaming Skull", 9, 5, 28, is_boss=False, loaded=False),
+      7: Enemy("Possesed Armour", 38, 9, 24, is_boss=False, loaded=False),
+      8: Enemy("Posessed Blades", 24, 12, 19, is_boss=False, loaded=False),
+      9: Enemy("Posessed Flaming Skull", 9, 6, 28, is_boss=False, loaded=False),
       ## misc
-      10: Enemy("Mimic", 20, 15, 35, is_boss=False, loaded=False),
-      11: Enemy("Chaos Spawn", 18, 10, 50, is_boss=False, loaded=False),
-      12: Enemy("Resurrected Knight", 26, 12, 40, is_boss=False, loaded=False),
-      13: Enemy("Rabid Boar", 12, 4, 8, is_boss=False, loaded=False),
+      10: Enemy("Mimic", 22, 16, 35, is_boss=False, loaded=False),
+      11: Enemy("Chaos Spawn", 19, 11, 50, is_boss=False, loaded=False),
+      12: Enemy("Resurrected Knight", 26, 13, 40, is_boss=False, loaded=False),
+      13: Enemy("Rabid Boar", 13, 5, 8, is_boss=False, loaded=False),
       14: Enemy("Shep", 5, 1, 1, is_boss=False, loaded=False),
       # 3 bosses
-      15: Enemy("Elite Skeleton Warrior", 130, 26, 100, is_boss=True, loaded=False),
-      16: Enemy("Giant Hunting Spider", 165, 21, 90, is_boss=True, loaded=False),
-      17: Enemy("Seeker of Chaos", 115, 35, 150, is_boss=True, loaded=False),
+      15: Enemy("Elite Skeleton Warrior", 135, 26, 100, is_boss=True, loaded=False),
+      16: Enemy("Giant Hunting Spider", 165, 23, 90, is_boss=True, loaded=False),
+      17: Enemy("Seeker of Chaos", 120, 35, 150, is_boss=True, loaded=False),
     })
     self.enemy_abilities.set({
       # ignition
@@ -354,23 +354,23 @@ class GameData(Loggable):
     })
     self.statistic_abilities.set({
       # healing
-      0: StatisticAbility(4, AbilityTypeName.HEAL, 5, 1, loaded=False),
-      1: StatisticAbility(5, AbilityTypeName.HEAL, 10, 1, loaded=False),
-      2: StatisticAbility(6, AbilityTypeName.HEAL, 15, 1, loaded=False),
+      0: StatisticAbility(4, AbilityTypeName.HEAL, 5, 1, is_unique=False, loaded=False),
+      1: StatisticAbility(5, AbilityTypeName.HEAL, 10, 1, is_unique=False, loaded=False),
+      2: StatisticAbility(6, AbilityTypeName.HEAL, 15, 1, is_unique=False, loaded=False),
       # weaken
-      3: StatisticAbility(2, AbilityTypeName.WEAKEN, 0.15, 2, loaded=False), # curse
-      4: StatisticAbility(3, AbilityTypeName.WEAKEN, 0.1, 2, loaded=False), # immune system
+      3: StatisticAbility(2, AbilityTypeName.WEAKEN, 0.15, 2, is_unique=True, loaded=False), # curse
+      4: StatisticAbility(3, AbilityTypeName.WEAKEN, 0.1, 2, is_unique=True, loaded=False), # immune system
       # defend
-      5: StatisticAbility(16, AbilityTypeName.DEFEND, 0.01, None, loaded=False),
-      6: StatisticAbility(17, AbilityTypeName.DEFEND, 0.025, None, loaded=False),
-      7: StatisticAbility(18, AbilityTypeName.DEFEND, 0.05, None, loaded=False),
+      5: StatisticAbility(16, AbilityTypeName.DEFEND, 0.01, None, is_unique=False, loaded=False),
+      6: StatisticAbility(17, AbilityTypeName.DEFEND, 0.025, None, is_unique=False, loaded=False),
+      7: StatisticAbility(18, AbilityTypeName.DEFEND, 0.05, None, is_unique=False, loaded=False),
     })
     self.parry_abilities.set({
-      0: ParryAbility(7, 8, 0.25, loaded=False), # Mahogany Staff
+      0: ParryAbility(7, 7, 0.3, loaded=False), # Mahogany Staff
       1: ParryAbility(8, 4, 0.8, loaded=False), # Surtur's Brimstone Dagger
-      2: ParryAbility(9, 10, 0.35, loaded=False), # Spear-Staff
+      2: ParryAbility(9, 9, 0.4, loaded=False), # Spear-Staff
       3: ParryAbility(10, 12, 0.45, loaded=False), # Runic Sceptre
-      4: ParryAbility(11, 8, 0.3, loaded=False), # Crimson Broadsword
+      4: ParryAbility(11, 8, 0.35, loaded=False), # Crimson Broadsword
       5: ParryAbility(12, 7, 0.9, loaded=False), # Sabre of the World Tree
       6: ParryAbility(13, 11, 0.3, loaded=False), # The Mace
       7: ParryAbility(14, 11, 0.25, loaded=False), # Gauntlets of Muspelheim
@@ -648,7 +648,7 @@ class GameData(Loggable):
       equipped_equipable_identifiers.append(equipable_id)
     return equipped_equipable_identifiers
   
-  def load_equipped_weapon_identifiers(self) -> None:
+  def load_active_character_equipped_weapon_identifiers(self) -> None:
     self.equipped_weapon_identifiers = self.get_equipped_character_weapon_identifiers()
 
   def get_equipped_weapon_names(self) -> list[str]:
@@ -669,19 +669,26 @@ class GameData(Loggable):
     if len(statistic_abilities) != 1: raise BufferError(f"Expected `1` statistic ability; instead got '{len(statistic_abilities)}' ({statistic_abilities=}).")
     return statistic_abilities[0]
   
+  def is_statistic_ability_unique(self, ability_id: int) -> bool:
+    statistic_ability: StatisticAbility = self.get_action_statistic_ability(ability_id)
+    return statistic_ability.is_unique
+  
   def get_ability_action(self, ability_id: int, ability: Ability) -> AbilityAction:
     match ability.ability_type:
       case AbilityTypeName.IGNITE:
         return IgniteAction()
       case AbilityTypeName.HEAL:
         heal_ability = self.get_action_statistic_ability(ability_id)
-        return HealAction(initial_duration=heal_ability.initial_duration, heal_amount=heal_ability.amount)
+        is_unique: bool = self.is_statistic_ability_unique(ability_id)
+        return HealAction(initial_duration=heal_ability.initial_duration, is_unique=is_unique, heal_amount=heal_ability.amount)
       case AbilityTypeName.DEFEND:
         defend_ability = self.get_action_statistic_ability(ability_id)
-        return DefendAction(initial_duration=defend_ability.initial_duration, resistance=defend_ability.amount)
+        is_unique: bool = self.is_statistic_ability_unique(ability_id)
+        return DefendAction(initial_duration=defend_ability.initial_duration, is_unique=is_unique, resistance=defend_ability.amount)
       case AbilityTypeName.WEAKEN:
         weaken_ability = self.get_action_statistic_ability(ability_id)
-        return WeakenAction(initial_duration=weaken_ability.initial_duration, vulnerability=weaken_ability.amount)
+        is_unique: bool = self.is_statistic_ability_unique(ability_id)
+        return WeakenAction(initial_duration=weaken_ability.initial_duration, is_unique=is_unique, vulnerability=weaken_ability.amount)
       case AbilityTypeName.PIERCE:
         return PierceAction()
       case AbilityTypeName.PARRY:
@@ -865,7 +872,7 @@ class GameData(Loggable):
   
   def get_random_enemy_identifier(self, get_boss: bool) -> int:
     matching_enemy_type: Callable[[int, Enemy], bool] = lambda _, enemy: enemy.is_boss == get_boss
-    enemies: dict[int, Enemy] = filter_dictionary(self.enemies, matching_enemy_type)
+    enemies: dict[int, Enemy] = filter_dictionary(self.enemies.data, matching_enemy_type)
     return select_random_identifier(enemies)
   
   def get_multiple_random_enemy_identifiers(self, n: int, get_boss: bool) -> list[int]:
@@ -902,17 +909,24 @@ class GameData(Loggable):
     """Sets the attack and heal abilities for a given fighting enemy. Having no attack ability means the enemy has only a standard attack. Having no heal ability means the enemy cannot heal."""
     enemy_id: int = fighting_enemy.enemy_id
     # attack abilities
-    attack_ability_ids: Optional[list[int]]
+    attack_ability_ids: list[int] = []
+    attack_actions: list[AbilityAction] = []
     attack_data: Optional[dict[int, Ability]] = self.get_enemy_abilities_for_attacking(enemy_id)
-    if attack_data == None: attack_ability_ids = None
-    else: attack_ability_ids = list(attack_data.keys())
+    if attack_data != None:
+      attack_ability_ids = list(attack_data.keys())
+      for (attack_ability_id, attack_ability) in attack_data.items():
+        attack_actions.append(self.get_ability_action(attack_ability_id, attack_ability))
     # heal ability
-    heal_ability_id: Optional[int]
+    heal_ability_id: Optional[int] = None
+    heal_action: list[AbilityAction] = []
     heal_data: Optional[tuple[int, Ability]] = self.get_enemy_ability_for_heal(enemy_id)
-    if heal_data == None: heal_ability_id = None
-    else: heal_ability_id = heal_data[0]
+    if heal_data != None:
+      heal_ability_id = heal_data[0]
+      heal_action = [self.get_ability_action(heal_ability_id, heal_data[1])]
 
     fighting_enemy.set_action_identifiers(attack_ability_ids, heal_ability_id)
+    fighting_enemy.calculate_action_offensiveness_value(ActionName.ATTACK, attack_actions)
+    fighting_enemy.calculate_action_offensiveness_value(ActionName.HEAL, heal_action)
   
   def finish_combat_encounter(self) -> None:
     for i in range(len(self.fighting_enemy_graph)):

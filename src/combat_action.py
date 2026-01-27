@@ -62,7 +62,7 @@ class CombatAction(Loggable):
   def apply_next_ability_to(self, recipient: FightingEntity) -> None:
     if type(self.action_type) != Attack: return # this never evaluates to true; if the action were not an attack, the `only_for_attacks` decorator would've caught it and raised an error
     next_ability: AbilityAction = self.action_type.get_next_ability()
-    recipient.apply_ability(next_ability)
+    recipient.apply_ability_action(next_ability)
 
   # action methods
 
@@ -75,7 +75,7 @@ class CombatAction(Loggable):
     damage: float = self.action_type.quantity
     applied_effects = self.action_type.effects
     if applied_effects.empty(): applied_effects = None
-    messages: list[Optional[str]] = [f"{sender.name.upper()} attacked {target.name.upper()} ({damage}DMG)"]
+    messages: list[Optional[str]] = [f"{sender.name.upper()} attacked {target.name.upper()} ({damage:.{Constants.DEFAULT_ROUNDING_ACCURACY}f}DMG)"]
     if target.is_parrying:
       parry_damage_threshold: Optional[float] = target.parry_damage_threshold
       parry_reflection_proportion: Optional[float] = target.parry_reflection_proportion
@@ -90,6 +90,5 @@ class CombatAction(Loggable):
     if type(self.action_type) != Heal:
       raise TypeError(f"Expected type `Heal` for `type(self.action_type)`; got `{type(self.action_type)=}` instead.")
     healing: float = self.action_type.quantity
-    if target == None:
-      return f"{sender.name.upper()}: healed nothing"
-    return target.heal(healing)
+    if target == None: return f"{sender.name.upper()}: healed nothing."
+    return f"{sender.name.upper()}: {target.heal(healing)}"

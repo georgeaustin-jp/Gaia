@@ -80,10 +80,12 @@ class EffectManager:
         ability_action = ParryAction(damage_threshold=parry.damage_threshold, reflection_proportion=parry.reflection_proportion)
       case AbilityTypeName.DEFEND:
         defend: StatisticAbility = self.get_defend_ability(ability_id)
-        ability_action = DefendAction(initial_duration=defend.initial_duration, resistance=defend.amount)
+        is_unique: bool = self.game_data.is_statistic_ability_unique(ability_id)
+        ability_action = DefendAction(initial_duration=defend.initial_duration, is_unique=is_unique, resistance=defend.amount)
       case AbilityTypeName.WEAKEN:
         weaken: StatisticAbility = self.get_weaken_ability(ability_id)
-        ability_action = WeakenAction(initial_duration=weaken.initial_duration, vulnerability=weaken.amount)
+        is_unique: bool = self.game_data.is_statistic_ability_unique(ability_id)
+        ability_action = WeakenAction(initial_duration=weaken.initial_duration, is_unique=is_unique, vulnerability=weaken.amount)
       case _: raise ValueError(f"Unknown value for {ability_type=} ({ability=}).")
     return ability_action
   
@@ -124,19 +126,32 @@ class EffectManager:
     duration: Optional[int] = ability_action.initial_duration
     new_effect = ActiveEffect(duration, ability_action)
     return new_effect
+  
+  def add_effect_to_list(self, effect: ActiveEffect, effect_list: list[ActiveEffect]) -> tuple[list[ActiveEffect], Optional[ActiveEffect]]:
+    """Assumes the effect being added has already been applied to the entity."""
+    try:
+      effect_location: int = effect_list.index(effect)
+    except: # what to do if the effect is not found in the list
+      effect_list.append(effect)
+      return (effect_list, None)
+    if effect.effect_ability.is_unique:
+      removed_effect: ActiveEffect = effect_list[effect_location]
+      effect_list[effect_location] = effect
+      return (effect_list, removed_effect)
+    effect_list.append(effect)
+    return (effect_list, None)
 
   ## character
-  #def apply_effect_to_active_character(self, effect: Effect)
-
   def apply_ability_action_to_active_character(self, ability_action: AbilityAction) -> Optional[str]:
     """
     :returns: Message to be added to the info box by `CombatManager`.
     :rtype: str
     """
     character: Character = self.get_active_character()
-    message: Optional[str] = character.apply_ability(ability_action)
+    message: Optional[str] = character.apply_ability_action(ability_action)
     new_effect: ActiveEffect = self.ability_action_to_active_effect(ability_action)
-    self.character_effects.append(new_effect)
+    (self.character_effects, removed_effect) = self.add_effect_to_list(new_effect, self.character_effects)
+    if removed_effect != None: character.remove_ability_action(removed_effect.effect_ability)
     return message
 
   def apply_ability_action_list_to_active_character(self, ability_actions: list[AbilityAction]) -> list[Optional[str]]:
@@ -168,9 +183,10 @@ class EffectManager:
   ## fighting enemies
   def apply_ability_action_to_fighting_enemy_with_identifier(self, fighting_enemy_id: int, ability_action: AbilityAction) -> Optional[str]:
     fighting_enemy: FightingEnemy = self.get_fighting_enemy(fighting_enemy_id)
-    message: Optional[str] = fighting_enemy.apply_ability(ability_action)
+    message: Optional[str] = fighting_enemy.apply_ability_action(ability_action)
     new_effect: ActiveEffect = self.ability_action_to_active_effect(ability_action)
-    self.fighting_enemy_effects[fighting_enemy_id].append(new_effect)
+    (self.fighting_enemy_effects[fighting_enemy_id], removed_effect) = self.add_effect_to_list(new_effect, self.fighting_enemy_effects[fighting_enemy_id])
+    if removed_effect != None: fighting_enemy.remove_ability_action(removed_effect.effect_ability)
     return message
   
   def apply_ability_action_list_to_fighting_enemy_with_identifier(self, fighting_enemy_id: int, ability_actions: list[AbilityAction]) -> list[Optional[str]]:
@@ -224,7 +240,7 @@ class EffectManager:
   def remove_effect_from_active_character(self, ability_action: AbilityAction) -> Optional[str]:
     """Doesn't remove the effect from `self.character_effects`."""
     character: Character = self.get_active_character()
-    return character.remove_ability(ability_action)
+    return character.remove_ability_action(ability_action)
 
   def remove_finished_effects_from_active_character(self) -> list[Optional[str]]:
     messages: list[Optional[str]] = []
@@ -246,7 +262,7 @@ class EffectManager:
   def remove_effect_from_fighting_enemy_with_identifier(self, fighting_enemy_id: int, ability_action: AbilityAction) -> Optional[str]:
     """Doesn't remove the effect from `self.fighting_enemy_effects`."""
     fighting_enemy: FightingEnemy = self.get_fighting_enemy(fighting_enemy_id)
-    return fighting_enemy.remove_ability(ability_action)
+    return fighting_enemy.remove_ability_action(ability_action)
 
   def remove_finished_effects_from_fighting_enemy_with_identifier(self, fighting_enemy_id: int) -> list[Optional[str]]:
     messages: list[Optional[str]] = []
@@ -280,4 +296,4 @@ class EffectManager:
       ignition_duration: Optional[int] = ignition_effects[0].turns_remaining
       if ignition_duration == None: raise ValueError(f"{ignition_effects[0]=} has {ignition_duration=}, which cannot be `None`.")
       return ignition_duration
-    raise BufferError(f"Multiple ignition effects found: {ignition_effects=}.") # TODO: edit effect application to make it impossible to have multiple ignitions applied at once 
+    raise BufferError(f"Multiple ignition effects found: {ignition_effects=}.")
