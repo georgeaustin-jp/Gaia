@@ -20,7 +20,7 @@ class Attack(ActionType):
   :param effects: The effects the attack applies to the target.
   :type effects: Queue[AbilityAction]
   """
-  effects: Queue[AbilityAction] = Queue()
+  effects: Queue[AbilityAction]
 
   def add_ability_action(self, ability_action: AbilityAction) -> None:
     self.effects.put(ability_action)

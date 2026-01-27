@@ -107,6 +107,13 @@ def get_caller_message(level: int = 0) -> str:
   line_number: int = caller_frame_at_level.lineno
   return f"CALLED BY `{caller_name}` (FILE `{file_name}`, LINE `{line_number}`)"
 
+def format_iterable(iterable: Iterable, start_character: str = "[", end_character: str = "]") -> str:
+  message: str = f"{start_character}"
+  for item in iterable:
+    message += f"\n  {item},"
+  message += f"\n{end_character}"
+  return message
+
 # classes
 
 class Loggable():

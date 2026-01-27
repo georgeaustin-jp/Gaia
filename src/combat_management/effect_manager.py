@@ -2,6 +2,8 @@ from tools.typing_tools import *
 from tools.ability_names import AbilityTypeName
 from tools.constants import ItemType
 from tools.dictionary_tools import filter_dictionary
+from tools.custom_exceptions import *
+from tools.logging_tools import *
 
 from game_data import GameData
 
@@ -27,8 +29,26 @@ from combat_management.active_effect import ActiveEffect
 class EffectManager:
   def __init__(self, game_data: GameData) -> None:
     self.game_data = game_data
-    self.character_effects: list[ActiveEffect] = []
-    self.fighting_enemy_effects: dict[int, list[ActiveEffect]] = {} # maps FightingEnemyID to the effects applied to them
+    self.__character_effects: list[ActiveEffect] = []
+    self.__fighting_enemy_effects: dict[int, list[ActiveEffect]] = {} # maps FightingEnemyID to the effects applied to them
+
+  # getter and setter methods
+
+  @property
+  def character_effects(self) -> list[ActiveEffect]:
+    return self.__character_effects
+  
+  @character_effects.setter
+  def character_effects(self, character_effects: list[ActiveEffect]) -> None:
+    self.__character_effects = character_effects
+
+  @property
+  def fighting_enemy_effects(self) -> dict[int, list[ActiveEffect]]:
+    return self.__fighting_enemy_effects
+  
+  @fighting_enemy_effects.setter
+  def fighting_enemy_effects(self, fighting_enemy_effects: dict[int, list[ActiveEffect]]) -> None:
+    self.__fighting_enemy_effects = fighting_enemy_effects
 
   # preparations made at the start of combat
 
@@ -127,13 +147,22 @@ class EffectManager:
     new_effect = ActiveEffect(duration, ability_action)
     return new_effect
   
+  def find_effect_type(self, effect_type: Type[ActiveEffect], effect_list: list[ActiveEffect]) -> Optional[int]:
+    """
+    :return: Returns the index it is first found at. If it's not in the list, returns `None`.
+    :rtype: Optional[int]
+    """
+    for (i, effect) in enumerate(effect_list):
+      if effect_type == type(effect): return i
+    return None
+  
   def add_effect_to_list(self, effect: ActiveEffect, effect_list: list[ActiveEffect]) -> tuple[list[ActiveEffect], Optional[ActiveEffect]]:
     """Assumes the effect being added has already been applied to the entity."""
-    try:
-      effect_location: int = effect_list.index(effect)
-    except: # what to do if the effect is not found in the list
+    effect_location: Optional[int] = self.find_effect_type(type(effect), effect_list)
+    if effect_location == None: # what to do if the effect is not found in the list
       effect_list.append(effect)
       return (effect_list, None)
+    
     if effect.effect_ability.is_unique:
       removed_effect: ActiveEffect = effect_list[effect_location]
       effect_list[effect_location] = effect
@@ -151,7 +180,7 @@ class EffectManager:
     message: Optional[str] = character.apply_ability_action(ability_action)
     new_effect: ActiveEffect = self.ability_action_to_active_effect(ability_action)
     (self.character_effects, removed_effect) = self.add_effect_to_list(new_effect, self.character_effects)
-    if removed_effect != None: character.remove_ability_action(removed_effect.effect_ability)
+    if removed_effect != None and type(removed_effect.effect_ability) != IgniteAction: character.remove_ability_action(removed_effect.effect_ability)
     return message
 
   def apply_ability_action_list_to_active_character(self, ability_actions: list[AbilityAction]) -> list[Optional[str]]:
@@ -285,10 +314,8 @@ class EffectManager:
 
   def get_entity_remaining_ignition_duration(self, fighting_enemy_id: Optional[int] = None) -> Optional[int]:
     effects: list[ActiveEffect] = []
-    if fighting_enemy_id == None:
-      effects = self.character_effects
-    else:
-      effects = self.fighting_enemy_effects[fighting_enemy_id]
+    if fighting_enemy_id == None: effects = self.character_effects
+    else: effects = self.fighting_enemy_effects[fighting_enemy_id]
     is_ignite_ability: Callable[[ActiveEffect], bool] = lambda effect: effect.effect_ability.get_ability_type_name() == AbilityTypeName.IGNITE
     ignition_effects: list[ActiveEffect] = list(filter(lambda effect: is_ignite_ability(effect), effects))
     if len(ignition_effects) == 0: return None
@@ -296,4 +323,4 @@ class EffectManager:
       ignition_duration: Optional[int] = ignition_effects[0].turns_remaining
       if ignition_duration == None: raise ValueError(f"{ignition_effects[0]=} has {ignition_duration=}, which cannot be `None`.")
       return ignition_duration
-    raise BufferError(f"Multiple ignition effects found: {ignition_effects=}.")
+    raise MultipleIgnitionEffectsError(ignition_effects)

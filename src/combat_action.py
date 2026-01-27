@@ -76,6 +76,7 @@ class CombatAction(Loggable):
     applied_effects = self.action_type.effects
     if applied_effects.empty(): applied_effects = None
     messages: list[Optional[str]] = [f"{sender.name.upper()} attacked {target.name.upper()} ({damage:.{Constants.DEFAULT_ROUNDING_ACCURACY}f}DMG)"]
+    
     if target.is_parrying:
       parry_damage_threshold: Optional[float] = target.parry_damage_threshold
       parry_reflection_proportion: Optional[float] = target.parry_reflection_proportion

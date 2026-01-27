@@ -588,12 +588,18 @@ class GameData(Loggable):
     return weapon_name
   
   def get_weapon_abilities(self, weapon: Weapon) -> dict[int, Ability]:
+    """Includes the weapon's parry ability (if it has one)."""
     item_id: int = weapon.item_id
     weapon_item_abilities: dict[int, ItemAbility] = filter_dictionary(self.item_abilities, lambda _, item_ability: item_ability.item_id == item_id)
     weapon_item_abilities_ability_identifiers: list[int] = []
     for item_ability in list(weapon_item_abilities.values()):
       weapon_item_abilities_ability_identifiers.append(item_ability.ability_id)
     return filter_dictionary(self.abilities.data, lambda identifier, _: identifier in weapon_item_abilities_ability_identifiers)
+  
+  def get_non_parry_weapon_abilities(self, weapon: Weapon) -> dict[int, Ability]:
+    weapon_abilities: dict[int, Ability] = self.get_weapon_abilities(weapon)
+    is_not_parry_ability: Callable[[int, Ability], bool] = lambda _, ability: ability.ability_type != AbilityTypeName.PARRY
+    return filter_dictionary(weapon_abilities, is_not_parry_ability)
   
   def get_weapon_parry(self, weapon: Weapon) -> Optional[ParryAbility]:
     weapon_abilities: dict[int, Ability] = self.get_weapon_abilities(weapon)
@@ -692,7 +698,7 @@ class GameData(Loggable):
       case AbilityTypeName.PIERCE:
         return PierceAction()
       case AbilityTypeName.PARRY:
-        raise Exception(f"Invalid method of obtaining a parry ability action.")
+        raise Exception(f"Invalid method of obtaining a parry ability action ({ability_id=}, {ability=}).")
       case _: raise ValueError(f"{ability.ability_type=} not recognised.")
   
   # character methods
@@ -750,11 +756,11 @@ class GameData(Loggable):
     fighting_enemy: FightingEnemy = self.fighting_enemies[fighting_enemy_id]
     return fighting_enemy.max_health
   
-  def get_enemy_abilities_for_attacking(self, enemy_id: int) -> Optional[dict[int, Ability]]:
+  def get_enemy_abilities_for_attacking(self, enemy_id: int) -> dict[int, Ability]:
     """Assumes enemy has only one ability used in an attack."""
     enemy_attack_abilities_dict: dict[int, EnemyAbility] = filter_dictionary(self.enemy_abilities, lambda _, enemy_ability: enemy_ability.enemy_id == enemy_id and enemy_ability.is_used_in_attack)
 
-    if len(enemy_attack_abilities_dict) == 0: return None
+    if len(enemy_attack_abilities_dict) == 0: return {}
 
     enemy_attack_abilities: list[EnemyAbility] = list(enemy_attack_abilities_dict.values())
     enemy_abilities_for_attacking: dict[int, Ability] = {}
@@ -911,7 +917,7 @@ class GameData(Loggable):
     # attack abilities
     attack_ability_ids: list[int] = []
     attack_actions: list[AbilityAction] = []
-    attack_data: Optional[dict[int, Ability]] = self.get_enemy_abilities_for_attacking(enemy_id)
+    attack_data: dict[int, Ability] = self.get_enemy_abilities_for_attacking(enemy_id)
     if attack_data != None:
       attack_ability_ids = list(attack_data.keys())
       for (attack_ability_id, attack_ability) in attack_data.items():

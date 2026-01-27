@@ -39,7 +39,7 @@ def calculate_damage_resistance_aggressiveness(damage_resistance: float, is_pier
   if is_pierced: return DecisionMakingConstants.PIERCE_OFFENSIVENESS
   return exp2(damage_resistance)-1
 
-def calculate_parry_aggressiveness(reflection_proportion: Optional[float], damage_threshold: Optional[float]) -> float:
+def calculate_parry_aggressiveness(damage_threshold: Optional[float], reflection_proportion: Optional[float]) -> float:
   if reflection_proportion == None or damage_threshold == None: return 0.3
   return sqrt(reflection_proportion * (2-reflection_proportion)) * (1 - exp2(damage_threshold*(-1/2)))
 

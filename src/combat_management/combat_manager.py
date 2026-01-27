@@ -337,7 +337,7 @@ class CombatManager:
     if action_name == ActionName.ATTACK:
       # initialising attack
       attack_damage: float = fighting_enemy.attack_damage
-      attack = Attack(attack_damage)
+      attack = Attack(attack_damage, Queue[AbilityAction]())
       # adding abilities
       attack_ability_ids: Optional[Union[int, list[int]]] = fighting_enemy.ability_id_table[ActionName.ATTACK]
       if attack_ability_ids == None: return attack

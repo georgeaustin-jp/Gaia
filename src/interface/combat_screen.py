@@ -419,7 +419,7 @@ class CombatScreen(AbstractScreen):
     elif using_health_potion and targeting_no_enemies and not using_weapons: # handles using the health potion
       action = Heal(Constants.HEALTH_POTION_AMOUNT)
     elif using_health_potion: # health potion button can't be toggled from this point
-      raise TooManyButtonsSelectedError(f"\'health_potion_button\' is toggled when other buttons are as well") 
+      raise TooManyButtonsSelectedError(f"`health_potion_button` is toggled when other buttons are as well.") 
     elif is_parrying and not is_attacking and targeting_no_enemies: # handles character parries
       parry_data: Optional[tuple[float, float]] = self.get_selected_weapon_parry_data()
       if parry_data == None: raise NoParryError(parry_data)
@@ -431,14 +431,17 @@ class CombatScreen(AbstractScreen):
     elif targeting_no_enemies: # all actions after this point require one enemy to be selected
       raise NoEnemiesSelectedError()
     elif is_attacking and not is_parrying: # handles character attacks
-      damage: float = self.get_selected_weapon_attack_damage()
-      action = Attack(damage)
+      index: Optional[int] = self.get_attacking_weapon_interface_index()
+      if index == None: raise NoWeaponSelectedError()
+      damage: float = self.get_weapon_interface_attack_damage(index)
+      effects: Queue[AbilityAction] = self.get_weapon_interface_attack_effects(index)
+      action = Attack(damage, effects)
     else:
       raise UnknownActionError()
     return action
   
-  def get_selected_weapon_attack_damage(self) -> float:
-    weapon_buttons_selected: int = 0 # if weapon_interface.is_attack_toggled: return False
+  def get_attacking_weapon_interface_index(self) -> Optional[int]:
+    weapon_buttons_selected: int = 0
     for (i, weapon_interface) in enumerate(self.weapon_interfaces):
       is_attack_toggled: ToggleState = weapon_interface.is_attack_toggled
       if is_attack_toggled:
@@ -446,9 +449,23 @@ class CombatScreen(AbstractScreen):
         selected_weapon_identifier_index = i
       if weapon_buttons_selected > 1:
         raise TooManyWeaponButtonsSelectedError(i)
-    weapon_identifier: Optional[int] = self.game_data.equipped_weapon_identifiers[selected_weapon_identifier_index]
+    if weapon_buttons_selected == 0: return None
+    return selected_weapon_identifier_index
+  
+  def get_weapon_interface_attack_damage(self, index: int) -> float:
+    weapon_identifier: Optional[int] = self.game_data.equipped_weapon_identifiers[index]
     if weapon_identifier == None: raise TypeError(f"{weapon_identifier=} should never be `None`.")
     return self.game_data.weapons[weapon_identifier].damage
+  
+  def get_weapon_interface_attack_effects(self, index: int) -> Queue[AbilityAction]:
+    weapon_identifier: Optional[int] = self.game_data.equipped_weapon_identifiers[index]
+    if weapon_identifier == None: raise TypeError(f"{weapon_identifier=} should never be `None`.")
+    weapon: Weapon = self.game_data.weapons[weapon_identifier]
+    weapon_abilities: dict[int, Ability] = self.game_data.get_non_parry_weapon_abilities(weapon)
+    attack_effects: Queue[AbilityAction] = Queue[AbilityAction]()
+    for (ability_id, ability) in weapon_abilities.items():
+      attack_effects.put(self.game_data.get_ability_action(ability_id, ability))
+    return attack_effects
   
   def get_selected_weapon_parry_data(self) -> Optional[tuple[float, float]]:
     """

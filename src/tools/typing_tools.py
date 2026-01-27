@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Any, Concatenate, Generic, Iterator, Literal, Mapping, Self, Sized, TypeVar, Optional, Type, Union, cast, get_args
+from typing import Any, Concatenate, Generic, Iterator, Iterable, Literal, Mapping, Self, Sized, TypeVar, Optional, Type, Union, cast, get_args
 from enum import Enum, Flag, IntEnum, StrEnum, unique
 from dataclasses import dataclass, field
 from functools import reduce

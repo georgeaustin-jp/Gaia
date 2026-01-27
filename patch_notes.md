@@ -11,4 +11,7 @@
  * Altered effects of parries in enemy decision making
  * Increased damage and health of most enemies
  * Fixed bug where the incorrect type of effect would try to be removed from an entity when adding an effect to them which they already had been inflicted with
+ * Fixed bug where unique effects being applied would not remove the already applied unique effect
+ * Fixed bug where attacking while applying effects would also try and apply the weapon's parry ability
+ * Added 'loading' text
  

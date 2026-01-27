@@ -138,7 +138,7 @@ class FightingEntity(Stored):
     elif new_health > self.max_health:
       new_health = self.max_health
     self.set_health(new_health)
-    return f"Health set to {self.health}"
+    return f"Health set to {self.health:.{Constants.DEFAULT_ROUNDING_ACCURACY}f}HP"
 
   @append_message_info(0, descriptor="RAW", units="DMG", add_brackets=True)
   def take_damage(self, damage_amount: float) -> str:
@@ -218,20 +218,19 @@ class FightingEntity(Stored):
     return f"Extinguished"
   
   ## defending
-  @append_message_info(0, "RESIST", add_brackets=True, add_comma_at_end=True)
+  @append_message_info(0, "RESIST", add_brackets=True, add_comma_at_end=True, rounding_accuracy=3)
   def defend(self, resistance: float) -> str:
     if resistance < 0: raise ValueError(f"{resistance=} cannot be less than `0`.")
     self.damage_resistance += resistance
     return f"Defending"
 
-  @append_message_info("damage_resistance", "RESIST", add_brackets=True)
   def undefend(self, resistance: float) -> str:
     if resistance < 0: raise ValueError(f"{resistance=} cannot be less than `0`.")
     self.damage_resistance -= resistance
     return f"Defend ended"
 
   ## weakening
-  @append_message_info(0, descriptor="VULN", add_brackets=True, add_comma_at_end=True)
+  @append_message_info(0, descriptor="VULN", add_brackets=True, add_comma_at_end=True, rounding_accuracy=3)
   def weaken(self, vulnerability: float) -> str:
     if vulnerability < 0: raise ValueError(f"{vulnerability=} cannot be less than `0`.")
     self.damage_resistance -= vulnerability
@@ -262,7 +261,6 @@ class FightingEntity(Stored):
     self.parry_reflection_proportion = reflection_proportion
     return f"Parry engaged"
 
-  @prepend_message_info("name", add_colon_at_end=True, capitalise=True)
   def unengage_parry(self) -> str:
     self.is_parrying = False
     self.parry_damage_threshold = None
