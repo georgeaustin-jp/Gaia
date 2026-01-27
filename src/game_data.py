@@ -3,7 +3,7 @@ from tools.constants import *
 from tools.dictionary_tools import filter_dictionary, get_next_available_identifier, add_if_vacant
 from tools.generation_tools import *
 from tools.ability_names import *
-from tools.logging_tools import *
+from tools.logging_tools import * # required for `Loggable`
 
 from data_storage_var import DataStorageVar
 
@@ -676,7 +676,7 @@ class GameData(Loggable):
   def get_ability_action(self, ability_id: int, ability: Ability) -> AbilityAction:
     match ability.ability_type:
       case AbilityTypeName.IGNITE:
-        return IgniteAction()
+        return IgniteAction() # type: ignore
       case AbilityTypeName.HEAL:
         heal_ability = self.get_action_statistic_ability(ability_id)
         is_unique: bool = self.is_statistic_ability_unique(ability_id)

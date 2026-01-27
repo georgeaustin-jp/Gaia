@@ -1,6 +1,6 @@
 from tools.typing_tools import *
 from tools.dictionary_tools import *
-from tools.logging_tools import *
+from tools.logging_tools import * # required for `Loggable`
 
 from database.condition import Condition, get_condition_inverse
 

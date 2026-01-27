@@ -5,7 +5,7 @@ from tools.typing_tools import *
 from tools.dictionary_tools import add_if_vacant
 from tools.tkinter_tools import *
 from tools.constants import DefaultTkInitOptions, ToggleState
-from tools.logging_tools import *
+from tools.logging_tools import * # required for `Loggable`
 
 from custom_tkinter.toggleable_button import ToggleableButton
 

@@ -1,8 +1,6 @@
 import tkinter as tk
 import custom_tkinter as ctk
 
-from tools.logging_tools import *
-
 from tools.typing_tools import *
 from tools.constants import *
 from tools.dictionary_tools import filter_dictionary

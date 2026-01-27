@@ -1,6 +1,6 @@
 from tools.typing_tools import *
 from tools.custom_exceptions import *
-from tools.logging_tools import *
+from tools.logging_tools import * # required for `Loggable`
 
 class Queue[QueueType](Sized, Loggable):
   def __init__(self, queue: list[QueueType] = [], is_logging_enabled: bool = False, label: Optional[str] = None) -> None:

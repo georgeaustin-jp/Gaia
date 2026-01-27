@@ -4,7 +4,7 @@ from tools.typing_tools import *
 from tools.constants import *
 from tools.custom_exceptions import QuitInterrupt
 
-from tools.logging_tools import *
+from tools.logging_tools import * # required for `Loggable`
 
 from database.condition import Condition
 
@@ -19,8 +19,10 @@ from stored.entities.character import Character
 from stored.items.storage import Storage
 from stored.items.inventory_item import InventoryItem
 
-class App:
-  def __init__(self, is_dev_mode_enabled: bool = Constants.IS_DEV_MODE) -> None:
+class App(Loggable):
+  def __init__(self, is_dev_mode_enabled: bool = Constants.IS_DEV_MODE, is_logging_enabled: bool = False, tag: Optional[str] = "App", include_call_stack: bool = False) -> None:
+    super().__init__(is_logging_enabled, tag, include_call_stack)
+
     self.game_data = GameData(is_dev_mode_enabled)
     self.game_data.load_game_data()
 

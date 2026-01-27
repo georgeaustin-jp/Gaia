@@ -1,6 +1,6 @@
 from tools.typing_tools import *
 from tools.constants import TableName
-from tools.logging_tools import *
+from tools.logging_tools import * # required for `Loggable`
 
 from database.condition import Condition
 

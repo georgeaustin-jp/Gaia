@@ -1,5 +1,5 @@
 from tools.typing_tools import *
-from tools.logging_tools import *
+from tools.logging_tools import * # required for `Loggable`
 
 from ability_action import AbilityAction
 from data_structures.action_type import *
