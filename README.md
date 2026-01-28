@@ -1,6 +1,6 @@
 # Gaia
 
-*v1.0.0*
+*v1.0.1*
 
 *See `patch_notes.md` for additional information about this version*
 
@@ -22,17 +22,20 @@ Gaia is a turn-based combat game, taking inspiration from Terraria, Pokémon and
 
 Download and uncompress the latest release from the **Releases** section.
 
-If you are on windows or mac, enter the new folder, select the folder inside and right-click; it should have the same name as the folder you are currently in. Under the menu shown by the right-click, select the option to `open in terminal`. A terminal window with something looking like the following text appearing:
+If you are on Windows or Mac, enter the uncompressed folder in your file manager. If there are more folders, continue until you enter a directory containing multiple folders and files. Right-click here and select the option to `open in terminal`. A terminal window with something looking like the following text appearing (for Windows Powershell):
 
-```shell
-PS C:\...\Gaia-1.0.0\Gaia-1.0.0>
+```powershell
+PS C:\...\Gaia-1.0.1>
 ```
 
 where the `...` is the path to the place where you have saved the project.
 
+If you are using a non-Windows OS, please be aware that the GUI looks different for other platforms, so you may encounter some visual bugs.
+
 ### Dependencies
 
 python >=3.11, !=3.14.1
+
 poetry >=2.3.1
 
 Python can simply be installed from the Python website.
@@ -60,6 +63,15 @@ For each round of combat, you can select 2 actions out of the following:
 Once you have selected your actions, the enemies will select theirs. The actions of both sides will then be executed in sequence.
 
 You win once all your enemies have been killed. If you are killed, then you die and return home.
+
+### Abilities
+
+Each weapon's attack can have abilities which go alongside it. These are as follows:
+ * Ignition (Ig): deals 3 damage per turn for 3 turns
+ * Pierce (Pr): all damage resistances are ignored
+ * Weaken (Wk): temporarily reduce damage resistance of target
+ * Parry (Pa): block up to a certain threshold of damage, with a percentage of the damage blocked being sent back to attacking enemies
+ * Defend (Df): increase damage resistance
 
 ## Information for testers
 

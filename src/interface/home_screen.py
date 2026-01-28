@@ -21,10 +21,10 @@ class HomeScreen(AbstractScreen):
     self.create_world_name_label(placement_options=state_name_label_placement_options)
     
     open_storage: Callable[[], None] = kwargs["open_storage"]
-    self.create_widget(tk.Button, text="Open storage", command=lambda: open_storage())
+    self.create_button(text="Open storage", command=lambda: open_storage())
 
     go_exploring: Callable[[], None] = kwargs["go_exploring"]
-    self.create_widget(tk.Button, text="Go exploring", command=lambda: go_exploring())
+    self.create_button(text="Go exploring", command=lambda: go_exploring())
 
     self.create_return(ScreenName.WORLD_SELECTION, return_message="Return to world selection")
     self.create_quit()

@@ -1,17 +1,16 @@
 # Patch notes
 
-*v1.0.0*
+*v1.0.1*
 
- * Fixed bug where an error would be thrown to the terminal upon trying to enter combat with more than 4 items
- * Fixed bug where data stored in memory would be deleted upon saving
- * Replaced terminal quit error with a quit message
- * Slightly changed some weapon stats
- * Made non-health attributes less significant in enemy decision making
- * Made average of character state attributes less significant in enemy decision making
- * Altered effects of parries in enemy decision making
- * Increased damage and health of most enemies
- * Fixed bug where the incorrect type of effect would try to be removed from an entity when adding an effect to them which they already had been inflicted with
- * Fixed bug where unique effects being applied would not remove the already applied unique effect
- * Fixed bug where attacking while applying effects would also try and apply the weapon's parry ability
- * Added 'loading' text
+ * Added weapon info to inventory and weapon interfaces
+ * Increased minimum number of enemies encountered (1->2)
+ * Increased health of most enemies by 15%
+ * Increased attack damage of most enemies by 20%
+ * Slightly increased damage of some weapons
+ * Fixed bug where incorrect action messages would appear with visual glitches
+ * Changed some weapon abilities
+ * Balanced parrying of some weapons
+ * Significantly increased boss encounter probability
+ * Added 'Abilities' description section to `README.md` 
+ * Added additional info to the installation guide section of `README.md`
  

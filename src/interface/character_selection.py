@@ -40,5 +40,5 @@ class CharacterSelection(Selection):
     super().create(title="Character selection", dimensions=(1,3), **kwargs)
 
     creation_command: Callable[[Optional[dict[str, Any]]], None] = kwargs["begin_character_creation"]
-    self.create_widget(tk.Button, text="Create character", command=lambda: creation_command(None))
+    self.create_button(text="Create character", command=lambda: creation_command(None))
     self.create_quit()

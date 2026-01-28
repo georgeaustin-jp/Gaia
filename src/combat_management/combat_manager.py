@@ -249,6 +249,7 @@ class CombatManager:
         raise e # this should never occur. If it does, then the program should properly raise the error
       except AbstractError as e:
         error_message_info = e.info()
+        logging.debug(f"{error_message_info=}")
       finally:
         if error_message_info == None:
           successful_input = True

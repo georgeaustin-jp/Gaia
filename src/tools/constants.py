@@ -29,7 +29,7 @@ class ScreenName(StrEnum):
 @dataclass
 class Constants:
   IS_DEV_MODE: bool = False
-  LOGGING_LEVEL: int = logging.CRITICAL
+  LOGGING_LEVEL: int = logging.DEBUG
   # constants related to the flow of combat:
   MIN_REMAINING_ACTIONS: int = 0
   MAX_REMAINING_PLAYER_ACTIONS: int = 2
@@ -41,9 +41,9 @@ class Constants:
   HEALTH_POTION_AMOUNT: float = 20
   GRID_WIDTH: int = 3
   GRID_HEIGHT: int = 3
-  MIN_ENEMIES: int = 1
+  MIN_ENEMIES: int = 2
   MAX_ENEMIES: int = 5
-  BOSS_ENCOUNTER_PROBABILITY: float = 0.08
+  BOSS_ENCOUNTER_PROBABILITY: float = 0.15
   IGNITE_DURATION: int = 3
   IGNITE_DAMAGE: float = 3
   # constants related to the GUI and screens:
@@ -63,6 +63,8 @@ class Constants:
   WEAPON_INTERFACE_DIMENSIONS: Position = (4,3)
   DEFAULT_FONT: str = "Segoe UI"
   DEFAULT_FONT_SIZE: int = 9
+  DEFAULT_WIDGET_PAD: int = 2
+  DEFAULT_BUTTON_PAD: int = 4
   # constants related to exploration
   COMBAT_ENCOUNTER_PROBABILITY: float = 0.6
   STRUCTURE_ENCOUNTER_PROBABILITY: float = 0.55
@@ -99,7 +101,7 @@ class DefaultTkInitOptions():
   """
   # placement
   ## general
-  GRID: dict[str, Any] = field(default_factory=lambda: {"sticky": "nsew", "padx": 1, "pady": 1})
+  GRID: dict[str, Any] = field(default_factory=lambda: {"sticky": "nsew", "padx": Constants.DEFAULT_WIDGET_PAD, "pady": Constants.DEFAULT_WIDGET_PAD})
   PACK: dict[str, Any] = field(default_factory=lambda: {"expand": True, "fill": tk.NONE})
   ## widget specific
   FRAME_PACK: dict[str, Any] = field(default_factory=lambda: {"fill": tk.BOTH})
@@ -108,9 +110,9 @@ class DefaultTkInitOptions():
   # widget creation
   WIDGET: dict[str, Any] = field(default_factory=lambda: {"borderwidth": 2}) # applied to all widgets
   LABEL: dict[str, Any] = field(default_factory=lambda: {})
-  BUTTON: dict[str, Any] = field(default_factory=lambda: {"padx": 2, "pady": 2})
-  DYNAMIC_BUTTON: dict[str, Any] = field(default_factory=lambda: {"padx": 2, "pady": 2, "anchor": tk.CENTER})
-  FRAME: dict[str, Any] = field(default_factory=lambda: {"relief": tk.RIDGE, "padx": 2, "pady": 2})
+  BUTTON: dict[str, Any] = field(default_factory=lambda: {"padx": Constants.DEFAULT_BUTTON_PAD, "pady": Constants.DEFAULT_BUTTON_PAD})
+  DYNAMIC_BUTTON: dict[str, Any] = field(default_factory=lambda: {"padx": Constants.DEFAULT_BUTTON_PAD, "pady": Constants.DEFAULT_BUTTON_PAD, "anchor": tk.CENTER})
+  FRAME: dict[str, Any] = field(default_factory=lambda: {"relief": tk.RIDGE, "padx": Constants.DEFAULT_WIDGET_PAD, "pady": Constants.DEFAULT_WIDGET_PAD})
   CTK_SCROLLABLE_FRAME: dict[str, Any] = field(default_factory=lambda: {"corner_radius": 0})
   WEAPON_INTERFACE_DESCRIPTORS: dict[str, Any] = field(default_factory=lambda: {"relief": tk.SOLID, "borderwidth": 1, "padx": 1, "pady": 1})
 

@@ -96,7 +96,7 @@ class CombatScreen(AbstractScreen):
     self.weapon_interfaces = weapon_interfaces
   
   def load_weapon_label_names(self) -> None:
-    weapon_names: list[str] = self.game_data.get_equipped_weapon_names()
+    weapon_names: list[str] = self.game_data.get_all_equipped_weapon_display_names()
     for (i, weapon_name) in enumerate(weapon_names):
       self.weapon_interfaces[i].weapon_name = weapon_name
 
@@ -106,7 +106,7 @@ class CombatScreen(AbstractScreen):
       weapon_interface.load()
       return None
     weapon_identifier: int = self.game_data.equipped_weapon_identifiers[index]
-    equipped_weapon_names: list[str] = self.game_data.get_equipped_weapon_names()
+    equipped_weapon_names: list[str] = self.game_data.get_all_equipped_weapon_display_names()
     weapon_name: Optional[str] = equipped_weapon_names[index]
     weapon: Weapon = self.game_data.weapons[weapon_identifier]
     attack_damage: float = weapon.damage

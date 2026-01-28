@@ -1,5 +1,6 @@
 from tools.typing_tools import *
 from tools.constants import BaseDatabaseStrEnum
+from tools.custom_exceptions import *
 
 # enums
 
@@ -34,3 +35,15 @@ def ability_type_name_to_abstract_ability_class_name(ability_type_name: AbilityT
   if ability_type_name in [AbilityTypeName.WEAKEN, AbilityTypeName.DEFEND, AbilityTypeName.HEAL]:
     return AbstractAbilityClassName.STATISTIC
   return None
+
+def get_ability_type_name_qualifier(ability_type_name: AbilityTypeName) -> str:
+  message: str = ""
+  match ability_type_name:
+    case AbilityTypeName.PARRY: message = "Pa"
+    case AbilityTypeName.WEAKEN: message = "Wk"
+    case AbilityTypeName.DEFEND: message = "Df"
+    case AbilityTypeName.HEAL: message = "He"
+    case AbilityTypeName.IGNITE: message = "Ig"
+    case AbilityTypeName.PIERCE: message = "Pr"
+    case _: raise UnexpectedAbilityTypeNameError(ability_type_name)
+  return message

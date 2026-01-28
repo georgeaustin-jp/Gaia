@@ -155,6 +155,9 @@ class StorageScreen(AbstractScreen):
     item_id: int = storage_item.item_id
     item: Item = self.game_data.items[item_id]
     item_name: str = item.name
+    if item.item_type == ItemType.WEAPON:
+      weapon_identifier: int = self.game_data.get_weapon_id_from_item_id(item_id)
+      item_name = self.game_data.get_equipped_weapon_display_name(weapon_identifier, item_name, is_for_inventory=True)
     # creating the frame
     item_frame: tk.Frame = unpack_optional(self.create_frame_on_grid((0,index), container=container, dimensions=(5,1), exclude_columns=[0,2,3,4], return_frame=True, placement_options={"sticky": "ew"}, **kwargs))
     # populating it
@@ -169,7 +172,7 @@ class StorageScreen(AbstractScreen):
       equip_button.command = self.equip_button_command_generator(equip_button, abstract_storage_item_id, switch_button) # disables swap button when the item is equipped
       switch_button.is_enabled = not initially_toggled
     ## other
-    self.create_widget_on_grid(tk.Label, (1,0), container=item_frame, text=item_name) # name of item
+    self.create_widget_on_grid(tk.Label, (1,0), container=item_frame, text=item_name, wraplength=300) # name of item
     unpack_optional(self.create_widget_on_grid(tk.Label, (2,0), container=item_frame, text=f"[{item.item_type}]", return_widget=True)).configure(font=self.itallics_font) # item type
     self.create_widget_on_grid(tk.Label, (3,0), container=item_frame, text=f"({str(stack_size)})") # stack size
 

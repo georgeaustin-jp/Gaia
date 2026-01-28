@@ -6,12 +6,14 @@ from game_data import GameData
 from interface.abstract_screen import AbstractScreen
 
 class Creation(AbstractScreen):
-  def __init__(self, root, parent: tk.Frame, game_data: GameData, **kwargs) -> None:
+  def __init__(self, root, parent: tk.Frame, game_data: GameData, default_entry_string: str, **kwargs) -> None:
+    self.DEFAULT_ENTRY_STRING: str = default_entry_string
+    self.entry_field: tk.StringVar = tk.StringVar()
     super().__init__(root, parent, game_data, **kwargs)
 
-  def create_entry(self, prompt: str, entry_string: tk.StringVar) -> None:
+  def create_entry(self, prompt: str, entry_field: tk.StringVar) -> None:
     self.create_widget(tk.Label, text=prompt)
-    self.create_widget(tk.Entry, textvariable=entry_string)
+    self.create_widget(tk.Entry, textvariable=entry_field)
   
   def get_name_invalidity_message(self, name: str, existing_names: list[str]) -> Optional[str]:
     """
@@ -25,8 +27,12 @@ class Creation(AbstractScreen):
   def fail_creation(self, message: str) -> None:
     self.message.set(message)
 
+  def reset_entry_field(self, entry_field: tk.StringVar) -> None:
+    entry_field.set(self.DEFAULT_ENTRY_STRING)
+
   def load(self, **kwargs) -> None:
-    return super().load(**kwargs)
+    self.reset_entry_field(self.entry_field)
+    super().load(**kwargs)
   
   def create(self, title: str = "", **kwargs) -> None:
-    return super().create(title, **kwargs)
+    super().create(title, **kwargs)

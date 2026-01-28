@@ -222,7 +222,7 @@ class GameData(Loggable):
       ## misc
       9: Item(ItemType.WEAPON, "The Mace", loaded=False),
       10: Item(ItemType.WEAPON, "Gauntlets of Muspelheim", loaded=False),
-      11: Item(ItemType.WEAPON, "Pickaxe-Axe", loaded=False),
+      11: Item(ItemType.WEAPON, "Metorite Pickaxe-Axe", loaded=False),
 
       # 11 equipables (2 starter)
       ## starters
@@ -241,15 +241,15 @@ class GameData(Loggable):
       22: Item(ItemType.EQUIPABLE, "Traveller's Boots", loaded=False),
     })
     self.weapons.set({
-      0: Weapon(0, 7, loaded=False), # Tin Dagger
-      1: Weapon(1, 4, loaded=False), # Mahogany Staff
+      0: Weapon(0, 9, loaded=False), # Tin Dagger
+      1: Weapon(1, 6, loaded=False), # Mahogany Staff
       2: Weapon(2, 19, loaded=False), # Glass Dagger
       3: Weapon(3, 15, loaded=False), # Surtur's Brimstone Dagger
       4: Weapon(4, 13, loaded=False), # Spear-Staff
-      5: Weapon(5, 6, loaded=False), # Runic Sceptre
+      5: Weapon(5, 7, loaded=False), # Runic Sceptre
       6: Weapon(6, 16, loaded=False), # Excalibur
       7: Weapon(7, 14, loaded=False), # Crimson Broadsword
-      8: Weapon(8, 13, loaded=False), # Sabre of the World Tree
+      8: Weapon(8, 12, loaded=False), # Sabre of the World Tree
       9: Weapon(9, 10, loaded=False), # The Mace
       10: Weapon(10, 8, loaded=False), # Gauntlets of Muspelheim
       11: Weapon(11, 14, loaded=False), # Pickaxe-Axe
@@ -270,28 +270,28 @@ class GameData(Loggable):
     self.enemies.set({
       # 15 regular enemies
       ## skeleton
-      0: Enemy("Skeleton", 18, 7, 20, is_boss=False, loaded=False),
-      1: Enemy("Brimstone Skeleton", 16, 6, 17, is_boss=False, loaded=False),
-      2: Enemy("Skeleton Archer", 18, 7, 23, is_boss=False, loaded=False),
-      3: Enemy("Armoured Skeleton", 27, 6, 22, is_boss=False, loaded=False),
+      0: Enemy("Skeleton", 21, 9, 20, is_boss=False, loaded=False),
+      1: Enemy("Brimstone Skeleton", 19, 7, 17, is_boss=False, loaded=False),
+      2: Enemy("Skeleton Archer", 21, 8, 23, is_boss=False, loaded=False),
+      3: Enemy("Armoured Skeleton", 31, 7, 22, is_boss=False, loaded=False),
       ## spiders
-      4: Enemy("Hunting Spider", 8, 5, 10, is_boss=False, loaded=False),
-      5: Enemy("Large Hunting Spider", 15, 6, 12, is_boss=False, loaded=False),
-      6: Enemy("Vampiric Hunting Spider", 14, 6, 16, is_boss=False, loaded=False),
+      4: Enemy("Hunting Spider", 10, 8, 10, is_boss=False, loaded=False),
+      5: Enemy("Large Hunting Spider", 19, 8, 12, is_boss=False, loaded=False),
+      6: Enemy("Vampiric Hunting Spider", 20, 8, 16, is_boss=False, loaded=False),
       ## possesed objects
-      7: Enemy("Possesed Armour", 38, 9, 24, is_boss=False, loaded=False),
-      8: Enemy("Posessed Blades", 24, 12, 19, is_boss=False, loaded=False),
-      9: Enemy("Posessed Flaming Skull", 9, 6, 28, is_boss=False, loaded=False),
+      7: Enemy("Possesed Armour", 44, 11, 24, is_boss=False, loaded=False),
+      8: Enemy("Posessed Blades", 28, 15, 19, is_boss=False, loaded=False),
+      9: Enemy("Posessed Flaming Skull", 11, 9, 28, is_boss=False, loaded=False),
       ## misc
-      10: Enemy("Mimic", 22, 16, 35, is_boss=False, loaded=False),
-      11: Enemy("Chaos Spawn", 19, 11, 50, is_boss=False, loaded=False),
-      12: Enemy("Resurrected Knight", 26, 13, 40, is_boss=False, loaded=False),
-      13: Enemy("Rabid Boar", 13, 5, 8, is_boss=False, loaded=False),
-      14: Enemy("Shep", 5, 1, 1, is_boss=False, loaded=False),
+      10: Enemy("Mimic", 30, 20, 35, is_boss=False, loaded=False),
+      11: Enemy("Chaos Spawn", 23, 28, 50, is_boss=False, loaded=False),
+      12: Enemy("Resurrected Knight", 30, 16, 40, is_boss=False, loaded=False),
+      13: Enemy("Rabid Boar", 15, 6, 8, is_boss=False, loaded=False),
+      14: Enemy("Shep", 5, 2, 1, is_boss=False, loaded=False),
       # 3 bosses
-      15: Enemy("Elite Skeleton Warrior", 135, 26, 100, is_boss=True, loaded=False),
-      16: Enemy("Giant Hunting Spider", 165, 23, 90, is_boss=True, loaded=False),
-      17: Enemy("Seeker of Chaos", 120, 35, 150, is_boss=True, loaded=False),
+      15: Enemy("Elite Skeleton Warrior", 156, 32, 100, is_boss=True, loaded=False),
+      16: Enemy("Giant Hunting Spider", 190, 30, 90, is_boss=True, loaded=False),
+      17: Enemy("Seeker of Chaos", 140, 45, 150, is_boss=True, loaded=False),
     })
     self.enemy_abilities.set({
       # ignition
@@ -366,42 +366,43 @@ class GameData(Loggable):
       7: StatisticAbility(18, AbilityTypeName.DEFEND, 0.05, None, is_unique=False, loaded=False),
     })
     self.parry_abilities.set({
-      0: ParryAbility(7, 7, 0.3, loaded=False), # Mahogany Staff
+      0: ParryAbility(7, 7, 0.25, loaded=False), # Mahogany Staff
       1: ParryAbility(8, 4, 0.8, loaded=False), # Surtur's Brimstone Dagger
-      2: ParryAbility(9, 9, 0.4, loaded=False), # Spear-Staff
+      2: ParryAbility(9, 9, 0.6, loaded=False), # Spear-Staff
       3: ParryAbility(10, 12, 0.45, loaded=False), # Runic Sceptre
       4: ParryAbility(11, 8, 0.35, loaded=False), # Crimson Broadsword
-      5: ParryAbility(12, 7, 0.9, loaded=False), # Sabre of the World Tree
-      6: ParryAbility(13, 11, 0.3, loaded=False), # The Mace
-      7: ParryAbility(14, 11, 0.25, loaded=False), # Gauntlets of Muspelheim
+      5: ParryAbility(12, 7, 0.7, loaded=False), # Sabre of the World Tree
+      6: ParryAbility(13, 10, 0.3, loaded=False), # The Mace
+      7: ParryAbility(14, 10, 0.25, loaded=False), # Gauntlets of Muspelheim
       8: ParryAbility(15, 8, 0.55, loaded=False), # Pickaxe-Axe
-      9: ParryAbility(19, 2, 0.5, loaded=False), # Tin Dagger
+      9: ParryAbility(19, 3, 0.55, loaded=False), # Tin Dagger
     })
     self.item_abilities.set({
       # ignition
-      0: ItemAbility(3, 0, loaded=False),
-      1: ItemAbility(10, 0, loaded=False),
+      0: ItemAbility(3, 0, loaded=False), # Surtur's Brimstone Dagger
+      1: ItemAbility(10, 0, loaded=False), # Gauntlets of Muspelheim
+      2: ItemAbility(11, 0, loaded=False), # Pickaxe-Axe
       # piercing
-      2: ItemAbility(2, 1, loaded=False),
-      3: ItemAbility(4, 1, loaded=False),
-      4: ItemAbility(9, 1, loaded=False),
-      5: ItemAbility(11, 1, loaded=False),
+      3: ItemAbility(4, 1, loaded=False), # Spear-Staff
+      4: ItemAbility(9, 1, loaded=False), # The Mace
+      5: ItemAbility(11, 1, loaded=False), # Pickaxe-Axe
+      30: ItemAbility(6, 1, loaded=False), # Excalibur
       # weakening
-      6: ItemAbility(5, 2, loaded=False),
-      7: ItemAbility(7, 2, loaded=False),
-      8: ItemAbility(10, 2, loaded=False),
+      6: ItemAbility(5, 2, loaded=False), # Runic Sceptre
+      7: ItemAbility(7, 2, loaded=False), # Crimson Broadsword
+      8: ItemAbility(10, 2, loaded=False), # Gauntlets of Muspelheim
       # defending
-      9: ItemAbility(12, 16, loaded=False),
-      10: ItemAbility(13, 16, loaded=False),
-      11: ItemAbility(14, 17, loaded=False),
-      12: ItemAbility(15, 17, loaded=False),
-      13: ItemAbility(16, 17, loaded=False),
-      14: ItemAbility(17, 17, loaded=False),
-      15: ItemAbility(18, 17, loaded=False),
-      16: ItemAbility(19, 18, loaded=False),
-      17: ItemAbility(20, 18, loaded=False),
-      18: ItemAbility(21, 18, loaded=False),
-      19: ItemAbility(22, 18, loaded=False),
+      9: ItemAbility(12, 16, loaded=False), # 
+      10: ItemAbility(13, 16, loaded=False), # 
+      11: ItemAbility(14, 17, loaded=False), # 
+      12: ItemAbility(15, 17, loaded=False), # 
+      13: ItemAbility(16, 17, loaded=False), # 
+      14: ItemAbility(17, 17, loaded=False), # 
+      15: ItemAbility(18, 17, loaded=False), # 
+      16: ItemAbility(19, 18, loaded=False), # 
+      17: ItemAbility(20, 18, loaded=False), # 
+      18: ItemAbility(21, 18, loaded=False), # 
+      19: ItemAbility(22, 18, loaded=False), # 
       # parrying
       20: ItemAbility(1, 7, loaded=False), # Mahogany Staff
       21: ItemAbility(3, 8, loaded=False), # Surtur's Brimstone Dagger
@@ -659,6 +660,58 @@ class GameData(Loggable):
 
   def get_equipped_weapon_names(self) -> list[str]:
     return [self.items[self.weapons[i].item_id].name for i in self.equipped_weapon_identifiers]
+  
+  def get_ability_tag(self, ability: Ability) -> str:
+    return get_ability_type_name_qualifier(ability.ability_type)
+  
+  def get_ability_tag_list(self, abilities: list[Ability]) -> list[str]:
+    ability_tag_list: list[str] = []
+    if len(abilities) == 0: return []
+    for ability in abilities:
+      ability_tag_list.append(self.get_ability_tag(ability))
+    return ability_tag_list
+  
+  def format_ability_tag_list(self, ability_tag_list: list[str]) -> str:
+    ability_tag_list_length: int = len(ability_tag_list)
+    if ability_tag_list_length == 0: return ""
+    last_tag_index: int = ability_tag_list_length - 1
+    formatted_ability_tag_list: str = " ("
+    for (i, ability_tag) in enumerate(ability_tag_list):
+      formatted_ability_tag_list += f"{ability_tag}"
+      if i != last_tag_index: formatted_ability_tag_list += ", "
+    formatted_ability_tag_list += ")"
+    return formatted_ability_tag_list
+  
+  def get_equipped_weapon_display_name(self, weapon_identifier: int, weapon_name: str, is_for_inventory: bool = False, includes_weapon_name: bool = True) -> str:
+    message: str = ""
+    if includes_weapon_name: message += f"{weapon_name}"
+    weapon: Weapon = self.weapons[weapon_identifier]
+    weapon_abilities: list[Ability] = list(self.get_non_parry_weapon_abilities(weapon).values())
+    ability_tag_list: list[str] = self.get_ability_tag_list(weapon_abilities)
+    weapon_qualifiers: str = self.format_ability_tag_list(ability_tag_list)
+    if is_for_inventory:
+      message += f" ({weapon.damage:.0f} DMG"
+      parry_ability: Optional[ParryAbility] = self.get_weapon_parry(weapon)
+      if parry_ability != None:
+        message += f", {parry_ability.damage_threshold:.0f} MAX, {parry_ability.reflection_proportion*100:.0f}% RLFC"
+      message += f")"
+    message += f"{weapon_qualifiers}"
+    return message
+  
+  def get_all_equipped_weapon_display_names(self, is_for_inventory: bool = False) -> list[str]:
+    equipped_weapon_names: list[str] = self.get_equipped_weapon_names()
+    weapon_display_names: list[str] = []
+    for (i, weapon_identifier) in enumerate(self.equipped_weapon_identifiers):
+      weapon_name: str = equipped_weapon_names[i]
+      weapon_display_names.append(self.get_equipped_weapon_display_name(weapon_identifier, weapon_name, is_for_inventory))
+    return weapon_display_names
+  
+  def get_weapon_id_from_item_id(self, item_id: int) -> int:
+    is_weapon_item: Callable[[int, Weapon], bool] = lambda _, weapon: weapon.item_id == item_id
+    selected_weapons: dict[int, Weapon] = filter_dictionary(self.weapons.data, is_weapon_item)
+    if len(selected_weapons) > 1: raise MultipleWeaponsFoundError(item_id, selected_weapons)
+    elif len(selected_weapons) == 0: raise NoWeaponsFoundError(item_id)
+    return list(selected_weapons.keys())[0]
   
   # abilities
 

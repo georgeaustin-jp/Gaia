@@ -99,7 +99,7 @@ class ExplorationScreen(AbstractScreen):
   def create(self, enter_structure: ButtonCommand, begin_combat: ButtonCommand, **kwargs):
     self.create_button(text="Open inventory", command=lambda: self.open_inventory())
 
-    self.continue_exploration_button = unpack_optional(self.create_widget(tk.Button, text="Continue exploration", command=lambda: self.continue_exploration(), return_widget=True))
+    self.continue_exploration_button = unpack_optional(self.create_button(text="Continue exploration", command=lambda: self.continue_exploration(), return_button=True))
 
     self.create_message()
 
@@ -116,5 +116,5 @@ class ExplorationScreen(AbstractScreen):
     self.create_quit()
     
     if self.game_data.is_dev_mode_enabled:
-      self.create_widget(tk.Button, text="DEV_MODE: Enter combat", command=lambda: begin_combat())
-      self.create_widget(tk.Button, text="DEV_MODE: Enter structure", command=lambda: enter_structure())
+      self.create_button(text="DEV_MODE: Enter combat", command=lambda: begin_combat())
+      self.create_button(text="DEV_MODE: Enter structure", command=lambda: enter_structure())

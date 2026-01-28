@@ -8,14 +8,12 @@ from game_data import GameData
 
 class CharacterCreation(Creation):
   def __init__(self, root, parent: tk.Frame, game_data: GameData, **kwargs) -> None:
-    self.entered_name = tk.StringVar()
-    self.message = tk.StringVar()
-    self.message.set("...")
     self.confirm_creation: Callable[[str], None] = kwargs["create_character"]
-    super().__init__(root, parent, game_data, **kwargs)
+    super().__init__(root, parent, game_data, "", **kwargs)
+    self.message.set("...")
 
   def create_character(self) -> None:
-    new_character_name: str = self.entered_name.get()
+    new_character_name: str = self.entry_field.get()
     existing_character_names: list[str] = [character.name for character in self.game_data.characters.values()]
     name_invalidity_message: Optional[str] = self.get_name_invalidity_message(new_character_name, existing_character_names)
     if name_invalidity_message == None: return self.confirm_creation(new_character_name)
@@ -29,7 +27,7 @@ class CharacterCreation(Creation):
   def create(self, **kwargs) -> None:
     super().create(title="Character creation", **kwargs)
 
-    self.create_entry("Enter character name:", self.entered_name)
+    self.create_entry("Enter character name:", self.entry_field)
 
     self.create_message()
 
