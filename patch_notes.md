@@ -13,4 +13,5 @@
  * Significantly increased boss encounter probability
  * Added 'Abilities' description section to `README.md` 
  * Added additional info to the installation guide section of `README.md`
+ * Reduced health potion heal amount (20->18)
  

@@ -29,7 +29,7 @@ class ScreenName(StrEnum):
 @dataclass
 class Constants:
   IS_DEV_MODE: bool = False
-  LOGGING_LEVEL: int = logging.DEBUG
+  LOGGING_LEVEL: int = logging.CRITICAL
   # constants related to the flow of combat:
   MIN_REMAINING_ACTIONS: int = 0
   MAX_REMAINING_PLAYER_ACTIONS: int = 2
@@ -38,7 +38,7 @@ class Constants:
   # constants related to the fighting part of combat:
   MAX_EQUIPPED_WEAPONS: int = 3
   MAX_EQUIPPED_EQUIPABLES: int = 4
-  HEALTH_POTION_AMOUNT: float = 20
+  HEALTH_POTION_AMOUNT: float = 18
   GRID_WIDTH: int = 3
   GRID_HEIGHT: int = 3
   MIN_ENEMIES: int = 2
