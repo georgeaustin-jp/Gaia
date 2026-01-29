@@ -183,7 +183,6 @@ class CombatManager:
     if is_character_winner != None: return is_character_winner # base_case
   
     self.add_round_start_info(self.round_number)
-    logging.debug(f"{self.round_number=}")
 
     try:
       self.start_character_turn()
@@ -364,9 +363,7 @@ class CombatManager:
     raise UnknownActionError(f"Unknown {action_name=} for {fighting_enemy=}.") # enemies can only use healing or attacking actions; anything else is erroneous
 
   def end_enemies_turn(self) -> None:
-    logging.debug(f"BEFORE: self.effect_manager.character_effects = {format_iterable(self.effect_manager.character_effects)}")
     self.execute_all_actions()
-    logging.debug(f"AFTER: self.effect_manager.character_effects = {format_iterable(self.effect_manager.character_effects)}")
     effect_inflict_messages: list[Optional[str]] = self.effect_manager.inflict_active_effects_to_all_fighting_entities()
     self.add_info_list(effect_inflict_messages)
     self.remove_dead_fighting_enemies()

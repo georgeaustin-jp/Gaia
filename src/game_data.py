@@ -207,7 +207,7 @@ class GameData(Loggable):
     self.items.set({
       # 12 weapons (2 starter)
       ## starters
-      0: Item(ItemType.WEAPON, "Tin Dagger", loaded=False),
+      0: Item(ItemType.WEAPON, "Ancient Tin Dagger", loaded=False),
       1: Item(ItemType.WEAPON, "Mahogany Staff", loaded=False),
       ## daggers: high damage with weak parry
       2: Item(ItemType.WEAPON, "Glass Dagger", loaded=False),
@@ -241,18 +241,18 @@ class GameData(Loggable):
       22: Item(ItemType.EQUIPABLE, "Traveller's Boots", loaded=False),
     })
     self.weapons.set({
-      0: Weapon(0, 9, loaded=False), # Tin Dagger
-      1: Weapon(1, 6, loaded=False), # Mahogany Staff
-      2: Weapon(2, 19, loaded=False), # Glass Dagger
-      3: Weapon(3, 15, loaded=False), # Surtur's Brimstone Dagger
+      0: Weapon(0, 9, loaded=False), # Ancient Tin Dagger
+      1: Weapon(1, 7, loaded=False), # Mahogany Staff
+      2: Weapon(2, 17, loaded=False), # Glass Dagger
+      3: Weapon(3, 13, loaded=False), # Surtur's Brimstone Dagger
       4: Weapon(4, 13, loaded=False), # Spear-Staff
       5: Weapon(5, 7, loaded=False), # Runic Sceptre
       6: Weapon(6, 16, loaded=False), # Excalibur
       7: Weapon(7, 14, loaded=False), # Crimson Broadsword
       8: Weapon(8, 12, loaded=False), # Sabre of the World Tree
-      9: Weapon(9, 10, loaded=False), # The Mace
+      9: Weapon(9, 11, loaded=False), # The Mace
       10: Weapon(10, 8, loaded=False), # Gauntlets of Muspelheim
-      11: Weapon(11, 14, loaded=False), # Pickaxe-Axe
+      11: Weapon(11, 11, loaded=False), # Metorite Pickaxe-Axe
     })
     self.equipables.set({
       0: Equipable(12, loaded=False), # Leather Boots
@@ -270,23 +270,23 @@ class GameData(Loggable):
     self.enemies.set({
       # 15 regular enemies
       ## skeleton
-      0: Enemy("Skeleton", 21, 9, 20, is_boss=False, loaded=False),
-      1: Enemy("Brimstone Skeleton", 19, 7, 17, is_boss=False, loaded=False),
-      2: Enemy("Skeleton Archer", 21, 8, 23, is_boss=False, loaded=False),
-      3: Enemy("Armoured Skeleton", 31, 7, 22, is_boss=False, loaded=False),
+      0: Enemy("Skeleton", 21, 11, 20, is_boss=False, loaded=False),
+      1: Enemy("Brimstone Skeleton", 19, 9, 17, is_boss=False, loaded=False),
+      2: Enemy("Skeleton Archer", 21, 10, 23, is_boss=False, loaded=False),
+      3: Enemy("Armoured Skeleton", 31, 9, 22, is_boss=False, loaded=False),
       ## spiders
       4: Enemy("Hunting Spider", 10, 8, 10, is_boss=False, loaded=False),
       5: Enemy("Large Hunting Spider", 19, 8, 12, is_boss=False, loaded=False),
-      6: Enemy("Vampiric Hunting Spider", 20, 8, 16, is_boss=False, loaded=False),
+      6: Enemy("Vampiric Hunting Spider", 18, 8, 16, is_boss=False, loaded=False),
       ## possesed objects
       7: Enemy("Possesed Armour", 44, 11, 24, is_boss=False, loaded=False),
       8: Enemy("Posessed Blades", 28, 15, 19, is_boss=False, loaded=False),
       9: Enemy("Posessed Flaming Skull", 11, 9, 28, is_boss=False, loaded=False),
       ## misc
       10: Enemy("Mimic", 30, 20, 35, is_boss=False, loaded=False),
-      11: Enemy("Chaos Spawn", 23, 28, 50, is_boss=False, loaded=False),
+      11: Enemy("Chaos Spawn", 23, 26, 50, is_boss=False, loaded=False),
       12: Enemy("Resurrected Knight", 30, 16, 40, is_boss=False, loaded=False),
-      13: Enemy("Rabid Boar", 15, 6, 8, is_boss=False, loaded=False),
+      13: Enemy("Rabid Boar", 15, 8, 8, is_boss=False, loaded=False),
       14: Enemy("Shep", 5, 2, 1, is_boss=False, loaded=False),
       # 3 bosses
       15: Enemy("Elite Skeleton Warrior", 156, 32, 100, is_boss=True, loaded=False),
@@ -346,7 +346,7 @@ class GameData(Loggable):
       13: Ability("", AbilityTypeName.PARRY, loaded=False), # The Mace
       14: Ability("", AbilityTypeName.PARRY, loaded=False), # Gauntlets of Muspelheim
       15: Ability("", AbilityTypeName.PARRY, loaded=False), # Pickaxe-Axe
-      19: Ability("", AbilityTypeName.PARRY, loaded=False), # Tin Dagger
+      19: Ability("", AbilityTypeName.PARRY, loaded=False), # Ancient Tin Dagger
       ## equipables
       16: Ability("Low resistance (1%)", AbilityTypeName.DEFEND, loaded=False),
       17: Ability("Medium resistance (2.5%)", AbilityTypeName.DEFEND, loaded=False),
@@ -366,16 +366,16 @@ class GameData(Loggable):
       7: StatisticAbility(18, AbilityTypeName.DEFEND, 0.05, None, is_unique=False, loaded=False),
     })
     self.parry_abilities.set({
-      0: ParryAbility(7, 7, 0.25, loaded=False), # Mahogany Staff
-      1: ParryAbility(8, 4, 0.8, loaded=False), # Surtur's Brimstone Dagger
-      2: ParryAbility(9, 9, 0.6, loaded=False), # Spear-Staff
-      3: ParryAbility(10, 12, 0.45, loaded=False), # Runic Sceptre
-      4: ParryAbility(11, 8, 0.35, loaded=False), # Crimson Broadsword
-      5: ParryAbility(12, 7, 0.7, loaded=False), # Sabre of the World Tree
+      0: ParryAbility(7, 7, 0.35, loaded=False), # Mahogany Staff
+      1: ParryAbility(8, 4, 0.95, loaded=False), # Surtur's Brimstone Dagger
+      2: ParryAbility(9, 9, 0.8, loaded=False), # Spear-Staff
+      3: ParryAbility(10, 11, 0.5, loaded=False), # Runic Sceptre
+      4: ParryAbility(11, 7, 0.3, loaded=False), # Crimson Broadsword
+      5: ParryAbility(12, 7, 0.65, loaded=False), # Sabre of the World Tree
       6: ParryAbility(13, 10, 0.3, loaded=False), # The Mace
       7: ParryAbility(14, 10, 0.25, loaded=False), # Gauntlets of Muspelheim
-      8: ParryAbility(15, 8, 0.55, loaded=False), # Pickaxe-Axe
-      9: ParryAbility(19, 3, 0.55, loaded=False), # Tin Dagger
+      8: ParryAbility(15, 8, 0.4, loaded=False), # Meteorite Pickaxe-Axe
+      9: ParryAbility(19, 5, 0.6, loaded=False), # Ancient Tin Dagger
     })
     self.item_abilities.set({
       # ignition
@@ -413,7 +413,7 @@ class GameData(Loggable):
       26: ItemAbility(9, 13, loaded=False), # The Mace
       27: ItemAbility(10, 14, loaded=False), # Gauntlets of Muspelheim
       28: ItemAbility(11, 15, loaded=False), # Pickaxe-Axe
-      29: ItemAbility(0, 19, loaded=False), # Tin Dagger
+      29: ItemAbility(0, 19, loaded=False), # Ancient Tin Dagger
     })
 
   def create_tables(self, existing_table_names: list[str]) -> None:

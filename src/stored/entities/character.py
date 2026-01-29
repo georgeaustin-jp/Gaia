@@ -5,7 +5,7 @@ from stored.entities.fighting_entity import *
 from database.condition import Condition
 
 class Character(FightingEntity):
-  def __init__(self, user_id: int, name: str, health: float, max_health: float, loaded: bool = False, is_logging_enabled: bool = True, label: Optional[str] = None, include_call_stack: bool = False) -> None: # TODO: reset is_logging_enabled
+  def __init__(self, user_id: int, name: str, health: float, max_health: float, loaded: bool = False, is_logging_enabled: bool = False, label: Optional[str] = None, include_call_stack: bool = False) -> None:
     """
     :param user_id: User who the `Character` object is attatched to.
     :type user_id: int

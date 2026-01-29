@@ -177,9 +177,7 @@ class EffectManager(Loggable):
   
   def add_effect_to_list(self, effect: ActiveEffect, effect_list: list[ActiveEffect]) -> tuple[list[ActiveEffect], Optional[ActiveEffect]]:
     """Assumes the effect being added has already been applied to the entity. Removes colliding effects from the effect list."""
-    logging.debug(f"CALLED: {effect=}")
     effect_location: Optional[int] = self.find_effect(effect, effect_list)
-    logging.debug(f"{effect_location=}")
     effect_to_be_removed: Optional[ActiveEffect] = None
     effect_list.append(effect)
     if effect_location != None and effect.effect_ability.is_unique: # what to do if the effect is not found in the list
@@ -188,12 +186,9 @@ class EffectManager(Loggable):
   
   def apply_ability_action_to_fighting_entity(self, ability_action: AbilityAction, fighting_entity: FightingEntity, effect_list: list[ActiveEffect]) -> tuple[Optional[str], list[ActiveEffect]]:
     new_effect: ActiveEffect = self.generate_active_effect(ability_action)
-    if type(fighting_entity) == Character: logging.debug(f"ADDING {new_effect=} TO {fighting_entity=} (effect_list={format_iterable(effect_list)})")
     (effect_list, effect_to_be_removed_from_fighting_entity) = self.add_effect_to_list(new_effect, effect_list)
-    if type(fighting_entity) == Character: logging.debug(f"ADDED TO LIST: {format_iterable(effect_list)} ({effect_to_be_removed_from_fighting_entity=})")
     if effect_to_be_removed_from_fighting_entity != None:
       fighting_entity.remove_ability_action(effect_to_be_removed_from_fighting_entity.effect_ability)
-      if type(fighting_entity) == Character: logging.debug(f"AFTER REMOVING FROM CHARACTER: {effect_to_be_removed_from_fighting_entity=}, effect_list={format_iterable(effect_list)} ({effect_to_be_removed_from_fighting_entity=})")
     message: Optional[str] = fighting_entity.apply_ability_action(ability_action)
     return (message, effect_list)
 
@@ -218,7 +213,6 @@ class EffectManager(Loggable):
     messages: list[Optional[str]] = []
     while not ability_actions.empty():
       ability_action: AbilityAction = ability_actions.get()
-      logging.info("NEXT ABILITY")
       next_message: Optional[str] = self.apply_ability_action_to_active_character(ability_action)
       messages.append(next_message)
     return messages
@@ -296,7 +290,6 @@ class EffectManager(Loggable):
 
   def remove_effect_from_fighting_entity(self, active_effect: ActiveEffect, fighting_entity: FightingEntity, effect_list: list[ActiveEffect]) -> tuple[Optional[str], list[ActiveEffect]]:
     """Removes both the status effect applied to the enemy as well as the effect from the specific list."""
-    if type(fighting_entity) == Character: logging.debug(f"Removing effect from character: {active_effect=}")
     ability_action: AbilityAction = active_effect.effect_ability
     effect_list = self.remove_effect_from_effect_list(active_effect, effect_list)
     return (fighting_entity.remove_ability_action(ability_action), effect_list)
