@@ -29,7 +29,7 @@ class ScreenName(StrEnum):
 @dataclass
 class Constants:
   IS_DEV_MODE: bool = False
-  LOGGING_LEVEL: int = logging.CRITICAL
+  LOGGING_LEVEL: int = logging.DEBUG
   # constants related to the flow of combat:
   MIN_REMAINING_ACTIONS: int = 0
   MAX_REMAINING_PLAYER_ACTIONS: int = 2

@@ -1,6 +1,6 @@
 # Gaia
 
-*v1.0.1*
+*v1.0.2*
 
 *See `patch_notes.md` for additional information about this version*
 
@@ -25,7 +25,7 @@ Download and uncompress the latest release from the **Releases** section.
 If you are on Windows or Mac, enter the uncompressed folder in your file manager. If there are more folders, continue until you enter a directory containing multiple folders and files. Right-click here and select the option to `open in terminal`. A terminal window with something looking like the following text appearing (for Windows Powershell):
 
 ```powershell
-PS C:\...\Gaia-1.0.1>
+PS C:\...\Gaia-1.0.2>
 ```
 
 where the `...` is the path to the place where you have saved the project.

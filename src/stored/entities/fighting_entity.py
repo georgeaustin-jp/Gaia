@@ -83,7 +83,7 @@ class FightingEntity(Stored):
     self.health = health
     self.max_health = max_health
     # attributes not stored in the database, but which are still important
-    self.damage_resistance: float = 0
+    self.__damage_resistance: float = 0
     self.is_ignited: bool = False
     self.is_pierced: bool = False
     ## parrying data
@@ -111,6 +111,14 @@ class FightingEntity(Stored):
     return instantiate_fighting_entity(fighting_entity_data, loaded)
   
   # variable-setting methods
+  
+  @property
+  def damage_resistance(self) -> float:
+    return self.__damage_resistance
+  
+  @damage_resistance.setter
+  def damage_resistance(self, damage_resistance: float) -> None:
+    self.__damage_resistance = damage_resistance
 
   def reset_state(self) -> None:
     self.reset_health()

@@ -12,6 +12,21 @@ class AbilityAction():
   initial_duration: Optional[int]
   is_unique: bool
 
+  # built-in methods
+
+  def __eq__(self, other) -> bool:
+    return isinstance(other, self.__class__) and self.initial_duration == other.initial_duration and self.is_unique == other.is_unique
+  
+  # getter and setter methods
+
+  def get_initial_duration(self) -> Optional[int]:
+    return self.initial_duration
+  
+  def get_is_unique(self) -> bool:
+    return self.is_unique
+
+  # abstract methods
+
   def get_ability_type_name(self) -> AbilityTypeName: raise AbstractMethodCallError(AbilityAction.__name__, self.get_ability_type_name.__name__)
 
   def calculate_offensiveness(self) -> float: raise AbstractMethodCallError(AbilityAction.__name__, self.calculate_offensiveness.__name__)
@@ -45,6 +60,9 @@ class ParryAction(AbilityAction):
   initial_duration: int = 1
   is_unique: bool = True
 
+  def __eq__(self, other) -> bool:
+    return super().__eq__(other) and self.damage_threshold == other.damage_threshold and self.reflection_proportion == other.reflection_proportion
+
   def get_ability_type_name(self) -> AbilityTypeName: return AbilityTypeName.PARRY
 
   def calculate_offensiveness(self) -> float:
@@ -72,6 +90,9 @@ class DefendAction(AbilityAction):
   """Increases damage resistance."""
   resistance: float = 0
 
+  def __eq__(self, other) -> bool:
+    return super().__eq__(other) and self.resistance == other.resistance
+
   def get_ability_type_name(self) -> AbilityTypeName: return AbilityTypeName.DEFEND
 
   def calculate_offensiveness(self) -> float:
@@ -81,6 +102,9 @@ class DefendAction(AbilityAction):
 class WeakenAction(AbilityAction):
   """Increases damage vulnerability (inverse of `DefendAction`)."""
   vulnerability: float = 0
+
+  def __eq__(self, other) -> bool:
+    return super().__eq__(other) and self.vulnerability == other.vulnerability
 
   def get_ability_type_name(self) -> AbilityTypeName: return AbilityTypeName.WEAKEN
 
@@ -92,6 +116,9 @@ class HealAction(AbilityAction):
   initial_duration: Optional[int] = 1
   is_unique: bool = False
   heal_amount: float = 0
+
+  def __eq__(self, other) -> bool:
+    return super().__eq__(other) and self.heal_amount == other.heal_amount
 
   def get_ability_type_name(self) -> AbilityTypeName: return AbilityTypeName.HEAL
 

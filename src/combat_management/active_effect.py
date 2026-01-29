@@ -1,7 +1,8 @@
 from tools.typing_tools import *
 from tools.custom_exceptions import InvalidTurnsError
+from tools.logging_tools import *
 
-from ability_action import AbilityAction
+from ability_action import *
 
 def is_turns_valid(turns_remaining: Optional[int]) -> bool:
   """Return `False` if `turns_remaining` is invalid (i.e. less than `0`)."""
@@ -20,6 +21,13 @@ class ActiveEffect:
   turns_remaining: Optional[int]
   effect_ability: AbilityAction
 
+  # built-in methods
+
+  def __eq__(self, other) -> bool:
+    return isinstance(other, ActiveEffect) and self.effect_ability == other.effect_ability
+
+  # other
+
   def is_no_turns_remaining(self) -> bool:
     if self.turns_remaining == 0: return True
     return False
@@ -33,4 +41,3 @@ class ActiveEffect:
     decremented_turns_remaining: int = self.turns_remaining - 1
     if not is_turns_valid(decremented_turns_remaining): raise InvalidTurnsError(decremented_turns_remaining)
     self.turns_remaining = decremented_turns_remaining
-    

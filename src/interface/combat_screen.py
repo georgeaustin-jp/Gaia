@@ -261,14 +261,11 @@ class CombatScreen(AbstractScreen):
     if attribute == "state" and value == tk.NORMAL and not weapon_interface.has_parry: return None
     self.set_weapon_button_attribute(weapon_index, WeaponUIComponentName.PARRY, attribute, value)
 
-  def enable_attack_button(self, weapon_index: int) -> None:
-    self.set_attack_button_attribute(weapon_index, "state", tk.NORMAL)
+  def enable_attack_button(self, weapon_index: int) -> None: self.set_attack_button_attribute(weapon_index, "state", tk.NORMAL)
 
-  def disable_attack_button(self, weapon_index: int) -> None:
-    self.set_attack_button_attribute(weapon_index, "state", tk.DISABLED)
+  def disable_attack_button(self, weapon_index: int) -> None: self.set_attack_button_attribute(weapon_index, "state", tk.DISABLED)
 
-  def disable_parry_button(self, weapon_index: int) -> None:
-    self.set_parry_button_attribute(weapon_index, "state", tk.DISABLED)
+  def disable_parry_button(self, weapon_index: int) -> None: self.set_parry_button_attribute(weapon_index, "state", tk.DISABLED)
 
   def reset_weapon_states(self) -> None:
     for i in range(Constants.MAX_EQUIPPED_WEAPONS):

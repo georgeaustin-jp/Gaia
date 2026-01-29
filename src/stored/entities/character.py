@@ -5,10 +5,8 @@ from stored.entities.fighting_entity import *
 from database.condition import Condition
 
 class Character(FightingEntity):
-  def __init__(self, user_id: int, name: str, health: float, max_health: float, loaded: bool = True) -> None:
+  def __init__(self, user_id: int, name: str, health: float, max_health: float, loaded: bool = False, is_logging_enabled: bool = True, label: Optional[str] = None, include_call_stack: bool = False) -> None: # TODO: reset is_logging_enabled
     """
-    Docstring for __init__
-    
     :param user_id: User who the `Character` object is attatched to.
     :type user_id: int
     :param name: Name of the character.
@@ -16,7 +14,7 @@ class Character(FightingEntity):
     :param health: How much health the character currently has.
     :type health: float
     """
-    super().__init__(name, health, max_health, loaded)
+    super().__init__(name, health, max_health, loaded, is_logging_enabled, label, include_call_stack)
     self.user_id = user_id
 
   @staticmethod

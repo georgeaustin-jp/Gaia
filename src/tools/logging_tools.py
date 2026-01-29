@@ -18,7 +18,7 @@ logging.basicConfig(
 ## for functions
 def log_all[ReturnType](func: Callable[..., ReturnType]) -> Callable[..., ReturnType]:
   def wrapper(*args, **kwargs) -> ReturnType:
-    level: int = 2
+    level: int = 3
     func_name: str = func.__qualname__
     log_return_func: Callable[..., ReturnType] = log_return(func, level)
     log_return_func.__qualname__ = func_name
@@ -99,7 +99,7 @@ def get_call_stack_as_str() -> str:
 def get_caller_message(level: int = 0) -> str:
   actual_level: int = level+2
   current_frame = inspect.currentframe()
-  caller_frame = inspect.getouterframes(current_frame, 2)
+  caller_frame = inspect.getouterframes(current_frame, actual_level+1)
   caller_frame_at_level = caller_frame[actual_level]
   caller_name: str = caller_frame_at_level.function
   file_path: list[str] = caller_frame_at_level.filename.split('\\')

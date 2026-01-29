@@ -9,6 +9,7 @@ from game_data import GameData
 
 from stored.entities.character import Character
 from stored.entities.fighting_enemy import FightingEnemy
+from stored.entities.fighting_entity import FightingEntity
 
 from stored.items.item import Item
 from stored.items.inventory_item import InventoryItem
@@ -26,8 +27,9 @@ from data_structures.queue import Queue
 
 from combat_management.active_effect import ActiveEffect
 
-class EffectManager:
-  def __init__(self, game_data: GameData) -> None:
+class EffectManager(Loggable):
+  def __init__(self, game_data: GameData, is_logging_enabled: bool = False, tag: Optional[str] = "EffectManager", include_call_stack: bool = False) -> None:
+    super().__init__(is_logging_enabled, tag, include_call_stack)
     self.game_data = game_data
     self.__character_effects: list[ActiveEffect] = []
     self.__fighting_enemy_effects: dict[int, list[ActiveEffect]] = {} # maps FightingEnemyID to the effects applied to them
@@ -140,35 +142,60 @@ class EffectManager:
   def get_fighting_enemy(self, fighting_enemy_id: int) -> FightingEnemy:
     return self.game_data.fighting_enemies[fighting_enemy_id]
   
+  # handling effect ids
+
+  def find_hole_in_integer_list(self, integer_list: list[int]) -> Optional[tuple[int, int]]:
+    """
+    :return: If found, returns a tuple of the index of the hole followed by the value that should be inserted. If no holes are found, returns `None`.
+    :rtype: Optional[tuple[int, int]]
+    """
+    integer_list_length: int = len(integer_list)
+    if integer_list_length <= 1: return None
+    a: int
+    b: int
+    for i in range(integer_list_length-1):
+      a = integer_list[i]
+      b = integer_list[i+1]
+      if b-1 > a: return (i+1, a+1)
+    return None
+
   # inflicting effects
   
-  def ability_action_to_active_effect(self, ability_action: AbilityAction) -> ActiveEffect:
+  def generate_active_effect(self, ability_action: AbilityAction) -> ActiveEffect:
     duration: Optional[int] = ability_action.initial_duration
     new_effect = ActiveEffect(duration, ability_action)
     return new_effect
   
-  def find_effect_type(self, effect_type: Type[ActiveEffect], effect_list: list[ActiveEffect]) -> Optional[int]:
+  def find_effect(self, effect: ActiveEffect, effect_list: list[ActiveEffect]) -> Optional[int]:
     """
     :return: Returns the index it is first found at. If it's not in the list, returns `None`.
     :rtype: Optional[int]
     """
-    for (i, effect) in enumerate(effect_list):
-      if effect_type == type(effect): return i
+    for (i, selected_effect) in enumerate(effect_list):
+      if effect == selected_effect: return i
     return None
   
   def add_effect_to_list(self, effect: ActiveEffect, effect_list: list[ActiveEffect]) -> tuple[list[ActiveEffect], Optional[ActiveEffect]]:
-    """Assumes the effect being added has already been applied to the entity."""
-    effect_location: Optional[int] = self.find_effect_type(type(effect), effect_list)
-    if effect_location == None: # what to do if the effect is not found in the list
-      effect_list.append(effect)
-      return (effect_list, None)
-    
-    if effect.effect_ability.is_unique:
-      removed_effect: ActiveEffect = effect_list[effect_location]
-      effect_list[effect_location] = effect
-      return (effect_list, removed_effect)
+    """Assumes the effect being added has already been applied to the entity. Removes colliding effects from the effect list."""
+    logging.debug(f"CALLED: {effect=}")
+    effect_location: Optional[int] = self.find_effect(effect, effect_list)
+    logging.debug(f"{effect_location=}")
+    effect_to_be_removed: Optional[ActiveEffect] = None
     effect_list.append(effect)
-    return (effect_list, None)
+    if effect_location != None and effect.effect_ability.is_unique: # what to do if the effect is not found in the list
+      effect_to_be_removed = effect_list.pop(effect_location)
+    return (effect_list, effect_to_be_removed)
+  
+  def apply_ability_action_to_fighting_entity(self, ability_action: AbilityAction, fighting_entity: FightingEntity, effect_list: list[ActiveEffect]) -> tuple[Optional[str], list[ActiveEffect]]:
+    new_effect: ActiveEffect = self.generate_active_effect(ability_action)
+    if type(fighting_entity) == Character: logging.debug(f"ADDING {new_effect=} TO {fighting_entity=} (effect_list={format_iterable(effect_list)})")
+    (effect_list, effect_to_be_removed_from_fighting_entity) = self.add_effect_to_list(new_effect, effect_list)
+    if type(fighting_entity) == Character: logging.debug(f"ADDED TO LIST: {format_iterable(effect_list)} ({effect_to_be_removed_from_fighting_entity=})")
+    if effect_to_be_removed_from_fighting_entity != None:
+      fighting_entity.remove_ability_action(effect_to_be_removed_from_fighting_entity.effect_ability)
+      if type(fighting_entity) == Character: logging.debug(f"AFTER REMOVING FROM CHARACTER: {effect_to_be_removed_from_fighting_entity=}, effect_list={format_iterable(effect_list)} ({effect_to_be_removed_from_fighting_entity=})")
+    message: Optional[str] = fighting_entity.apply_ability_action(ability_action)
+    return (message, effect_list)
 
   ## character
   def apply_ability_action_to_active_character(self, ability_action: AbilityAction) -> Optional[str]:
@@ -177,10 +204,7 @@ class EffectManager:
     :rtype: str
     """
     character: Character = self.get_active_character()
-    message: Optional[str] = character.apply_ability_action(ability_action)
-    new_effect: ActiveEffect = self.ability_action_to_active_effect(ability_action)
-    (self.character_effects, removed_effect) = self.add_effect_to_list(new_effect, self.character_effects)
-    if removed_effect != None and type(removed_effect.effect_ability) != IgniteAction: character.remove_ability_action(removed_effect.effect_ability)
+    (message, self.character_effects) = self.apply_ability_action_to_fighting_entity(ability_action, character, self.character_effects)
     return message
 
   def apply_ability_action_list_to_active_character(self, ability_actions: list[AbilityAction]) -> list[Optional[str]]:
@@ -194,6 +218,7 @@ class EffectManager:
     messages: list[Optional[str]] = []
     while not ability_actions.empty():
       ability_action: AbilityAction = ability_actions.get()
+      logging.info("NEXT ABILITY")
       next_message: Optional[str] = self.apply_ability_action_to_active_character(ability_action)
       messages.append(next_message)
     return messages
@@ -212,10 +237,7 @@ class EffectManager:
   ## fighting enemies
   def apply_ability_action_to_fighting_enemy_with_identifier(self, fighting_enemy_id: int, ability_action: AbilityAction) -> Optional[str]:
     fighting_enemy: FightingEnemy = self.get_fighting_enemy(fighting_enemy_id)
-    message: Optional[str] = fighting_enemy.apply_ability_action(ability_action)
-    new_effect: ActiveEffect = self.ability_action_to_active_effect(ability_action)
-    (self.fighting_enemy_effects[fighting_enemy_id], removed_effect) = self.add_effect_to_list(new_effect, self.fighting_enemy_effects[fighting_enemy_id])
-    if removed_effect != None: fighting_enemy.remove_ability_action(removed_effect.effect_ability)
+    (message, self.fighting_enemy_effects[fighting_enemy_id]) = self.apply_ability_action_to_fighting_entity(ability_action, fighting_enemy, self.fighting_enemy_effects[fighting_enemy_id])
     return message
   
   def apply_ability_action_list_to_fighting_enemy_with_identifier(self, fighting_enemy_id: int, ability_actions: list[AbilityAction]) -> list[Optional[str]]:
@@ -233,7 +255,7 @@ class EffectManager:
       messages.append(next_message)
     return messages
 
-  # applying and decrementing effects in the course of combat
+  # inflicting and decrementing effects in the course of combat
 
   def inflict_active_effects_to_all_fighting_entities(self) -> list[Optional[str]]:
     """Also decrements all effects."""
@@ -265,42 +287,56 @@ class EffectManager:
       self.decrement_fighting_enemy_effects_durations(fighting_enemy_id)
 
   # removing effects
+
+  def remove_effect_from_effect_list(self, effect: ActiveEffect, effect_list: list[ActiveEffect]) -> list[ActiveEffect]:
+    index: Optional[int] = self.find_effect(effect, effect_list)
+    if index == None: raise BufferError(f"Tried to remove effect {effect} not found in effect list ({effect_list=}).")
+    effect_list.pop(index)
+    return effect_list
+
+  def remove_effect_from_fighting_entity(self, active_effect: ActiveEffect, fighting_entity: FightingEntity, effect_list: list[ActiveEffect]) -> tuple[Optional[str], list[ActiveEffect]]:
+    """Removes both the status effect applied to the enemy as well as the effect from the specific list."""
+    if type(fighting_entity) == Character: logging.debug(f"Removing effect from character: {active_effect=}")
+    ability_action: AbilityAction = active_effect.effect_ability
+    effect_list = self.remove_effect_from_effect_list(active_effect, effect_list)
+    return (fighting_entity.remove_ability_action(ability_action), effect_list)
+  
+  def clear_effects(self, fighting_entity: FightingEntity, effect_list: list[ActiveEffect]) -> list[ActiveEffect]:
+    fighting_entity.reset_state()
+    effect_list = []
+    return effect_list
+
   ## character
-  def remove_effect_from_active_character(self, ability_action: AbilityAction) -> Optional[str]:
-    """Doesn't remove the effect from `self.character_effects`."""
+  def remove_effect_from_active_character(self, active_effect: ActiveEffect) -> Optional[str]:
+    """Removes the effect from `self.character_effects`."""
     character: Character = self.get_active_character()
-    return character.remove_ability_action(ability_action)
+    (message, self.character_effects) = self.remove_effect_from_fighting_entity(active_effect, character, self.character_effects)
+    return message
 
   def remove_finished_effects_from_active_character(self) -> list[Optional[str]]:
     messages: list[Optional[str]] = []
-    for (i, active_effect) in enumerate(self.character_effects):
+    for active_effect in self.character_effects:
       if active_effect.is_no_turns_remaining():
-        self.character_effects.pop(i)
-        ability_action: AbilityAction = active_effect.effect_ability
-        message: Optional[str] = self.remove_effect_from_active_character(ability_action)
+        message: Optional[str] = self.remove_effect_from_active_character(active_effect)
         messages.append(message)
     return messages
 
   def remove_all_effects_from_active_character(self) -> None:
-    for (i, active_effect) in enumerate(self.character_effects):
-      self.character_effects.pop(i)
-      ability_action: AbilityAction = active_effect.effect_ability
-      self.remove_effect_from_active_character(ability_action)
+    self.character_effects = self.clear_effects(self.get_active_character(), self.character_effects)
 
   ## fighting enemies
-  def remove_effect_from_fighting_enemy_with_identifier(self, fighting_enemy_id: int, ability_action: AbilityAction) -> Optional[str]:
-    """Doesn't remove the effect from `self.fighting_enemy_effects`."""
+  def remove_effect_from_fighting_enemy_with_identifier(self, fighting_enemy_id: int, active_effect: ActiveEffect) -> Optional[str]:
+    """Removes the effect from `self.fighting_enemy_effects`."""
     fighting_enemy: FightingEnemy = self.get_fighting_enemy(fighting_enemy_id)
-    return fighting_enemy.remove_ability_action(ability_action)
+    (message, self.fighting_enemy_effects[fighting_enemy_id]) = self.remove_effect_from_fighting_entity(active_effect, fighting_enemy, self.fighting_enemy_effects[fighting_enemy_id])
+    return message
 
   def remove_finished_effects_from_fighting_enemy_with_identifier(self, fighting_enemy_id: int) -> list[Optional[str]]:
     messages: list[Optional[str]] = []
     specific_fighting_enemy_effects: list[ActiveEffect] = self.fighting_enemy_effects[fighting_enemy_id]
     for (i, active_effect) in enumerate(specific_fighting_enemy_effects):
       if active_effect.is_no_turns_remaining():
-        self.fighting_enemy_effects[fighting_enemy_id].pop(i)
-        ability_action: AbilityAction = active_effect.effect_ability
-        message: Optional[str] = self.remove_effect_from_fighting_enemy_with_identifier(fighting_enemy_id, ability_action)
+        message: Optional[str] = self.remove_effect_from_fighting_enemy_with_identifier(fighting_enemy_id, active_effect)
         messages.append(message)
     return messages
 
