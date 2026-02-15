@@ -1,6 +1,6 @@
 # Gaia
 
-*v1.0.2*
+*v1.0.3*
 
 *See `patch_notes.md` for additional information about this version*
 

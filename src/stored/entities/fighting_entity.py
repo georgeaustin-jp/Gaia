@@ -259,8 +259,8 @@ class FightingEntity(Stored):
     return f"Pierce ended"
 
   ## parrying
-  @append_message_info(0, descriptor="RFLCT", add_brackets=True)
-  @append_message_info(1, descriptor="DMG", add_brackets=True, add_comma_at_end=True)
+  @append_message_info(0, descriptor="DMG", add_brackets=True)
+  @append_message_info(1, descriptor="RFLCT", add_brackets=True, add_comma_at_end=True)
   def engage_parry(self, damage_threshold: float, reflection_proportion: float) -> str:
     if damage_threshold <= 0: raise ValueError(f"`{damage_threshold=}` cannot be less than or equal to `0`.")
     if reflection_proportion < 0: raise ValueError(f"`{reflection_proportion=}` cannot be less than `0`.")
